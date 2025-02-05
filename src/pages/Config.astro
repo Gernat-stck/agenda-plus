@@ -1,0 +1,104 @@
+---
+import { Image } from "astro:assets";
+import Header from "../components/Header.astro";
+import Layout from "../layouts/Layout.astro";
+---
+
+<Layout>
+  <div class="max-w-7xl mx-auto p-2">
+    <!-- Header -->
+    <Header
+      title="Configuración"
+      subtitle="Agenda+"
+      userName="Usuario"
+      userRole="Emprendedor"
+    />
+    <!-- Main Content -->
+    <div
+      class="max-w-md mx-auto bg-white rounded-3xl shadow-lg overflow-hidden -mt-15"
+    >
+      <div class="relative">
+        <div class="bg-[#9747FF] h-32 rounded-t-3xl">
+          <h1 class="text-white text-2xl font-medium pt-6 pl-8">
+            Información del Perfil
+          </h1>
+        </div>
+        <div class="absolute left-1/2 -translate-x-1/2 -bottom-16">
+          <div
+            class="w-32 h-32 bg-gray-300 rounded-full border-4 border-white overflow-hidden"
+          >
+            <Image
+              src="/src/assets/usericon.svg"
+              alt="Profile"
+              width={48}
+              height={48}
+              class="w-full h-full object-cover"
+            />
+          </div>
+        </div>
+      </div>
+
+      <form class="pt-20 p-8 space-y-6">
+        <div class="space-y-2">
+          <label for="nombre" class="block text-gray-700 text-sm font-medium">
+            Nombre <span class="text-red-500">*</span>
+          </label>
+          <input
+            type="text"
+            id="nombre"
+            name="nombre"
+            placeholder="Usuario"
+            class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+            required
+          />
+        </div>
+
+        <div class="space-y-2">
+          <label for="email" class="block text-gray-700 text-sm font-medium"
+            >Email</label
+          >
+          <input
+            type="email"
+            id="email"
+            name="email"
+            placeholder="E.g. marcoslopez14@gmail.com"
+            class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+          />
+        </div>
+
+        <div class="space-y-2">
+          <label for="telefono" class="block text-gray-700 text-sm font-medium"
+            >Telefono</label
+          >
+          <input
+            type="tel"
+            id="telefono"
+            name="telefono"
+            placeholder="E.g. 3234323421"
+            class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+          />
+        </div>
+
+        <div class="space-y-2">
+          <label for="rol" class="block text-gray-700 text-sm font-medium"
+            >Rol</label
+          >
+          <input
+            type="text"
+            id="rol"
+            name="rol"
+            placeholder="Emprendedor"
+            class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+          />
+        </div>
+
+        <button
+          type="submit"
+          class="w-full bg-[#9747FF] text-white py-3 rounded-lg hover:bg-purple-600 transition-colors font-medium mt-8"
+        >
+          Actualizar Perfil
+        </button>
+      </form>
+    </div>
+  </div>
+</Layout>

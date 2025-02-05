@@ -1,0 +1,149 @@
+---
+import Header from "../components/Header.astro";
+
+interface Props {
+  userName?: string;
+  userRole?: string;
+}
+
+const { userName = "Usuario", userRole = "Emprendedor" } = Astro.props;
+
+const metrics = [
+  {
+    title: "Citas para Hoy",
+    value: "0",
+    icon: "ri-calendar-todo-fill",
+    bgColor: "bg-orange-50",
+    iconColor: "text-orange-500",
+  },
+  {
+    title: "Pendientes",
+    value: "0",
+    icon: "ri-calendar-check-fill",
+    bgColor: "bg-red-50",
+    iconColor: "text-red-500",
+  },
+  {
+    title: "Clientes Reg.",
+    value: "0",
+    icon: "ri-team-fill",
+    bgColor: "bg-green-50",
+    iconColor: "text-green-500",
+  },
+  {
+    title: "Servicios Reg.",
+    value: "0",
+    icon: "ri-briefcase-4-fill",
+    bgColor: "bg-purple-50",
+    iconColor: "text-purple-500",
+  },
+];
+
+const sections = [
+  {
+    title: "Ir a Citas",
+    icon: "ri-calendar-line",
+    bgColor: "bg-purple-600",
+    href: "/citas",
+  },
+  {
+    title: "Ir a Clientes",
+    icon: "ri-user-3-line",
+    bgColor: "bg-blue-500",
+    href: "/clientes",
+  },
+  {
+    title: "Ir a Servicios",
+    icon: "ri-service-line",
+    bgColor: "bg-orange-500",
+    href: "/servicios",
+  },
+];
+---
+
+<main class="h-full bg-gray-50 p-4 md:p-6 text-2xl">
+  <div class="max-w-7xl mx-auto">
+    <!-- Header -->
+    <Header
+      title="Dashboard"
+      subtitle="Skedify"
+      userName="Usuario"
+      userRole="Emprendedor"
+    />
+
+    <!-- Metrics Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      {
+        metrics.map((metric) => (
+          <div class="bg-white rounded-lg p-4 shadow-sm">
+            <div class="flex items-start gap-4">
+              <div
+                class={`${metric.bgColor} w-12 h-12 rounded-full flex items-center justify-center`}
+              >
+                <i class={`${metric.icon} text-xl ${metric.iconColor}`} />
+              </div>
+              <div>
+                <p class="text-gray-600">{metric.title}</p>
+                <p class="text-3xl font-semibold">{metric.value}</p>
+              </div>
+            </div>
+          </div>
+        ))
+      }
+    </div>
+
+    <!-- Main Content -->
+    <div class="grid md:grid-cols-3 gap-6">
+      <!-- Recommended Sections -->
+      <div class="md:col-span-2">
+        <h2 class="flex items-center gap-2 text-xl font-semibold mb-4">
+          <i class="ri-star-line text-yellow-400"></i>
+          Secciones Recomendadas
+        </h2>
+        <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {
+            sections.map((section) => (
+              <a
+                href={section.href}
+                class={`${section.bgColor} rounded-lg p-6 text-white hover:opacity-90 transition-opacity`}
+              >
+                <div class="h-32 flex items-center justify-center mb-4">
+                  <i class={`${section.icon} text-6xl`} />
+                </div>
+                <p class="text-center font-medium">{section.title}</p>
+              </a>
+            ))
+          }
+        </div>
+      </div>
+
+      <!-- Wallet Card -->
+      <div class="bg-white rounded-lg p-6 shadow-sm h-fit">
+        <h2 class="text-xl font-semibold mb-4">Cartera</h2>
+        <div class="bg-yellow-50 rounded-lg p-4 text-center">
+          <div class="text-yellow-500 text-2xl mb-2">
+            <i class="ri-wallet-3-fill"></i>
+          </div>
+          <div class="text-3xl font-bold mb-2">$0</div>
+          <div
+            class="flex items-center justify-between text-sm text-gray-600 mb-4"
+          >
+            <span>Ingresos:</span>
+            <select class="flex items-center gap-1">
+              <option value="diario">Diario</option>
+              <option value="semanal">Semanal</option>
+              <option value="mensual">Mensual</option>
+            </select>
+          </div>
+          <a
+            href="/citas"
+            class="text-sm text-purple-600 hover:text-purple-700 font-medium inline-flex items-center gap-1"
+          >
+            Ver Citas Agendadas
+            <i class="ri-arrow-right-s-line"></i>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
