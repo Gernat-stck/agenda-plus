@@ -1,10 +1,10 @@
 ---
 const navLinks = [
-  { href: "/", icon: "ri-dashboard-line", label: "Dashboard" },
-  { href: "/Citas", icon: "ri-calendar-line", label: "Citas" },
-  { href: "/Clientes", icon: "ri-user-line", label: "Clientes" },
-  { href: "/Servicios", icon: "ri-briefcase-line", label: "Servicios" },
-  { href: "/Config", icon: "ri-settings-line", label: "Configuración" },
+  { href: "/", icon: "ri-dashboard-fill", label: "Dashboard" },
+  { href: "/Citas", icon: "ri-calendar-fill", label: "Citas" },
+  { href: "/Clientes", icon: "ri-user-fill", label: "Clientes" },
+  { href: "/Servicios", icon: "ri-briefcase-fill", label: "Servicios" },
+  { href: "/Config", icon: "ri-settings-fill", label: "Configuración" },
 ];
 ---
 
@@ -42,9 +42,9 @@ const navLinks = [
         navLinks.map((link) => (
           <a
             href={link.href}
-            class="flex items-center gap-4 text-3xl px-3 py-3 text-gray-700 hover:bg-purple-300 rounded-lg transition-all duration-300 hover:shadow-md group"
+            class="flex items-center gap-4 text-2xl p-3 py-3 text-gray-600 hover:bg-purple-300 rounded-lg transition-all duration-300 hover:shadow-md group"
           >
-            <i class={`${link.icon} w-8 h-8 min-w-[2rem]`} />
+            <i class={`${link.icon} w-6 h-6 min-w-[1rem]`} />
             <span class="opacity-0 group-hover:opacity-100 transition-opacity duration-300 text-lg whitespace-nowrap">
               {link.label}
             </span>
