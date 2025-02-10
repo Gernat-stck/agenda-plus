@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import Calendar from "@/components/Calendar";
+import  Calendar  from "@/components/CalendarDemo";
 import EmptyState from "@/components/EmptyState";
 import Header from "@/components/Header";
 import { Button } from "@/components/ui/button";
