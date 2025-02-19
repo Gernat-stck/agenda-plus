@@ -1,73 +1,96 @@
-"use client"
+// components/AppointmentCalendar.tsx
+import React, { useContext, useState } from "react";
+import { CitaContext, Cita } from "@/contexts/CitasContext";
+import {
+  Calendar,
+  momentLocalizer,
+  SlotInfo,
+  Event,
+} from "react-big-calendar";
+import withDragAndDrop, {
+  withDragAndDropProps,
+} from "react-big-calendar/lib/addons/dragAndDrop";
+import moment from "moment";
+import "react-big-calendar/lib/css/react-big-calendar.css";
+import "react-big-calendar/lib/addons/dragAndDrop/styles.css";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import AppointmentForm from "./AppointmentForm";
 
-import { useEffect, useState } from "react"
-import { Calendar, momentLocalizer } from "react-big-calendar"
-import withDragAndDrop from "react-big-calendar/lib/addons/dragAndDrop"
-import moment from "moment"
-import "react-big-calendar/lib/css/react-big-calendar.css"
-import "react-big-calendar/lib/addons/dragAndDrop/styles.css"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import AppointmentForm from "./AppointmentForm"
-import { Appointment, EventInteractionArgs } from "@/types/AppointmentType"
-import { driver } from "driver.js";
-import "driver.js/dist/driver.css";
-import { Button } from "../ui/button"
-import { CircleHelp } from "lucide-react"
-import { startTour } from "@/utils/tourUtils"
+const localizer = momentLocalizer(moment);
+const DragAndDropCalendar = withDragAndDrop(Calendar);
 
-const localizer = momentLocalizer(moment)
-const DragAndDropCalendar = withDragAndDrop(Calendar)
+const AppointmentCalendar: React.FC = () => {
+  const { citas, agregarCita, actualizarCita, eliminarCita } =
+    useContext(CitaContext);
+  const [selectedAppointment, setSelectedAppointment] = useState<Cita | null>(
+    null
+  );
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-export default function AppointmentCalendar() {
-  const [appointments, setAppointments] = useState<Appointment[]>([])
-  const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null)
-  const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const handleSelectSlot = (slotInfo: SlotInfo) => {
+    const { start, end } = slotInfo;
+    setSelectedAppointment({
+      id: "",
+      title: "",
+      start,
+      end,
+      estado: "Pendiente",
+    });
+    setIsDialogOpen(true);
+  };
 
-  const handleSelectSlot = ({ start, end }: { start: Date; end: Date }) => {
-    setSelectedAppointment({ id: "", title: "", start, end })
-    setIsDialogOpen(true)
-  }
+  const handleSelectEvent = (event: Event) => {
+    setSelectedAppointment(event as Cita);
+    setIsDialogOpen(true);
+  };
 
-  const handleSelectEvent = (event: any) => {
-    setSelectedAppointment(event)
-    setIsDialogOpen(true)
-  }
-
-  const handleSaveAppointment = (appointment: Appointment) => {
+  const handleSaveAppointment = (appointment: any) => {
     if (appointment.id) {
-      setAppointments(appointments.map((apt) => (apt.id === appointment.id ? appointment : apt)))
+      actualizarCita(appointment);
     } else {
-      const newAppointment = { ...appointment, id: Date.now().toString() }
-      setAppointments([...appointments, newAppointment])
+      const newAppointment: Cita = {
+        ...appointment,
+        id: Date.now().toString(),
+      };
+      agregarCita(newAppointment);
     }
-    setIsDialogOpen(false)
-  }
+    setIsDialogOpen(false);
+  };
 
   const handleDeleteAppointment = (id: string) => {
-    setAppointments(appointments.filter((apt) => apt.id !== id))
-    setIsDialogOpen(false)
-  }
+    eliminarCita(id);
+    setIsDialogOpen(false);
+  };
 
-  const moveAppointment = ({ event, start, end }: any) => {
-    const updatedAppointments = appointments.map((apt) => (apt.id === event.id ? { ...apt, start, end } : apt))
-    setAppointments(updatedAppointments)
-  }
+  const moveAppointment = ({
+    event,
+    start,
+    end,
+  }: any) => {
+    const updatedAppointment: Cita = { ...(event as Cita), start, end };
+    actualizarCita(updatedAppointment);
+  };
 
-  const resizeAppointment = ({ event, start, end }: any) => {
-    const updatedAppointments = appointments.map((apt) => (apt.id === event.id ? { ...apt, start, end } : apt))
-    setAppointments(updatedAppointments)
-  }
-  useEffect(() => {
-    const tourShown = localStorage.getItem("tourShown")
-    if (!tourShown) {
-      startTour()
-    }
-  }, [])
+  const resizeAppointment = ({
+    event,
+    start,
+    end,
+  }: any
+  ) => {
+    const updatedAppointment: Cita = { ...(event as Cita), start, end };
+    actualizarCita(updatedAppointment);
+  };
+
   return (
-    <div className="h-[85svh]  relative">
+    <div className="h-[85svh] relative">
       <DragAndDropCalendar
         localizer={localizer}
-        events={appointments}
+        events={citas}
         onEventDrop={moveAppointment}
         onEventResize={resizeAppointment}
         onSelectSlot={handleSelectSlot}
@@ -76,26 +99,24 @@ export default function AppointmentCalendar() {
         resizable
         className="h-full"
       />
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{selectedAppointment?.id ? "Edit Appointment" : "Create Appointment"}</DialogTitle>
-          </DialogHeader>
-          <AppointmentForm
-            appointment={selectedAppointment}
-            onSave={handleSaveAppointment}
-            onDelete={handleDeleteAppointment}
-          />
-        </DialogContent>
-      </Dialog>
-      <Button
-        id="tour-button"
-        onClick={startTour}
-        className="flex z-99  bg-purple-500 hover:bg-purple-600 text-white rounded-full  shadow-xl absolute bottom-4 -right-16"
-      >
-        <CircleHelp className="h-full w-full" />
-      </Button>
+      {selectedAppointment && (
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>
+                {selectedAppointment.id ? "Editar Cita" : "Crear Cita"}
+              </DialogTitle>
+            </DialogHeader>
+            <AppointmentForm
+              appointment={selectedAppointment}
+              onSave={handleSaveAppointment}
+              onDelete={handleDeleteAppointment}
+            />
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
-  )
-}
+  );
+};
 
+export default AppointmentCalendar;

@@ -67,7 +67,7 @@ export function ChartArea() {
                         <Area
                             dataKey="mobile"
                             type="natural"
-                            fill="var(--color-mobile)"
+                            fill="#11f0f1"
                             fillOpacity={0.4}
                             stroke="var(--color-mobile)"
                             stackId="a"
