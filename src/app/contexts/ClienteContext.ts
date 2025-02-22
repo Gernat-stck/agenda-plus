@@ -1,5 +1,7 @@
-// contexts/ClienteContext.tsx
-import React, { createContext, ReactNode, useContext, useState } from "react";
+// app/contexts/ClienteContext.tsx
+"use client";
+
+import React, { createContext, useState, ReactNode } from "react";
 
 export interface Cliente {
   id: string;
@@ -17,36 +19,27 @@ interface ClienteContextProps {
   eliminarCliente: (id: string) => void;
 }
 
-interface ClienteProviderProps {
-  children: ReactNode;
-}
+export const ClienteContext = createContext<ClienteContextProps | null>(null);
 
-const ClienteContext = createContext<ClienteContextProps>({
-  clientes: [],
-  agregarCliente: () => {},
-  actualizarCliente: () => {},
-  eliminarCliente: () => {},
-});
-
-export const ClienteProvider: React.FC<ClienteProviderProps> = ({
-  children,
-}) => {
+export const ClienteProvider = ({ children }: { children: ReactNode }) => {
   const [clientes, setClientes] = useState<Cliente[]>([]);
 
   const agregarCliente = (cliente: Cliente) => {
-    setClientes([...clientes, cliente]);
+    setClientes((prevClientes) => [...prevClientes, cliente]);
   };
 
   const actualizarCliente = (clienteActualizado: Cliente) => {
-    setClientes(
-      clientes.map((cliente) =>
+    setClientes((prevClientes) =>
+      prevClientes.map((cliente) =>
         cliente.id === clienteActualizado.id ? clienteActualizado : cliente
       )
     );
   };
 
   const eliminarCliente = (id: string) => {
-    setClientes(clientes.filter((cliente) => cliente.id !== id));
+    setClientes((prevClientes) =>
+      prevClientes.filter((cliente) => cliente.id !== id)
+    );
   };
 
   return (
@@ -57,5 +50,3 @@ export const ClienteProvider: React.FC<ClienteProviderProps> = ({
     </ClienteContext.Provider>
   );
 };
-
-export const useCliente = () => useContext(ClienteContext);

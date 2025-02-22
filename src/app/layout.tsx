@@ -1,9 +1,8 @@
 // app/layout.tsx
 import React, { ReactNode } from "react";
-import { ClienteProvider } from "@/contexts/ClienteContext";
-import { CitasProvider } from "@/contexts/CitasContext";
+import { Providers } from "./providers";
 import { Geist, Azeret_Mono as Geist_Mono } from "next/font/google";
-import Navbar from "@/components/Navbar";
+import Navbar from "@/app/components/Navbar";
 import "@/app/css/globals.css";
 
 const geistSans = Geist({
@@ -29,16 +28,14 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   return (
     <html lang="es">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        <ClienteProvider>
-          <CitasProvider>
-            <div className="flex h-screen overflow-hidden bg-gray-50">
-              <Navbar />
-              <div className="flex-1 overflow-y-scroll scrollbar">
-                <main className="h-full">{children}</main>
-              </div>
-            </div>
-          </CitasProvider>
-        </ClienteProvider>
+        <div className="flex h-screen overflow-hidden bg-gray-50">
+          <Navbar />
+          <div className="flex-1 overflow-y-scroll scrollbar">
+            <main className="h-full">
+              <Providers>{children}</Providers>
+            </main>
+          </div>
+        </div>
       </body>
     </html>
   );

@@ -1,5 +1,5 @@
 "use client"
-import Header from "@/components/Header";
+import Header from "@/app/components/Header";
 import React from "react";
 //TODO: Implementar la vista de citas
 return (

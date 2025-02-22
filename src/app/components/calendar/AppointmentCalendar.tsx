@@ -1,6 +1,8 @@
 // components/AppointmentCalendar.tsx
+"use client";
+
 import React, { useContext, useState } from "react";
-import { CitaContext, Cita } from "@/contexts/CitasContext";
+import { CitaContexto, Cita } from "@/app/contexts/CitaContext";
 import {
   Calendar,
   momentLocalizer,
@@ -18,15 +20,18 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
+} from "@/app/components/ui/dialog";
 import AppointmentForm from "./AppointmentForm";
 
 const localizer = momentLocalizer(moment);
 const DragAndDropCalendar = withDragAndDrop(Calendar);
 
 const AppointmentCalendar: React.FC = () => {
-  const { citas, agregarCita, actualizarCita, eliminarCita } =
-    useContext(CitaContext);
+  const citaContext = useContext(CitaContexto);
+  if (!citaContext) {
+    throw new Error("AppointmentCalendar debe estar dentro de CitaProvider");
+  }
+  const { citas, agregarCita, actualizarCita, eliminarCita } = citaContext;
   const [selectedAppointment, setSelectedAppointment] = useState<Cita | null>(
     null
   );
@@ -37,15 +42,15 @@ const AppointmentCalendar: React.FC = () => {
     setSelectedAppointment({
       id: "",
       title: "",
-      start,
-      end,
+      start: start.toString(),
+      end: end.toString(),
       estado: "Pendiente",
     });
     setIsDialogOpen(true);
   };
 
   const handleSelectEvent = (event: Event) => {
-    setSelectedAppointment(event as Cita);
+    setSelectedAppointment(event as unknown as Cita);
     setIsDialogOpen(true);
   };
 
@@ -90,7 +95,11 @@ const AppointmentCalendar: React.FC = () => {
     <div className="h-[85svh] relative">
       <DragAndDropCalendar
         localizer={localizer}
-        events={citas}
+        events={citas.map((cita) => ({
+          ...cita,
+          start: new Date(cita.start),
+          end: new Date(cita.end),
+        }))}
         onEventDrop={moveAppointment}
         onEventResize={resizeAppointment}
         onSelectSlot={handleSelectSlot}

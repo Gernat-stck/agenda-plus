@@ -1,9 +1,9 @@
 import { Plus } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import Metrics from "@/components/dashboard/Metrics"
-import RecomendedSection from "@/components/dashboard/RecommendedSections"
-import Wallet from "@/components/dashboard/Wallet"
-import Overview from "@/components/dashboard/Overview"
+import { Button } from "@/app/components/ui/button"
+import Metrics from "@/app/components/dashboard/Metrics"
+import RecomendedSection from "@/app/components/dashboard/RecommendedSections"
+import Wallet from "@/app/components/dashboard/Wallet"
+import Overview from "@/app/components/dashboard/Overview"
 
 export default function Dashboard() {
   return (

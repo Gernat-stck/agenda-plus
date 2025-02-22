@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useState } from "react";
-import Calendar from "@/components/calendar/AppointmentCalendar";
-import Header from "@/components/Header";
+import Calendar from "@/app/components/calendar/AppointmentCalendar";
+import Header from "@/app/components/Header";
 
 export default function Citas() {
   return (
