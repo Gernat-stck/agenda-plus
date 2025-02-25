@@ -3,6 +3,7 @@ export type Appointment = {
   title: string;
   start: Date;
   end: Date;
+  estado: string;
 };
 
 export interface EventInteractionArgs<T> {
