@@ -1,87 +1,187 @@
-import React, { useContext } from "react";
-import { ClienteContext } from "@/contexts/ClienteContext";
+"use client"
+
+import { useState } from "react"
+import { Search, Info, Edit, Plus } from "lucide-react"
+import DetallesCliente from "./DetallesClientes"
+import EmptyState from "../EmptyState"
+
+export interface Cita {
+    id: string
+    fecha: string
+    estado: "Programado" | "Completado" | "Pendiente" | "Cancelado"
+    metodoPago: "tarjeta" | "efectivo"
+}
+
+export interface Cliente {
+    id: string
+    nombre: string
+    contacto: number
+    correo: string
+    citas: Cita[]
+}
+
+const clientesIniciales: Cliente[] = [
+    {
+        id: "CLI001",
+        nombre: "Juan Pérez",
+        contacto: 1234567890,
+        correo: "juan@example.com",
+        citas: [
+            { id: "CIT001", fecha: "2023-06-15", estado: "Completado", metodoPago: "tarjeta" },
+            { id: "CIT004", fecha: "2023-07-01", estado: "Programado", metodoPago: "efectivo" },
+        ],
+    },
+    {
+        id: "CLI002",
+        nombre: "María García",
+        contacto: 9876543210,
+        correo: "maria@example.com",
+        citas: [
+            { id: "CIT002", fecha: "2023-06-16", estado: "Completado", metodoPago: "efectivo" },
+            { id: "CIT005", fecha: "2023-07-02", estado: "Pendiente", metodoPago: "tarjeta" },
+        ],
+    },
+    {
+        id: "CLI003",
+        nombre: "Carlos Rodríguez",
+        contacto: 5555555555,
+        correo: "carlos@example.com",
+        citas: [
+            { id: "CIT003", fecha: "2023-06-17", estado: "Cancelado", metodoPago: "tarjeta" },
+            { id: "CIT006", fecha: "2023-07-03", estado: "Programado", metodoPago: "efectivo" },
+        ],
+    },
+]
 
 export default function ListaClientes() {
-    const { clientes } = useContext(ClienteContext);
-    //TODO: Arreglar errores de variables(Agregar nuevos campos)
+    const [clientes, setClientes] = useState<Cliente[]>(clientesIniciales)
+    const [searchTerm, setSearchTerm] = useState("")
+    const [selectedCliente, setSelectedCliente] = useState<Cliente | null>(null)
+    const [isEditing, setIsEditing] = useState(false)
+    const [isCreating, setIsCreating] = useState(false)
+
+    const filteredClientes = clientes.filter(
+        (cliente) =>
+            cliente.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            cliente.id.toLowerCase().includes(searchTerm.toLowerCase()),
+    )
+
+    const openModal = (cliente: Cliente) => {
+        setSelectedCliente(cliente)
+        setIsEditing(false)
+    }
+
+    const closeModal = () => {
+        setSelectedCliente(null)
+        setIsEditing(false)
+    }
+
+    const handleEdit = (cliente: Cliente) => {
+        setSelectedCliente(cliente)
+        setIsEditing(true)
+    }
+
+    const handleSave = (updatedCliente: Cliente) => {
+        setClientes(clientes.map((c) => (c.id === updatedCliente.id ? updatedCliente : c)))
+        setIsEditing(false)
+    }
+
+    const handleCreate = () => {
+        setIsCreating(true)
+        setSelectedCliente({
+            id: `CLI${(clientes.length + 1).toString().padStart(3, "0")}`,
+            nombre: "",
+            contacto: 0,
+            correo: "",
+            citas: [],
+        })
+    }
+
+    const handleCreateSave = (newCliente: Cliente) => {
+        setClientes([...clientes, newCliente])
+        setIsCreating(false)
+        setSelectedCliente(null)
+    }
+
+    const handleCancel = () => {
+        setIsCreating(false)
+        setSelectedCliente(null)
+    }
+
     return (
-        <div className="flex min-h-screen items-center justify-center bg-white">
-            <div className="p-6 overflow-scroll px-0">
-                <table className="w-full min-w-max table-auto text-left">
-                    <thead>
-                        <tr>
-                            <th className="border-y border-blue-gray-100 bg-blue-gray-50/50 p-4">
-                                <p className="block antialiased font-sans text-sm text-blue-gray-900 font-normal leading-none opacity-70">Transaction</p>
-                            </th>
-                            <th className="border-y border-blue-gray-100 bg-blue-gray-50/50 p-4">
-                                <p className="block antialiased font-sans text-sm text-blue-gray-900 font-normal leading-none opacity-70">Amount</p>
-                            </th>
-                            <th className="border-y border-blue-gray-100 bg-blue-gray-50/50 p-4">
-                                <p className="block antialiased font-sans text-sm text-blue-gray-900 font-normal leading-none opacity-70">Date</p>
-                            </th>
-                            <th className="border-y border-blue-gray-100 bg-blue-gray-50/50 p-4">
-                                <p className="block antialiased font-sans text-sm text-blue-gray-900 font-normal leading-none opacity-70">Status</p>
-                            </th>
-                            <th className="border-y border-blue-gray-100 bg-blue-gray-50/50 p-4">
-                                <p className="block antialiased font-sans text-sm text-blue-gray-900 font-normal leading-none opacity-70">Account</p>
-                            </th>
-                            <th className="border-y border-blue-gray-100 bg-blue-gray-50/50 p-4">
-                                <p className="block antialiased font-sans text-sm text-blue-gray-900 font-normal leading-none opacity-70"></p>
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {clientes.map((item, index) => (
-                            <tr key={index}>
-                                <td className="p-4 border-b border-blue-gray-50">
-                                    <div className="flex items-center gap-3">
-                                        <img src={item.logo} alt={item.transaction} className="inline-block relative object-center !rounded-full w-12 h-12 rounded-lg border border-blue-gray-50 bg-blue-gray-50/50 object-contain p-1" />
-                                        <p className="block antialiased font-sans text-sm leading-normal text-blue-gray-900 font-bold">{item.transaction}</p>
-                                    </div>
-                                </td>
-                                <td className="p-4 border-b border-blue-gray-50">
-                                    <p className="block antialiased font-sans text-sm leading-normal text-blue-gray-900 font-normal">{item.amount}</p>
-                                </td>
-                                <td className="p-4 border-b border-blue-gray-50">
-                                    <p className="block antialiased font-sans text-sm leading-normal text-blue-gray-900 font-normal">{item.date}</p>
-                                </td>
-                                <td className="p-4 border-b border-blue-gray-50">
-                                    <div className="w-max">
-                                        <div className={`relative grid items-center font-sans font-bold uppercase whitespace-nowrap select-none py-1 px-2 text-xs rounded-md ${item.status === 'paid' ? 'bg-green-500/20 text-green-900' : 'bg-red-500/20 text-red-900'}`} style={{ opacity: 1 }}>
-                                            <span>{item.status}</span>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td className="p-4 border-b border-blue-gray-50">
-                                    <div className="flex items-center gap-3">
-                                        <div className="h-9 w-12 rounded-md border border-blue-gray-50 p-1">
-                                            <img src={item.cardLogo} alt={item.account.split(' ')[0]} className="inline-block relative object-center !rounded-none rounded-md h-full w-full object-contain p-1" />
-                                        </div>
-                                        <div className="flex flex-col">
-                                            <p className="block antialiased font-sans text-sm leading-normal text-blue-gray-900 font-normal capitalize">{item.account}</p>
-                                            <p className="block antialiased font-sans text-sm leading-normal text-blue-gray-900 font-normal opacity-70">06/2026</p>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td className="p-4 border-b border-blue-gray-50">
-                                    <button className="relative align-middle select-none font-sans font-medium text-center uppercase transition-all disabled:opacity-50 disabled:shadow-none disabled:pointer-events-none w-10 max-w-[40px] h-10 max-h-[40px] rounded-lg text-xs text-gray-900 hover:bg-gray-900/10 active:bg-gray-900/20" type="button">
-                                        <span className="absolute top-1/2 left-1/2 transform -translate-y-1/2 -translate-x-1/2">
-                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" className="h-4 w-4">
-                                                <path d="M21.731 2.269a2.625 2.625 0 00-3.712 0l-1.157 1.157 3.712 3.712 1.157-1.157a2.625 2.625 0 000-3.712zM19.513 8.199l-3.712-3.712-12.15 12.15a5.25 5.25 0 00-1.32 2.214l-.8 2.685a.75.75 0 00.933.933l2.685-.8a5.25 5.25 0 002.214-1.32L19.513 8.2z"></path>
-                                            </svg>
-                                        </span>
-                                    </button>
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-                <div className="w-full pt-5 px-4 mb-8 mx-auto">
-                    <div className="text-sm text-gray-700 py-1">
-                        Made with <a className="text-gray-700 font-semibold" href="https://www.material-tailwind.com/?ref=tailwindcomponents" target="_blank">Material Tailwind</a> by <a href="https://www.creative-tim.com?ref=tailwindcomponents" className="text-gray-700 font-semibold" target="_blank"> Creative Tim</a>.
-                    </div>
+        <div className="container mx-auto p-6">
+            <h1 className="text-3xl font-bold mb-6">Lista de Clientes</h1>
+            <div className="mb-4 flex items-center">
+                <div className="relative flex-grow mr-4">
+                    <input
+                        type="text"
+                        placeholder="Buscar por nombre o ID..."
+                        className="w-full p-2 pl-10 border rounded-md"
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                    <Search className="absolute left-3 top-2.5 text-gray-400" size={20} />
                 </div>
+                <button
+                    onClick={handleCreate}
+                    className="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600 transition-colors"
+                >
+                    <Plus size={20} className="inline-block mr-2" />
+                    Nuevo Cliente
+                </button>
             </div>
+            {clientes.length === 0 ? (
+                <EmptyState />
+            ) : (
+                <div className="overflow-x-auto shadow-md rounded-lg">
+                    <table className="w-full min-w-max table-auto text-left">
+                        <thead>
+                            <tr className="bg-gray-100">
+                                <th className="border-b p-4 font-medium">ID</th>
+                                <th className="border-b p-4 font-medium">Nombre</th>
+                                <th className="border-b p-4 font-medium">Contacto</th>
+                                <th className="border-b p-4 font-medium">Correo</th>
+                                <th className="border-b p-4 font-medium text-left">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {filteredClientes.map((cliente) => (
+                                <tr key={cliente.id} className="border-b hover:bg-gray-50 transition-colors">
+                                    <td className="p-4 font-medium">{cliente.id}</td>
+                                    <td className="p-4">{cliente.nombre}</td>
+                                    <td className="p-4">{cliente.contacto}</td>
+                                    <td className="p-4">{cliente.correo}</td>
+                                    <td className="p-4 flex mr-0">
+                                        <button
+                                            className="text-blue-600 hover:text-blue-800 transition-colors mr-4 flex items-center"
+                                            onClick={() => openModal(cliente)}
+                                        >
+                                            <Info size={18} className="mr-1" /> Detalles
+                                        </button>
+                                        <button
+                                            className="text-green-600 hover:text-green-800 transition-colors flex items-center"
+                                            onClick={() => handleEdit(cliente)}
+                                        >
+                                            <Edit size={18} className="mr-1" /> Editar
+                                        </button>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            )}
+            {selectedCliente && (
+                <DetallesCliente
+                    cliente={selectedCliente}
+                    onClose={closeModal}
+                    isEditing={isEditing}
+                    onSave={handleSave}
+                    isCreating={isCreating}
+                    onCreateSave={handleCreateSave}
+                    onCancel={handleCancel}
+                />
+            )}
         </div>
-    );
+    )
 }
+
