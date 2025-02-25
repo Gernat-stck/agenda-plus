@@ -1,6 +1,5 @@
 // app/layout.tsx
 import React, { ReactNode } from "react";
-import { Providers } from "./providers";
 import { Geist, Azeret_Mono as Geist_Mono } from "next/font/google";
 import Navbar from "@/app/components/Navbar";
 import "@/app/css/globals.css";
@@ -32,7 +31,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           <Navbar />
           <div className="flex-1 overflow-y-scroll scrollbar">
             <main className="h-full">
-              <Providers>{children}</Providers>
+              {children}
             </main>
           </div>
         </div>
