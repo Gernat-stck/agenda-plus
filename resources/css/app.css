@@ -1,3 +1,4 @@
+@import url('./sidebar.css');
 @import 'tailwindcss';
 
 @plugin 'tailwindcss-animate';
@@ -155,5 +156,15 @@
 
     body {
         @apply bg-background text-foreground;
+    }
+}
+
+@layer utilities {
+    .scrollbar-hide {
+        -ms-overflow-style: none; /* IE and Edge */
+        scrollbar-width: none; /* Firefox */
+    }
+    .scrollbar-hide::-webkit-scrollbar {
+        display: none; /* Chrome, Safari and Opera */
     }
 }
