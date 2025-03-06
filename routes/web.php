@@ -14,6 +14,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('calendar', function () {
         return Inertia::render('calendar');
     })->name('calendar');
+    Route::get('clients', function () {
+        return Inertia::render('clients');
+    })->name('clients');
+    Route::get('services', function () {
+        return Inertia::render('services');
+    })->name('services');
 });
 
 require __DIR__.'/settings.php';
