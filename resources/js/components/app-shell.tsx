@@ -1,5 +1,6 @@
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { useState } from 'react';
+import { Toaster } from 'sonner';
 
 interface AppShellProps {
     children: React.ReactNode;
@@ -24,6 +25,7 @@ export function AppShell({ children, variant = 'header' }: AppShellProps) {
     return (
         <SidebarProvider defaultOpen={isOpen} open={isOpen} onOpenChange={handleSidebarChange}>
             {children}
+            <Toaster richColors position="top-right" />
         </SidebarProvider>
     );
 }
