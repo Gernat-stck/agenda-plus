@@ -32,11 +32,12 @@ class RegisteredUserController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|string|lowercase|email|max:255|unique:'.User::class,
+            'email' => 'required|string|lowercase|email|max:255|unique:' . User::class,
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 
         $user = User::create([
+            'user_id' => $this->generateUserId($request->name),
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
@@ -47,5 +48,19 @@ class RegisteredUserController extends Controller
         Auth::login($user);
 
         return to_route('dashboard');
+    }
+
+    private function generateUserId($name)
+    {
+        $nameParts = explode(' ', $name);
+        $initials = '';
+
+        foreach ($nameParts as $part) {
+            $initials .= strtoupper(substr($part, 0, 2));
+        }
+
+        $number = str_pad(rand(0, 9999), 4, '0', STR_PAD_LEFT);
+
+        return substr($initials, 0, 4) . $number;
     }
 }

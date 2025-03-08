@@ -1,35 +1,37 @@
-import { useState } from "react"
-import { Handshake, Plus, Search } from "lucide-react"
-import { type Servicio, categoriasIniciales, serviciosIniciales } from "@/types/services"
-import { ServicioDialog } from "./service-dialog"
-import { TablaServicios } from "./tabla-servicios"
-import { Card, CardContent, CardHeader, CardTitle } from "../ui/card"
-import { NoData } from "../no-data"
-import { Button } from "../ui/button"
-import { Input } from "../ui/input"
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "../ui/select"
-import { toast } from "sonner"
+import { useState } from "react";
+import { Handshake, Plus, Search } from "lucide-react";
+import { usePage, router } from "@inertiajs/react";
+import { type Servicio, categoriasIniciales } from "@/types/services";
+import { ServicioDialog } from "./service-dialog";
+import { TablaServicios } from "./tabla-servicios";
+import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
+import { NoData } from "../no-data";
+import { Button } from "../ui/button";
+import { Input } from "../ui/input";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "../ui/select";
+import { toast } from "sonner";
 
 export default function GestionServicios() {
-    const [servicios, setServicios] = useState<Servicio[]>(serviciosIniciales)
-    const [categorias, setCategorias] = useState<string[]>(categoriasIniciales)
-    const [editingServicio, setEditingServicio] = useState<Servicio | null>(null)
-    const [isModalOpen, setIsModalOpen] = useState(false)
-    const [searchTerm, setSearchTerm] = useState("")
-    const [filterCategoria, setFilterCategoria] = useState<string>("all")
-    const [isCreating, setIsCreating] = useState(false)
+    const { services } = usePage().props;
+    const [servicios, setServicios] = useState<Servicio[]>(services);
+    const [categorias, setCategorias] = useState<string[]>(categoriasIniciales);
+    const [editingServicio, setEditingServicio] = useState<Servicio | null>(null);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [searchTerm, setSearchTerm] = useState("");
+    const [filterCategoria, setFilterCategoria] = useState<string>("all");
+    const [isCreating, setIsCreating] = useState(false);
 
     const filteredServicios = servicios.filter(
         (servicio) =>
             (servicio.titulo.toLowerCase().includes(searchTerm.toLowerCase()) ||
                 servicio.descripcion.toLowerCase().includes(searchTerm.toLowerCase())) &&
             (filterCategoria === "all" || servicio.categoria === filterCategoria),
-    )
+    );
 
     const openModal = (servicio?: Servicio) => {
         if (servicio) {
-            setEditingServicio(servicio)
-            setIsCreating(false)
+            setEditingServicio(servicio);
+            setIsCreating(false);
         } else {
             setEditingServicio({
                 id: `SERV${(servicios.length + 1).toString().padStart(3, "0")}`,
@@ -38,42 +40,64 @@ export default function GestionServicios() {
                 precio: 0,
                 duracion: 30,
                 categoria: "",
-            })
-            setIsCreating(true)
+            });
+            setIsCreating(true);
         }
-        setIsModalOpen(true)
-    }
+        setIsModalOpen(true);
+    };
 
     const closeModal = () => {
-        setIsModalOpen(false)
-        setEditingServicio(null)
-        setIsCreating(false)
-    }
+        setIsModalOpen(false);
+        setEditingServicio(null);
+        setIsCreating(false);
+    };
 
     const handleSave = (servicio: Servicio) => {
+        try{
         if (isCreating) {
-            setServicios([...servicios, servicio])
+            
+            router.post(route('services.store'), servicio, {
+                onSuccess: () => {
+                    setServicios([...servicios, servicio]);
+                    closeModal();
+                    toast.success("Servicio guardado correctamente.", {
+                        duration: 3000,
+                        position: "top-right",
+                    });
+                },
+            }); 
         } else {
-            setServicios(servicios.map((s) => (s.id === servicio.id ? servicio : s)))
+            Inertia.put(route('services.update', { service: servicio.id }), servicio, {
+                onSuccess: () => {
+                    setServicios(servicios.map((s) => (s.id === servicio.id ? servicio : s)));
+                    closeModal();
+                    toast.success("Servicio actualizado correctamente.", {
+                        duration: 3000,
+                        position: "top-right",
+                    });
+                },
+            });
         }
-        closeModal()
-        toast.success("Servicio guardado correctamente.", {
-            duration: 3000
-            , position: "top-right"
-
-        })
-
-
-    }
+        }catch(error){
+            console.error(error);
+            toast.error("Error al guardar el servicio.", {
+                duration: 3000,
+                position: "top-right",
+            });
+        }
+    };
 
     const handleDelete = (id: string) => {
-        setServicios(servicios.filter((s) => s.id !== id))
-        toast.success("Servicio eliminado correctamente.", {
-            duration: 3000
-            , position: "top-right"
-
-        })
-    }
+        Inertia.delete(route('services.destroy', { service: id }), {
+            onSuccess: () => {
+                setServicios(servicios.filter((s) => s.id !== id));
+                toast.success("Servicio eliminado correctamente.", {
+                    duration: 3000,
+                    position: "top-right",
+                });
+            },
+        });
+    };
 
     return (
         <Card className="container mx-auto p-6">
@@ -135,5 +159,5 @@ export default function GestionServicios() {
                 />
             )}
         </Card>
-    )
+    );
 }
