@@ -12,11 +12,12 @@ class CreateServicesTable extends Migration
             // Usamos UUID para el id
             $table->id();
             $table->string('service_id')->unique();
-            $table->string('user_id')->unique();
+            $table->string('user_id');
             $table->string('name');
             $table->text('description')->nullable();
             $table->integer('duration');
             $table->decimal('price', 10, 2);
+            $table->string('category');
             $table->timestamps();
 
             // Relación con la tabla users (empresa)

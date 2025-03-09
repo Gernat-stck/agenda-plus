@@ -18,6 +18,7 @@ class Service extends Model
         'description',
         'duration',
         'price',
+        'category'
     ];
 
     public function user()
