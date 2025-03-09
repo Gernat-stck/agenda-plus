@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Handshake, Plus, Search } from "lucide-react";
-import { usePage, router } from "@inertiajs/react";
-import { type Servicio, categoriasIniciales } from "@/types/services";
+import { router } from "@inertiajs/react";
+import { type Servicio, categoriasIniciales, serviciosIniciales } from "@/types/services";
 import { ServicioDialog } from "./service-dialog";
 import { TablaServicios } from "./tabla-servicios";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
@@ -11,8 +11,7 @@ import { Input } from "../ui/input";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "../ui/select";
 import { toast } from "sonner";
 
-export default function GestionServicios() {
-    const { services } = usePage().props;
+export default function GestionServicios({ services }: { services: Servicio[] }) {
     const [servicios, setServicios] = useState<Servicio[]>(services);
     const [categorias, setCategorias] = useState<string[]>(categoriasIniciales);
     const [editingServicio, setEditingServicio] = useState<Servicio | null>(null);
@@ -23,9 +22,9 @@ export default function GestionServicios() {
 
     const filteredServicios = servicios.filter(
         (servicio) =>
-            (servicio.titulo.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                servicio.descripcion.toLowerCase().includes(searchTerm.toLowerCase())) &&
-            (filterCategoria === "all" || servicio.categoria === filterCategoria),
+            (servicio.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                servicio.description.toLowerCase().includes(searchTerm.toLowerCase())) &&
+            (filterCategoria === "all" || servicio.category === filterCategoria),
     );
 
     const openModal = (servicio?: Servicio) => {
@@ -34,12 +33,13 @@ export default function GestionServicios() {
             setIsCreating(false);
         } else {
             setEditingServicio({
-                id: `SERV${(servicios.length + 1).toString().padStart(3, "0")}`,
-                titulo: "",
-                descripcion: "",
-                precio: 0,
-                duracion: 30,
-                categoria: "",
+                service_id: `SERV${(servicios.length + 1).toString().padStart(3, "0")}`,
+                user_id: "CAJU3446",
+                name: "",
+                description: "",
+                price: 0,
+                duration: 30,
+                category: "",
             });
             setIsCreating(true);
         }
@@ -53,32 +53,33 @@ export default function GestionServicios() {
     };
 
     const handleSave = (servicio: Servicio) => {
-        try{
-        if (isCreating) {
-            
-            router.post(route('services.store'), servicio, {
-                onSuccess: () => {
-                    setServicios([...servicios, servicio]);
-                    closeModal();
-                    toast.success("Servicio guardado correctamente.", {
-                        duration: 3000,
-                        position: "top-right",
-                    });
-                },
-            }); 
-        } else {
-            Inertia.put(route('services.update', { service: servicio.id }), servicio, {
-                onSuccess: () => {
-                    setServicios(servicios.map((s) => (s.id === servicio.id ? servicio : s)));
-                    closeModal();
-                    toast.success("Servicio actualizado correctamente.", {
-                        duration: 3000,
-                        position: "top-right",
-                    });
-                },
-            });
-        }
-        }catch(error){
+        console.log(servicio);
+        try {
+            if (isCreating) {
+
+                router.post(('services'), { ...servicio }, {
+                    onSuccess: () => {
+                        setServicios([...servicios, servicio]);
+                        closeModal();
+                        toast.success("Servicio guardado correctamente.", {
+                            duration: 3000,
+                            position: "top-right",
+                        });
+                    },
+                });
+            } else {
+                router.patch((`services/${servicio.service_id}`), { ...servicio }, {
+                    onSuccess: () => {
+                        setServicios(servicios.map((s) => (s.service_id === servicio.service_id ? servicio : s)));
+                        closeModal();
+                        toast.success("Servicio actualizado correctamente.", {
+                            duration: 3000,
+                            position: "top-right",
+                        });
+                    },
+                });
+            }
+        } catch (error) {
             console.error(error);
             toast.error("Error al guardar el servicio.", {
                 duration: 3000,
@@ -88,7 +89,7 @@ export default function GestionServicios() {
     };
 
     const handleDelete = (id: string) => {
-        Inertia.delete(route('services.destroy', { service: id }), {
+        /*Inertia.delete(route('services.destroy', { service: id }), {
             onSuccess: () => {
                 setServicios(servicios.filter((s) => s.id !== id));
                 toast.success("Servicio eliminado correctamente.", {
@@ -96,7 +97,7 @@ export default function GestionServicios() {
                     position: "top-right",
                 });
             },
-        });
+        });*/
     };
 
     return (

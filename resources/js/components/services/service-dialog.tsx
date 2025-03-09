@@ -1,22 +1,21 @@
-import type React from "react"
-
-import { useState, useEffect } from "react"
-import type { Servicio } from "@/types/services"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { Button } from "@/components/ui/button"
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
-import { toast } from "sonner"
+import type React from "react";
+import { useState, useEffect } from "react";
+import type { Servicio } from "@/types/services";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { toast } from "sonner";
 
 interface ServicioDialogProps {
-    servicio: Servicio | null
-    open: boolean
-    onOpenChange: (open: boolean) => void
-    onSave: (servicio: Servicio) => void
-    categorias: string[]
-    setCategorias: React.Dispatch<React.SetStateAction<string[]>>
-    isCreating: boolean
+    servicio: Servicio | null;
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+    onSave: (servicio: Servicio) => void;
+    categorias: string[];
+    setCategorias: React.Dispatch<React.SetStateAction<string[]>>;
+    isCreating: boolean;
 }
 
 export const ServicioDialog = ({
@@ -28,54 +27,49 @@ export const ServicioDialog = ({
     setCategorias,
     isCreating,
 }: ServicioDialogProps) => {
-    const [editedServicio, setEditedServicio] = useState<Servicio>(
-        servicio || {
-            id: "",
-            titulo: "",
-            descripcion: "",
-            precio: 0,
-            duracion: 30,
-            categoria: "",
-        },
-    )
-    const [newCategoria, setNewCategoria] = useState("")
+    const initialServicio: Servicio = {
+        service_id: '',
+        user_id: "CAJU3446",
+        name: "",
+        description: "",
+        price: 0,
+        duration: 30,
+        category: "", // Asegúrate de incluir la propiedad 'category'
+    };
+
+    const [editedServicio, setEditedServicio] = useState<Servicio>(initialServicio);
+    const [newCategoria, setNewCategoria] = useState("");
 
     useEffect(() => {
-        setEditedServicio(
-            servicio || {
-                id: "",
-                titulo: "",
-                descripcion: "",
-                precio: 0,
-                duracion: 30,
-                categoria: "",
-            },
-        )
-    }, [servicio])
+        if (servicio) {
+            setEditedServicio(servicio);
+        } else {
+            setEditedServicio(initialServicio);
+        }
+    }, [servicio]);
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-        const { name, value } = e.target
+        const { name, value } = e.target;
         setEditedServicio((prev) => ({
             ...prev,
-            [name]: name === "precio" || name === "duracion" ? Number.parseFloat(value) : value,
-        }))
-    }
+            [name]: name === "price" || name === "duration" ? Number.parseFloat(value) : value,
+        }));
+    };
 
     const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault()
-        onSave(editedServicio)
-        onOpenChange(false)
-    }
+        e.preventDefault();
+        onSave(editedServicio);
+        onOpenChange(false);
+    };
 
     const addNewCategoria = () => {
-        if (!newCategoria) return toast.error("La categoría no puede estar vacía")
+        if (!newCategoria) return toast.error("La categoría no puede estar vacía");
         if (newCategoria && !categorias.includes(newCategoria)) {
-            setCategorias([...categorias, newCategoria])
-            setEditedServicio((prev) => ({ ...prev, categoria: newCategoria }))
-            setNewCategoria("")
+            setCategorias([...categorias, newCategoria]);
+            setEditedServicio((prev) => ({ ...prev, category: newCategoria }));
+            setNewCategoria("");
         }
-
-    }
+    };
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
@@ -86,54 +80,54 @@ export const ServicioDialog = ({
                 <form onSubmit={handleSubmit}>
                     <div className="grid gap-4 py-4">
                         <div className="grid gap-2">
-                            <label htmlFor="id" className="text-sm font-medium">
+                            <label htmlFor="service_id" className="text-sm font-medium">
                                 ID
                             </label>
                             <Input
                                 type="text"
-                                id="id"
-                                name="id"
-                                value={editedServicio.id}
+                                id="service_id"
+                                name="service_id"
+                                value={editedServicio.service_id}
                                 onChange={handleInputChange}
                                 required
                                 readOnly
                             />
                         </div>
                         <div className="grid gap-2">
-                            <label htmlFor="titulo" className="text-sm font-medium">
+                            <label htmlFor="name" className="text-sm font-medium">
                                 Título
                             </label>
                             <Input
                                 type="text"
-                                id="titulo"
-                                name="titulo"
-                                value={editedServicio.titulo}
+                                id="name"
+                                name="name"
+                                value={editedServicio.name}
                                 onChange={handleInputChange}
                                 required
                             />
                         </div>
                         <div className="grid gap-2">
-                            <label htmlFor="descripcion" className="text-sm font-medium">
+                            <label htmlFor="description" className="text-sm font-medium">
                                 Descripción
                             </label>
                             <Textarea
-                                id="descripcion"
-                                name="descripcion"
-                                value={editedServicio.descripcion}
+                                id="description"
+                                name="description"
+                                value={editedServicio.description}
                                 onChange={handleInputChange}
                                 rows={3}
                                 required
                             />
                         </div>
                         <div className="grid gap-2">
-                            <label htmlFor="precio" className="text-sm font-medium">
+                            <label htmlFor="price" className="text-sm font-medium">
                                 Precio
                             </label>
                             <Input
                                 type="number"
-                                id="precio"
-                                name="precio"
-                                value={editedServicio.precio}
+                                id="price"
+                                name="price"
+                                value={editedServicio.price}
                                 onChange={handleInputChange}
                                 step="0.01"
                                 min="0"
@@ -141,26 +135,26 @@ export const ServicioDialog = ({
                             />
                         </div>
                         <div className="grid gap-2">
-                            <label htmlFor="duracion" className="text-sm font-medium">
+                            <label htmlFor="duration" className="text-sm font-medium">
                                 Duración (minutos)
                             </label>
                             <Input
                                 type="number"
-                                id="duracion"
-                                name="duracion"
-                                value={editedServicio.duracion}
+                                id="duration"
+                                name="duration"
+                                value={editedServicio.duration}
                                 onChange={handleInputChange}
                                 min="1"
                                 required
                             />
                         </div>
                         <div className="grid gap-2">
-                            <label htmlFor="categoria" className="text-sm font-medium">
+                            <label htmlFor="category" className="text-sm font-medium">
                                 Categoría
                             </label>
                             <Select
-                                value={editedServicio.categoria}
-                                onValueChange={(value) => setEditedServicio((prev) => ({ ...prev, categoria: value }))}
+                                value={editedServicio.category}
+                                onValueChange={(value) => setEditedServicio((prev) => ({ ...prev, category: value }))}
                             >
                                 <SelectTrigger>
                                     <SelectValue placeholder="Seleccionar categoría" />
@@ -202,6 +196,6 @@ export const ServicioDialog = ({
                 </form>
             </DialogContent>
         </Dialog>
-    )
+    );
 }
 

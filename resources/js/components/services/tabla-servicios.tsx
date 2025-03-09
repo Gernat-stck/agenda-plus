@@ -29,12 +29,12 @@ export const TablaServicios: React.FC<TablaServiciosProps> = ({ servicios, onEdi
                 <TableBody>
                     {servicios.map((servicio) => (
                         <TableRow key={servicio.id} className="hover:bg-gray-400/20 dark:hover:bg-gray-400/20">
-                            <TableCell className="p-4">{servicio.id}</TableCell>
-                            <TableCell className="p-4">{servicio.titulo}</TableCell>
-                            <TableCell className="p-4">{servicio.descripcion}</TableCell>
-                            <TableCell className="p-4">${servicio.precio.toFixed(2)}</TableCell>
-                            <TableCell className="p-4">{servicio.duracion} min</TableCell>
-                            <TableCell className="p-4">{servicio.categoria}</TableCell>
+                            <TableCell className="p-4">{servicio.service_id}</TableCell>
+                            <TableCell className="p-4">{servicio.name}</TableCell>
+                            <TableCell className="p-4">{servicio.description}</TableCell>
+                            <TableCell className="p-4">${servicio.price}</TableCell>
+                            <TableCell className="p-4">{servicio.duration} min</TableCell>
+                            <TableCell className="p-4">{servicio.category}</TableCell>
                             <TableCell className="p-4">
                                 <Button
                                     onClick={() => onEdit(servicio)}
@@ -45,7 +45,7 @@ export const TablaServicios: React.FC<TablaServiciosProps> = ({ servicios, onEdi
                                     <Edit size={18} /> Editar
                                 </Button>
                                 <Button
-                                    onClick={() => onDelete(servicio.id)}
+                                    onClick={() => onDelete(servicio.service_id)}
                                     variant="ghost"
                                     size="sm"
                                     className="text-red-500 hover:text-red-600/80 hover:bg-red-700/10 justify-start"
