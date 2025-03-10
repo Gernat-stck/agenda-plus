@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Handshake, Plus, Search } from "lucide-react";
 import { router } from "@inertiajs/react";
-import { type Servicio, categoriasIniciales, serviciosIniciales } from "@/types/services";
+import { type Servicio } from "@/types/services";
 import { ServicioDialog } from "./service-dialog";
 import { TablaServicios } from "./tabla-servicios";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
@@ -10,15 +10,23 @@ import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "../ui/select";
 import { toast } from "sonner";
+import { useAuth } from "@/context/AuthContext";
 
 export default function GestionServicios({ services }: { services: Servicio[] }) {
+    const { user } = useAuth();
     const [servicios, setServicios] = useState<Servicio[]>(services);
-    const [categorias, setCategorias] = useState<string[]>(categoriasIniciales);
+    const [categorias, setCategorias] = useState<string[]>([]);
     const [editingServicio, setEditingServicio] = useState<Servicio | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState("");
     const [filterCategoria, setFilterCategoria] = useState<string>("all");
     const [isCreating, setIsCreating] = useState(false);
+
+    useEffect(() => {
+        // Extraer categorías únicas de los servicios
+        const categoriasUnicas = Array.from(new Set(services.map((servicio) => servicio.category)));
+        setCategorias(categoriasUnicas);
+    }, [services]);
 
     const filteredServicios = servicios.filter(
         (servicio) =>
@@ -34,7 +42,7 @@ export default function GestionServicios({ services }: { services: Servicio[] })
         } else {
             setEditingServicio({
                 service_id: `SERV${(servicios.length + 1).toString().padStart(3, "0")}`,
-                user_id: "CAJU3446",
+                user_id: "",
                 name: "",
                 description: "",
                 price: 0,
@@ -53,11 +61,9 @@ export default function GestionServicios({ services }: { services: Servicio[] })
     };
 
     const handleSave = (servicio: Servicio) => {
-        console.log(servicio);
         try {
             if (isCreating) {
-
-                router.post(('services'), { ...servicio }, {
+                router.post(('services'), { ...servicio, user_id: user?.user_id }, {
                     onSuccess: () => {
                         setServicios([...servicios, servicio]);
                         closeModal();
@@ -68,7 +74,7 @@ export default function GestionServicios({ services }: { services: Servicio[] })
                     },
                 });
             } else {
-                router.patch((`services/${servicio.service_id}`), { ...servicio }, {
+                router.patch((`services/${servicio.service_id}`), { ...servicio, user_id: user?.user_id }, {
                     onSuccess: () => {
                         setServicios(servicios.map((s) => (s.service_id === servicio.service_id ? servicio : s)));
                         closeModal();
@@ -89,7 +95,8 @@ export default function GestionServicios({ services }: { services: Servicio[] })
     };
 
     const handleDelete = (id: string) => {
-        /*Inertia.delete(route('services.destroy', { service: id }), {
+        console.log(id);
+        router.delete((`services/${id}`), {
             onSuccess: () => {
                 setServicios(servicios.filter((s) => s.id !== id));
                 toast.success("Servicio eliminado correctamente.", {
@@ -97,7 +104,7 @@ export default function GestionServicios({ services }: { services: Servicio[] })
                     position: "top-right",
                 });
             },
-        });*/
+        });
     };
 
     return (
@@ -105,16 +112,9 @@ export default function GestionServicios({ services }: { services: Servicio[] })
             <CardHeader className="pb-0">
                 <CardTitle className="text-3xl font-bold">Servicios</CardTitle>
             </CardHeader>
-            <CardContent className="flex justify-between items-center mb-4">
-                <Button
-                    onClick={() => openModal()}
-                    className="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600 transition-colors"
-                >
-                    <Plus size={20} className="inline-block mr-2" />
-                    Nuevo Servicio
-                </Button>
-                <div className="flex items-center space-x-2">
-                    <div className="relative">
+            <CardContent className="p-6">
+                <div className="mb-6 flex flex-col sm:flex-row items-center gap-4">
+                    <div className="relative flex-grow w-full">
                         <Input
                             type="text"
                             placeholder="Buscar servicios..."
@@ -124,6 +124,7 @@ export default function GestionServicios({ services }: { services: Servicio[] })
                         />
                         <Search className="absolute left-3 top-2.5 text-gray-400" size={20} />
                     </div>
+
                     <Select defaultValue="all" onValueChange={(value) => setFilterCategoria(value)}>
                         <SelectTrigger className="border rounded-md px-2 py-2">
                             <SelectValue placeholder="Todas las categorías" />
@@ -137,6 +138,13 @@ export default function GestionServicios({ services }: { services: Servicio[] })
                             ))}
                         </SelectContent>
                     </Select>
+                    <Button
+                        onClick={() => openModal()}
+                        className="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600 transition-colors"
+                    >
+                        <Plus size={20} className="inline-block mr-2" />
+                        Nuevo Servicio
+                    </Button>
                 </div>
             </CardContent>
             {servicios.length === 0 ? (

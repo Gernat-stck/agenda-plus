@@ -29,7 +29,7 @@ export const ServicioDialog = ({
 }: ServicioDialogProps) => {
     const initialServicio: Servicio = {
         service_id: '',
-        user_id: "CAJU3446",
+        user_id: "",
         name: "",
         description: "",
         price: 0,
