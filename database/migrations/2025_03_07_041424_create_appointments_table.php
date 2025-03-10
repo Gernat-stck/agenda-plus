@@ -35,6 +35,9 @@ class CreateAppointmentsTable extends Migration
             $table->foreign('service_id')
                 ->references('service_id')->on('services')
                 ->onDelete('set null');
+
+            //INDICES
+            $table->index(['user_id', 'client_id']);
         });
     }
 

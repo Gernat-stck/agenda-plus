@@ -3,18 +3,18 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\ServiceRequest;
 use App\Models\Service;
-use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class ServiceController extends Controller
 {
     public function index()
     {
-        $services = Service::all();
+        $services = Service::where('user_id', auth()->user()->user_id)->get();
         return Inertia::render('Services/Index', [
             'services' => $services,
         ]);
     }
+
 
     public function store(ServiceRequest $data)
     {
@@ -23,30 +23,25 @@ class ServiceController extends Controller
         return redirect()->route('services.index')->with('success', 'Servicio creado correctamente.');
     }
 
-    public function update(Request $request, $service)
+    public function update(ServiceRequest $request, $serviceId)
     {
-        $request->validate([
-            'user_id' => 'required|string',
-            'service_id' => 'required|string',
-            'category' => 'required|string|max:255',
-            'name' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'duration' => 'required|integer',
-            'price' => 'required|numeric',
-        ]);
-
-        $service = Service::where('service_id', $service)->firstOrFail();
+        $service = Service::where('service_id', $serviceId)
+            ->where('user_id', auth()->user()->user_id)
+            ->firstOrFail();
 
         $service->update($request->all());
 
         return redirect()->route('services.index')->with('success', 'Servicio actualizado correctamente.');
     }
 
-    public function destroy($service)
+    public function destroy($serviceId)
     {
-        $service = Service::where('service_id', $service)->firstOrFail();
+        $service = Service::where('service_id', $serviceId)
+            ->where('user_id', auth()->user()->user_id)
+            ->firstOrFail();
         $service->delete();
 
         return redirect()->route('services.index')->with('success', 'Servicio eliminado correctamente.');
     }
+
 }
