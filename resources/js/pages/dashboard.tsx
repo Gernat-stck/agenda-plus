@@ -2,9 +2,11 @@ import ChartOverview from '@/components/dashboard/chart-info-overview';
 import CitaOverview from '@/components/dashboard/citas-overview';
 import ClientesOverview from '@/components/dashboard/clientes-registrados';
 import WalletOverview from '@/components/dashboard/wallet-overview';
+import { useAuth } from '@/context/AuthContext';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head } from '@inertiajs/react';
+import { useEffect } from 'react';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -13,7 +15,13 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-export default function Dashboard() {
+export default function Dashboard({ auth }: { auth: any }) {
+    const { setUser } = useAuth();
+
+    useEffect(() => {
+        setUser(auth.user);
+    }, [auth.user, setUser]);
+
     //TODO: Hacer los componentes responsive
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
