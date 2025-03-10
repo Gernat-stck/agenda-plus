@@ -1,5 +1,3 @@
-"use client"
-
 import { useState } from "react"
 import { Search, Info, Edit, Plus, Trash2, PlusCircle } from "lucide-react"
 import DetallesCliente from "./clientes-details"
@@ -198,7 +196,7 @@ export default function ListaClientes() {
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
                     </div>
-                    <Button onClick={handleCreate} className="w-full sm:w-auto" variant="default">
+                    <Button onClick={handleCreate} className="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600 transition-colors" variant="default">
                         <Plus size={18} className="mr-2" />
                         Nuevo Cliente
                     </Button>
