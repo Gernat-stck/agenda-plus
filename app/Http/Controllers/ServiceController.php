@@ -14,8 +14,6 @@ class ServiceController extends Controller
             'services' => $services,
         ]);
     }
-
-
     public function store(ServiceRequest $data)
     {
         Service::create($data->all());
