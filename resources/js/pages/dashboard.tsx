@@ -3,6 +3,7 @@ import CitaOverview from '@/components/dashboard/citas-overview';
 import ClientesOverview from '@/components/dashboard/clientes-registrados';
 import WalletOverview from '@/components/dashboard/wallet-overview';
 import { useAuth } from '@/context/AuthContext';
+
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head } from '@inertiajs/react';
@@ -14,6 +15,7 @@ const breadcrumbs: BreadcrumbItem[] = [
         href: '/dashboard',
     },
 ];
+
 
 export default function Dashboard({ auth }: { auth: any }) {
     const { setUser } = useAuth();
