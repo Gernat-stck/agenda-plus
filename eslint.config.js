@@ -1,44 +1,31 @@
-import js from '@eslint/js';
-import prettier from 'eslint-config-prettier';
-import react from 'eslint-plugin-react';
-import reactHooks from 'eslint-plugin-react-hooks';
-import globals from 'globals';
-import typescript from 'typescript-eslint';
-
-/** @type {import('eslint').Linter.Config[]} */
-export default [
-    js.configs.recommended,
-    ...typescript.configs.recommended,
-    {
-        ...react.configs.flat.recommended,
-        ...react.configs.flat['jsx-runtime'], // Required for React 17+
-        languageOptions: {
-            globals: {
-                ...globals.browser,
-            },
-        },
-        rules: {
-            'react/react-in-jsx-scope': 'off',
-            'react/prop-types': 'off',
-            'react/no-unescaped-entities': 'off',
-        },
-        settings: {
-            react: {
-                version: 'detect',
-            },
+/** @type {import('eslint').Linter.Config} */
+export default {
+    parser: '@typescript-eslint/parser',
+    parserOptions: {
+        ecmaVersion: 2021,
+        sourceType: 'module',
+        ecmaFeatures: {
+            jsx: true,
         },
     },
-    {
-        plugins: {
-            'react-hooks': reactHooks,
-        },
-        rules: {
-            'react-hooks/rules-of-hooks': 'error',
-            'react-hooks/exhaustive-deps': 'warn',
+    plugins: ['@typescript-eslint', 'react', 'react-hooks'],
+    extends: [
+        'eslint:recommended',
+        'plugin:@typescript-eslint/recommended',
+        'plugin:react/recommended',
+        'plugin:react-hooks/recommended',
+        'prettier',
+    ],
+    settings: {
+        react: {
+            version: 'detect',
         },
     },
-    {
-        ignores: ['vendor', 'node_modules', 'public', 'bootstrap/ssr', 'tailwind.config.js'],
+    rules: {
+        'react/react-in-jsx-scope': 'off', // Si usas React 17+
+        'react/prop-types': 'off', // Si no usas PropTypes
+        '@typescript-eslint/no-unused-vars': 'warn',
+        '@typescript-eslint/explicit-function-return-type': 'off',
     },
-    prettier, // Turn off all rules that might conflict with Prettier
-];
+    ignorePatterns: ['vendor/', 'node_modules/', 'public/', '*.config.js'],
+};
