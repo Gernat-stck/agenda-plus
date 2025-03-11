@@ -11,13 +11,11 @@ return new class extends Migration {
     public function up(): void
     {
         Schema::create('clients_user', function (Blueprint $table) {
+            $table->id();
             $table->string('client_id');
             $table->string('user_id');
             $table->text('notes')->nullable();
             $table->timestamps();
-
-            // Clave primaria compuesta
-            $table->primary(['client_id', 'user_id']);
 
             // Definir las claves foráneas
             $table->foreign('client_id')

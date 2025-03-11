@@ -16,5 +16,16 @@ class Client extends Model
         "contact_number",
         "email"
     ];
+
+    public function appointments()
+    {
+        return $this->hasMany(Appointments::class);
+    }
+
+    public function users()
+    {
+        return $this->belongsToMany(User::class, 'clients_user', 'client_id', 'user_id');
+    }
+
+
 }
-;
