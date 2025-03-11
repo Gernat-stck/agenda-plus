@@ -1,35 +1,49 @@
+import type React from "react"
+
 import { useState, useEffect } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
-import { Textarea } from "@/components/ui/textarea"
 import { format } from "date-fns"
 import { toast } from "sonner"
+import type { Cita } from "@/types/clients"
+import type { category } from "@/types/services"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 interface AppointmentDialogProps {
     isOpen: boolean
     onClose: () => void
-    onSave: (appointment: any) => void
-    appointment: any | null
+    onSave: (appointment: Cita) => void
+    appointment: Cita | null
     selectedDate: Date | null
     clientId: string
     clientName: string
     clientPhone: string
     clientEmail: string
+    category: category[]
 }
 
-export function AppointmentDialog({ isOpen, onClose, onSave, appointment, selectedDate, clientId, clientName, clientPhone, clientEmail }: AppointmentDialogProps) {
-    const [formData, setFormData] = useState({
-        id: "",
+export function AppointmentDialog({
+    isOpen,
+    onClose,
+    onSave,
+    appointment,
+    selectedDate,
+    clientId,
+    clientName,
+    clientPhone,
+    clientEmail,
+    category,
+}: AppointmentDialogProps) {
+    const [formData, setFormData] = useState<Cita>({
+        appointment_id: "",
+        service_id: "",
         title: "",
-        start: new Date(),
-        end: new Date(new Date().getTime() + 60 * 60 * 1000), // 1 hora después
-        description: "",
-        clientId: clientId,
-        clientName: clientName,
-        clientPhone: clientPhone,
-        clientEmail: clientEmail,
+        start_time: new Date(),
+        end_time: new Date(new Date().getTime() + 60 * 60 * 1000), // 1 hora después
+        status: 'pendiente',
+        payment_type: "",
     })
 
     const [date, setDate] = useState<Date | undefined>(new Date())
@@ -38,19 +52,17 @@ export function AppointmentDialog({ isOpen, onClose, onSave, appointment, select
 
     useEffect(() => {
         if (appointment) {
-            const startDate = new Date(appointment.start)
-            const endDate = new Date(appointment.end)
+            const startDate = new Date(appointment.start_time)
+            const endDate = new Date(appointment.end_time)
 
             setFormData({
-                id: appointment.id,
+                appointment_id: appointment.appointment_id,
+                service_id: appointment.service_id,
                 title: appointment.title,
-                start: startDate,
-                end: endDate,
-                description: appointment.description || "",
-                clientId: appointment.clientId,
-                clientName: appointment.clientName,
-                clientPhone: appointment.clientPhone,
-                clientEmail: appointment.clientEmail,
+                start_time: startDate,
+                end_time: endDate,
+                status: appointment.status,
+                payment_type: appointment.payment_type,
             })
 
             setDate(startDate)
@@ -60,20 +72,18 @@ export function AppointmentDialog({ isOpen, onClose, onSave, appointment, select
             setDate(selectedDate)
             setFormData({
                 ...formData,
-                start: selectedDate,
-                end: new Date(new Date(selectedDate).getTime() + 60 * 60 * 1000),
+                start_time: selectedDate,
+                end_time: new Date(new Date(selectedDate).getTime() + 60 * 60 * 1000),
             })
         } else {
             setFormData({
-                id: "",
+                appointment_id: "",
+                service_id: "",
                 title: "",
-                start: new Date(),
-                end: new Date(new Date().getTime() + 60 * 60 * 1000),
-                description: "",
-                clientId: clientId,
-                clientName: clientName,
-                clientPhone: clientPhone,
-                clientEmail: clientEmail,
+                start_time: new Date(),
+                end_time: new Date(new Date().getTime() + 60 * 60 * 1000),
+                status: "pendiente",
+                payment_type: "tarjeta",
             })
             setDate(new Date())
             setStartTime("09:00")
@@ -101,8 +111,8 @@ export function AppointmentDialog({ isOpen, onClose, onSave, appointment, select
 
             setFormData({
                 ...formData,
-                start: newStartDate,
-                end: newEndDate,
+                start_time: newStartDate,
+                end_time: newEndDate,
             })
         }
     }
@@ -112,10 +122,10 @@ export function AppointmentDialog({ isOpen, onClose, onSave, appointment, select
             setStartTime(value)
 
             const [hours, minutes] = value.split(":").map(Number)
-            const newStartDate = new Date(formData.start)
+            const newStartDate = new Date(formData.start_time)
             newStartDate.setHours(hours, minutes, 0)
 
-            const newEndDate = new Date(formData.end)
+            const newEndDate = new Date(formData.end_time)
             if (newEndDate < newStartDate) {
                 newEndDate.setTime(newStartDate.getTime() + 60 * 60 * 1000)
                 setEndTime(format(newEndDate, "HH:mm"))
@@ -123,17 +133,17 @@ export function AppointmentDialog({ isOpen, onClose, onSave, appointment, select
 
             setFormData({
                 ...formData,
-                start: newStartDate,
-                end: newEndDate,
+                start_time: newStartDate,
+                end_time: newEndDate,
             })
         } else {
             setEndTime(value)
 
             const [hours, minutes] = value.split(":").map(Number)
-            const newEndDate = new Date(formData.end)
+            const newEndDate = new Date(formData.end_time)
             newEndDate.setHours(hours, minutes, 0)
 
-            const newStartDate = new Date(formData.start)
+            const newStartDate = new Date(formData.start_time)
             if (newEndDate < newStartDate) {
                 newStartDate.setTime(newEndDate.getTime() - 60 * 60 * 1000)
                 setStartTime(format(newStartDate, "HH:mm"))
@@ -141,19 +151,42 @@ export function AppointmentDialog({ isOpen, onClose, onSave, appointment, select
 
             setFormData({
                 ...formData,
-                start: newStartDate,
-                end: newEndDate,
+                start_time: newStartDate,
+                end_time: newEndDate,
             })
         }
     }
 
+    const handleSelectChange = (type: "service" | "payment", value: string) => {
+        if (type === "payment") {
+            if (value === "tarjeta" || value === "efectivo") {
+                setFormData({
+                    ...formData,
+                    payment_type: value,
+                });
+            }
+            return;
+        }
+        // Buscar el nombre de la categoría seleccionada
+        const selectedCategory = category.find((cat) => cat.service_id === value)
+        // Actualizar el service_id y el título con el nombre de la categoría
+        setFormData({
+            ...formData,
+            service_id: value,
+            title: selectedCategory ? `${selectedCategory.category} de ${clientName}` : "",
+        })
+    }
+
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault()
+        if (formData.service_id === "" || formData.payment_type === "") {
+            toast.error("Error", {
+                description: "Por favor seleccione un servicio y un tipo de pago.",
+                duration: 3000,
+            })
+            return;
+        }
         onSave(formData)
-        toast.success("Cita guardada", {
-            description: `La cita "${formData.title}" ha sido guardada correctamente.`,
-            duration: 3000,
-        })
     }
 
     const generateTimeOptions = () => {
@@ -185,8 +218,9 @@ export function AppointmentDialog({ isOpen, onClose, onSave, appointment, select
                                 name="title"
                                 value={formData.title}
                                 onChange={handleInputChange}
-                                placeholder="Ej: Consulta con Dr. García"
+                                placeholder="Selecciona un servicio para autocompletar"
                                 required
+                                disabled
                             />
                         </div>
 
@@ -202,22 +236,14 @@ export function AppointmentDialog({ isOpen, onClose, onSave, appointment, select
 
                             <div className="grid gap-2">
                                 <Label>Hora de inicio</Label>
-                                <Input
-                                    type="time"
-                                    value={startTime}
-                                    onChange={(e) => handleTimeChange("start", e.target.value)}
-                                />
+                                <Input type="time" value={startTime} onChange={(e) => handleTimeChange("start", e.target.value)} />
                             </div>
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="grid gap-2">
                                 <Label>Hora de fin</Label>
-                                <Input
-                                    type="time"
-                                    value={endTime}
-                                    onChange={(e) => handleTimeChange("end", e.target.value)}
-                                />
+                                <Input type="time" value={endTime} onChange={(e) => handleTimeChange("end", e.target.value)} />
                             </div>
 
                             <div className="grid gap-2">
@@ -225,7 +251,7 @@ export function AppointmentDialog({ isOpen, onClose, onSave, appointment, select
                                 <Input
                                     id="clientName"
                                     name="clientName"
-                                    value={formData.clientName}
+                                    value={clientName}
                                     onChange={handleInputChange}
                                     placeholder="Nombre completo"
                                     disabled
@@ -239,7 +265,7 @@ export function AppointmentDialog({ isOpen, onClose, onSave, appointment, select
                                 <Input
                                     id="clientPhone"
                                     name="clientPhone"
-                                    value={formData.clientPhone}
+                                    value={clientPhone}
                                     onChange={handleInputChange}
                                     placeholder="Número de teléfono"
                                     disabled
@@ -252,24 +278,41 @@ export function AppointmentDialog({ isOpen, onClose, onSave, appointment, select
                                     id="clientEmail"
                                     name="clientEmail"
                                     type="email"
-                                    value={formData.clientEmail}
+                                    value={clientEmail}
                                     onChange={handleInputChange}
                                     placeholder="Correo electrónico"
                                     disabled
                                 />
                             </div>
                         </div>
-
-                        <div className="grid gap-2">
-                            <Label htmlFor="description">Descripción</Label>
-                            <Textarea
-                                id="description"
-                                name="description"
-                                value={formData.description}
-                                onChange={handleInputChange}
-                                placeholder="Detalles adicionales de la cita"
-                                rows={3}
-                            />
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="grid gap-2">
+                                <Label htmlFor="service_id">Servicio</Label>
+                                <Select name="service_id" value={formData.service_id} onValueChange={(value) => handleSelectChange("service", value)} required>
+                                    <SelectTrigger className="w-full">
+                                        <SelectValue placeholder="Seleccionar servicio" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {category.map((cat) => (
+                                            <SelectItem key={cat.service_id} value={cat.service_id}>
+                                                {cat.category}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div className="grid gap-2">
+                                <Label htmlFor="service_id">Tipo de pago</Label>
+                                <Select name="service_id" value={formData.payment_type} onValueChange={(value) => handleSelectChange("payment", value)} required>
+                                    <SelectTrigger className="w-full">
+                                        <SelectValue placeholder="Seleccionar Metodo de pago" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="tarjeta">Tarjeta</SelectItem>
+                                        <SelectItem value="efectivo">Efectivo</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
                         </div>
                     </div>
                     <DialogFooter>
@@ -283,3 +326,4 @@ export function AppointmentDialog({ isOpen, onClose, onSave, appointment, select
         </Dialog>
     )
 }
+
