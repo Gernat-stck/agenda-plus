@@ -2,7 +2,7 @@ import { useState } from "react"
 import { Search, Info, Edit, Plus, Trash2, PlusCircle } from "lucide-react"
 import DetallesCliente from "./clientes-details"
 import { NoData } from "../no-data"
-import type { Cliente } from "@/types/clients"
+import type { Cliente, Cita } from "@/types/clients"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -10,44 +10,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import ConfirmDeleteDialog from "../confirm-dialog"
 import { toast } from "sonner"
-import { Appointment } from "@/types/events"
 import { AppointmentDialog } from "../calendar/appointment-dialog"
-
-const clientesIniciales: Cliente[] = [
-    {
-        id: "CLI001",
-        nombre: "Juan Pérez",
-        contacto: 1234567890,
-        correo: "juan@example.com",
-        citas: [
-            { id: "CIT001", fecha: "2023-06-15", estado: "Completado", metodoPago: "tarjeta" },
-            { id: "CIT004", fecha: "2023-07-01", estado: "Programado", metodoPago: "efectivo" },
-        ],
-    },
-    {
-        id: "CLI002",
-        nombre: "María García",
-        contacto: 9876543210,
-        correo: "maria@example.com",
-        citas: [
-            { id: "CIT002", fecha: "2023-06-16", estado: "Completado", metodoPago: "efectivo" },
-            { id: "CIT005", fecha: "2023-07-02", estado: "Pendiente", metodoPago: "tarjeta" },
-        ],
-    },
-    {
-        id: "CLI003",
-        nombre: "Carlos Rodríguez",
-        contacto: 5555555555,
-        correo: "carlos@example.com",
-        citas: [
-            { id: "CIT003", fecha: "2023-06-17", estado: "Cancelado", metodoPago: "tarjeta" },
-            { id: "CIT006", fecha: "2023-07-03", estado: "Programado", metodoPago: "efectivo" },
-        ],
-    },
-]
-
-export default function ListaClientes() {
-    const [clientes, setClientes] = useState<Cliente[]>(clientesIniciales)
+import { router } from "@inertiajs/react"
+import { category } from "@/types/services"
+//TODO: Cambiar el estilo del overflow del display citas en details
+export default function ListaClientes({ clients, category }: { clients: Cliente[], category: category[] }) {
+    const [clientes, setClientes] = useState<Cliente[]>(clients)
     const [searchTerm, setSearchTerm] = useState("")
     const [selectedCliente, setSelectedCliente] = useState<Cliente | null>(null)
     const [isEditing, setIsEditing] = useState(false)
@@ -56,16 +24,16 @@ export default function ListaClientes() {
     const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false)
     const [showFinalDeleteConfirmation, setShowFinalDeleteConfirmation] = useState(false)
     const [selectedDate, setSelectedDate] = useState<Date | null>(null)
-    const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null)
+    const [selectedAppointment, setSelectedAppointment] = useState<Cita | null>(null)
     const [isAppointmentDialogOpen, setIsAppointmentDialogOpen] = useState(false)
     const [isCreatingAppointment, setIsCreatingAppointment] = useState(false)
     const [isViewDetails, setIsViewDetails] = useState(false)
     const filteredClientes = clientes.filter(
         (cliente) =>
-            cliente.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            cliente.id.toLowerCase().includes(searchTerm.toLowerCase()),
+            cliente.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            cliente.client_id.toLowerCase().includes(searchTerm.toLowerCase()),
     )
-
+    console.log(category)
     const openModal = (cliente: Cliente) => {
         setSelectedCliente(cliente)
         setIsEditing(false)
@@ -88,31 +56,68 @@ export default function ListaClientes() {
     }
 
     const handleSave = (updatedCliente: Cliente) => {
-        setClientes(clientes.map((c) => (c.id === updatedCliente.id ? updatedCliente : c)))
-        setIsEditing(false)
-        setIsViewDetails(false)
+        router.patch((`clients/${updatedCliente.client_id}`), {
+            client_id: updatedCliente.client_id,
+            name: updatedCliente.name,
+            contact_number: updatedCliente.contact_number,
+            email: updatedCliente.email
+        }, {
+            onSuccess: () => {
+                setClientes(clientes.map((c) => (c.client_id === updatedCliente.client_id ? updatedCliente : c)))
+                setIsEditing(false)
+                setIsViewDetails(false)
+                toast.success("Cliente actualizado", {
+                    description: `El cliente "${updatedCliente.name}" ha sido actualizado correctamente.`,
+                    duration: 3000,
+                })
+            },
+            onError: (error: any) => {
+                const errorMessage = error.response?.data?.message || "Error desconocido al actualizar el cliente";
+                toast.error("Error al actualizar el cliente", {
+                    description: errorMessage,
+                    duration: 3000,
+                })
+            }
+        });
     }
 
     const handleCreate = () => {
         setIsCreating(true)
         setSelectedCliente({
-            id: `CLI${(clientes.length + 1).toString().padStart(3, "0")}`,
-            nombre: "",
-            contacto: 0,
-            correo: "",
+            client_id: `CLI${(clientes.length + 1).toString().padStart(3, "0")}`,
+            name: "",
+            contact_number: "",
+            email: "",
             citas: [],
         })
         setIsViewDetails(false) // Asegúrate de que el diálogo de detalles esté cerrado
     }
 
     const handleCreateSave = (newCliente: Cliente) => {
-        setClientes([...clientes, newCliente])
-        setIsCreating(false)
-        setSelectedCliente(null)
-        toast.success("Cliente creado", {
-            description: `El cliente "${newCliente.nombre}" ha sido creado correctamente.`,
-            duration: 3000,
-        })
+        console.log(newCliente)
+        router.post('clients/create', {
+            client_id: newCliente.client_id,
+            name: newCliente.name,
+            contact_number: newCliente.contact_number,
+            email: newCliente.email
+        }, {
+            onSuccess: () => {
+                setClientes([...clientes, newCliente])
+                setIsCreating(false)
+                setSelectedCliente(null)
+                toast.success("Cliente creado", {
+                    description: `El cliente "${newCliente.name}" ha sido creado correctamente.`,
+                    duration: 3000,
+                })
+            },
+            onError: (error: any) => {
+                const errorMessage = error.response?.data?.message || "Error desconocido al crear el cliente";
+                toast.error("Error al crear el cliente", {
+                    description: errorMessage,
+                    duration: 3000,
+                })
+            }
+        });
     }
 
     const handleCancel = () => {
@@ -134,52 +139,101 @@ export default function ListaClientes() {
     }
 
     const handleFinalDeleteConfirm = () => {
-        if (clienteToDelete) {
-            setClientes(clientes.filter((c) => c.id !== clienteToDelete.id))
-            setClienteToDelete(null)
-        }
-        setShowFinalDeleteConfirmation(false)
-        toast.success("Cliente eliminado", {
-            description: `El cliente ha sido eliminado correctamente.`,
-            duration: 3000,
-        })
-    }
+        if (!clienteToDelete) return;
 
+        router.delete((`clients/${clienteToDelete.client_id}`), {
+            onSuccess: () => {
+                setClientes(clientes.filter((c) => c.client_id !== clienteToDelete.client_id))
+                setClienteToDelete(null)
+                setShowFinalDeleteConfirmation(false)
+                toast.success("Cliente eliminado", {
+                    description: `El cliente ha sido eliminado correctamente.`,
+                    duration: 3000,
+                })
+            },
+            onError: (error: any) => {
+                const errorMessage = error.response?.data?.message || "Error desconocido al eliminar el cliente";
+                toast.error("Error al eliminar el cliente", {
+                    description: errorMessage,
+                    duration: 3000,
+                })
+            }
+        });
+    }
     const handleDeleteCancel = () => {
         setClienteToDelete(null)
         setShowDeleteConfirmation(false)
         setShowFinalDeleteConfirmation(false)
     }
-
-    const handleDeleteCita = (clienteId: string, citaId: string) => {
-        const updatedClientes = clientes.map((cliente) => {
-            if (cliente.id === clienteId) {
-                return {
-                    ...cliente,
-                    citas: cliente.citas.filter((cita) => cita.id !== citaId),
+    const handleDeleteCita = (clienteclient_id: string, citaclient_id: string) => {
+        router.post('appointments/delete', {
+            client_id: clienteclient_id,
+            appointment_id: citaclient_id
+        }, {
+            onSuccess: () => {
+                const updatedClientes = clientes.map((cliente) => {
+                    if (cliente.client_id === clienteclient_id) {
+                        return {
+                            ...cliente,
+                            citas: cliente.citas ? cliente.citas.filter((cita) => cita.appointment_id !== citaclient_id) : [],
+                        }
+                    }
+                    return cliente
+                })
+                setClientes(updatedClientes)
+                if (selectedCliente && selectedCliente.client_id === clienteclient_id) {
+                    const updatedCliente = updatedClientes.find((c) => c.client_id === clienteclient_id)
+                    if (updatedCliente) {
+                        setSelectedCliente(updatedCliente)
+                    }
                 }
+                toast.success("Cita eliminada", {
+                    description: `La cita ha sido eliminada correctamente.`,
+                    duration: 3000,
+                })
+            },
+            onError: (error: any) => {
+                const errorMessage = error.response?.data?.message || "Error desconocido al eliminar la cita";
+                toast.error("Error al eliminar la cita", {
+                    description: errorMessage,
+                    duration: 3000,
+                })
             }
-            return cliente
-        })
-        setClientes(updatedClientes)
-
-        // Actualizar el cliente seleccionado si está abierto
-        if (selectedCliente && selectedCliente.id === clienteId) {
-            const updatedCliente = updatedClientes.find((c) => c.id === clienteId)
-            if (updatedCliente) {
-                setSelectedCliente(updatedCliente)
-            }
-        }
+        });
     }
 
-    const handleSaveAppointment = (appointment: Appointment) => {
-        // Lógica para guardar la cita
-        console.log("Cita guardada:", appointment)
-        setIsAppointmentDialogOpen(false)
-        setIsCreatingAppointment(false)
-        setIsViewDetails(false) // Asegúrate de que el diálogo de detalles no se abra después de cerrar el diálogo de citas
+    const handleSaveAppointment = (appointment: Cita) => {
+        router.post('appointments/client', {
+            client_id: selectedCliente?.client_id,
+            appointment_id: appointment.appointment_id,
+            service_id: appointment.service_id,
+            title: appointment.title,
+            start_time: appointment.start_time,
+            end_time: appointment.end_time,
+            status: appointment.status,
+            payment_type: appointment.payment_type
+        }, {
+            onSuccess: () => {
+                setIsAppointmentDialogOpen(false)
+                setIsCreatingAppointment(false)
+                setIsViewDetails(false)
+                toast.success("Cita guardada", {
+                    description: `La cita ha sido guardada correctamente.`,
+                    duration: 3000,
+                })
+                setTimeout(() => {
+                    window.location.reload();
+                }, 3000);
+            },
+            onError: (error: any) => {
+                const errorMessage = error.response?.data?.message || "Error desconocido al guardar la cita";
+                toast.error("Error al guardar la cita", {
+                    description: errorMessage,
+                    duration: 3000,
+                })
+            }
+        });
     }
-
     return (
         <Card className="container mx-auto p-3 border-0 shadow-none ">
             <CardHeader className="pb-0">
@@ -191,7 +245,7 @@ export default function ListaClientes() {
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
                         <Input
                             type="text"
-                            placeholder="Buscar por nombre o ID..."
+                            placeholder="Buscar por nombre o ID de cliente..."
                             className="w-full pl-10"
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
@@ -218,11 +272,11 @@ export default function ListaClientes() {
                             </TableHeader>
                             <TableBody>
                                 {filteredClientes.map((cliente) => (
-                                    <TableRow key={cliente.id}>
-                                        <TableCell className="w-1/12 font-medium">{cliente.id}</TableCell>
-                                        <TableCell className="w-3/12">{cliente.nombre}</TableCell>
-                                        <TableCell className="w-2/12">{cliente.contacto}</TableCell>
-                                        <TableCell className="w-3/12">{cliente.correo}</TableCell>
+                                    <TableRow key={cliente.client_id}>
+                                        <TableCell className="w-1/12 font-medium">{cliente.client_id}</TableCell>
+                                        <TableCell className="w-3/12">{cliente.name}</TableCell>
+                                        <TableCell className="w-2/12">{cliente.contact_number}</TableCell>
+                                        <TableCell className="w-3/12">{cliente.email}</TableCell>
                                         <TableCell className="w-3/12 p-2">
                                             <div className="flex flex-col sm:flex-row gap-2">
                                                 <Button
@@ -291,7 +345,7 @@ export default function ListaClientes() {
                     onOpenChange={setShowDeleteConfirmation}
                     onConfirm={handleDeleteConfirm}
                     onCancel={handleDeleteCancel}
-                    displayMessage={`al cliente ${clienteToDelete?.nombre} y todos sus datos`}
+                    displayMessage={`al cliente ${clienteToDelete?.name} y todos sus datos`}
                 />
 
                 <ConfirmDeleteDialog
@@ -299,7 +353,7 @@ export default function ListaClientes() {
                     onOpenChange={setShowFinalDeleteConfirmation}
                     onConfirm={handleFinalDeleteConfirm}
                     onCancel={handleDeleteCancel}
-                    displayMessage={`al cliente ${clienteToDelete?.nombre}`}
+                    displayMessage={`al cliente ${clienteToDelete?.name}`}
                     finalConfirmation={true}
                 />
             </CardContent>
@@ -311,10 +365,12 @@ export default function ListaClientes() {
                     onSave={handleSaveAppointment}
                     appointment={selectedAppointment}
                     selectedDate={selectedDate}
-                    clientId={selectedCliente.id}
-                    clientName={selectedCliente.nombre}
-                    clientPhone={selectedCliente.contacto.toString()}
-                    clientEmail={selectedCliente.correo}
+                    clientId={selectedCliente.client_id}
+                    clientName={selectedCliente.name}
+                    clientPhone={selectedCliente.contact_number.toString()}
+                    clientEmail={selectedCliente.email}
+                    category={category}
+
                 />
             )}
         </Card>

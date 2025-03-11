@@ -1,14 +1,17 @@
 export interface Cita {
-    id: string;
-    fecha: string;
-    estado: 'Programado' | 'Completado' | 'Pendiente' | 'Cancelado';
-    metodoPago: 'tarjeta' | 'efectivo';
+    appointment_id: string;
+    service_id: string;
+    title: string;
+    start_time: Date;
+    end_time: Date;
+    status: 'pendiente' | 'en curso' | 'finalizado' | 'cancelado';
+    payment_type: 'tarjeta' | 'efectivo' | '';
 }
 
 export interface Cliente {
-    id: string;
-    nombre: string;
-    contacto: number;
-    correo: string;
-    citas: Cita[];
+    client_id: string;
+    name: string;
+    email: string;
+    contact_number: string;
+    citas?: Cita[];
 }

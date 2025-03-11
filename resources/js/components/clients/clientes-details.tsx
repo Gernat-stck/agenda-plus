@@ -1,7 +1,7 @@
 import type React from "react"
-import { useState, useEffect } from "react"
-import { Trash2 } from "lucide-react"
-import type { Cliente } from "@/types/clients"
+import { useState, useEffect, use } from "react"
+import { CalendarClock, Trash2 } from "lucide-react"
+import type { Cliente, Cita } from "@/types/clients"
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import ConfirmDeleteDialog from "../confirm-dialog"
-
+import { NoData } from "../no-data"
 interface DetallesClienteProps {
     cliente: Cliente
     onClose: () => void
@@ -31,14 +31,14 @@ export default function DetallesCliente({
     onCancel,
     onDeleteCita,
 }: DetallesClienteProps) {
-    const [editedCliente, setEditedCliente] = useState(cliente)
+    const [editedCliente, setEditedCliente] = useState<Cliente>(cliente)
     const [citaToDelete, setCitaToDelete] = useState<string | null>(null)
     const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false)
     const [showFinalDeleteConfirmation, setShowFinalDeleteConfirmation] = useState(false)
 
     useEffect(() => {
         setEditedCliente(cliente)
-    }, [cliente])
+    }, [cliente]);
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target
@@ -80,7 +80,7 @@ export default function DetallesCliente({
 
     const handleFinalDeleteConfirm = () => {
         if (citaToDelete) {
-            onDeleteCita(cliente.id, citaToDelete)
+            onDeleteCita(cliente.client_id, citaToDelete)
             setCitaToDelete(null)
         }
         setShowFinalDeleteConfirmation(false)
@@ -91,7 +91,6 @@ export default function DetallesCliente({
         setShowDeleteConfirmation(false)
         setShowFinalDeleteConfirmation(false)
     }
-
     return (
         <>
             <Dialog open={true} onOpenChange={() => onCancel()}>
@@ -104,46 +103,46 @@ export default function DetallesCliente({
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 py-4">
                         <div className="space-y-2">
-                            <Label htmlFor="id">ID</Label>
-                            <div className="font-medium">{editedCliente.id}</div>
+                            <Label htmlFor="client_id">ID</Label>
+                            <div className="font-medium">{editedCliente.client_id}</div>
                         </div>
 
                         <div className="space-y-2">
-                            <Label htmlFor="nombre">Nombre</Label>
+                            <Label htmlFor="name">Nombre</Label>
                             {isEditing || isCreating ? (
-                                <Input id="nombre" name="nombre" value={editedCliente.nombre} onChange={handleInputChange} />
+                                <Input id="name" name="name" value={editedCliente.name} onChange={handleInputChange} />
                             ) : (
-                                <div className="font-medium">{editedCliente.nombre}</div>
+                                <div className="font-medium">{editedCliente.name}</div>
                             )}
                         </div>
 
                         <div className="space-y-2">
-                            <Label htmlFor="contacto">Contacto</Label>
+                            <Label htmlFor="contact_number">Contacto</Label>
                             {isEditing || isCreating ? (
                                 <Input
-                                    id="contacto"
-                                    name="contacto"
-                                    type="number"
-                                    value={editedCliente.contacto}
+                                    id="contact_number"
+                                    name="contact_number"
+                                    type="text"
+                                    value={editedCliente.contact_number}
                                     onChange={handleInputChange}
                                 />
                             ) : (
-                                <div className="font-medium">{editedCliente.contacto}</div>
+                                <div className="font-medium">{editedCliente.contact_number}</div>
                             )}
                         </div>
 
                         <div className="space-y-2">
-                            <Label htmlFor="correo">Correo</Label>
+                            <Label htmlFor="email">Correo</Label>
                             {isEditing || isCreating ? (
                                 <Input
-                                    id="correo"
-                                    name="correo"
+                                    id="email"
+                                    name="email"
                                     type="email"
-                                    value={editedCliente.correo}
+                                    value={editedCliente.email}
                                     onChange={handleInputChange}
                                 />
                             ) : (
-                                <div className="font-medium">{editedCliente.correo}</div>
+                                <div className="font-medium">{editedCliente.email}</div>
                             )}
                         </div>
                     </div>
@@ -164,21 +163,21 @@ export default function DetallesCliente({
                                     </TableHeader>
                                     <TableBody>
                                         {editedCliente.citas.map((cita) => (
-                                            <TableRow key={cita.id}>
-                                                <TableCell className="font-medium">{cita.id}</TableCell>
-                                                <TableCell>{cita.fecha}</TableCell>
+                                            <TableRow key={cita.appointment_id}>
+                                                <TableCell className="font-medium">{cita.appointment_id}</TableCell>
+                                                <TableCell>{new Date(cita.start_time).toLocaleDateString()}</TableCell>
                                                 <TableCell>
-                                                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${getBadgeStyles(cita.estado)}`}>
-                                                        {cita.estado}
+                                                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${getBadgeStyles(cita.status)}`}>
+                                                        {cita.status}
                                                     </span>
                                                 </TableCell>
-                                                <TableCell className="capitalize">{cita.metodoPago}</TableCell>
+                                                <TableCell className="capitalize">{cita.payment_type}</TableCell>
                                                 <TableCell>
                                                     <Button
                                                         variant="ghost"
                                                         size="icon"
                                                         className="h-8 w-8 text-destructive hover:text-destructive/80 hover:bg-destructive/10"
-                                                        onClick={() => handleDeleteCitaClick(cita.id)}
+                                                        onClick={() => handleDeleteCitaClick(cita.appointment_id)}
                                                     >
                                                         <Trash2 size={16} />
                                                         <span className="sr-only">Eliminar cita</span>
@@ -190,7 +189,7 @@ export default function DetallesCliente({
                                 </Table>
                             </div>
                         </div>
-                    )}
+                    ) || <NoData title="No hay citas aun" description="No existen registro de citas aun" icon={<CalendarClock />} />}
 
                     <DialogFooter className="mt-4">
                         {isEditing || isCreating ? (
@@ -232,4 +231,3 @@ export default function DetallesCliente({
         </>
     )
 }
-
