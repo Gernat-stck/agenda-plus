@@ -38,12 +38,13 @@ Route::middleware(['auth', 'verified'])->group(
         Route::delete('clients/{client}', [ClientController::class, 'destroy'])->name('clients.destroy');
 
         //Appointments
-        Route::get('appointments', [AppointmentController::class, 'index'])->name('appointments.index');
+        Route::get('calendar', [AppointmentController::class, 'index'])->name('appointments.index');
         Route::post('appointments', [AppointmentController::class, 'store'])->name('appointments.store');
         Route::post('appointments/client', [AppointmentController::class, 'storeClientsPage'])->name('appointments.clientattach');
         Route::get('appointments/{appointment}', [AppointmentController::class, 'show'])->name('appointments.show');
         Route::patch('appointments/{appointment}', [AppointmentController::class, 'update'])->name('appointments.update');
         Route::delete('appointments/{appointment}', [AppointmentController::class, 'destroy'])->name('appointments.destroy');
+        Route::delete('appointments/client/{appointment}', [AppointmentController::class, 'destroyClientsPage'])->name('appointments.destroyClient');
     }
 
 );
