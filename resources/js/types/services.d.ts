@@ -8,8 +8,13 @@ export interface Servicio {
     price: number;
     category: string;
 }
-
-export interface category {
+export interface Servicios {
     service_id: string;
-    category: string;
+    name: string;
+    price: string;
+    duration: number;
+}
+export interface category {
+    name: string;
+    services: Servicios[];
 }

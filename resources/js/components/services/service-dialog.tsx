@@ -80,20 +80,6 @@ export const ServicioDialog = ({
                 <form onSubmit={handleSubmit}>
                     <div className="grid gap-4 py-4">
                         <div className="grid gap-2">
-                            <label htmlFor="service_id" className="text-sm font-medium">
-                                ID
-                            </label>
-                            <Input
-                                type="text"
-                                id="service_id"
-                                name="service_id"
-                                value={editedServicio.service_id}
-                                onChange={handleInputChange}
-                                required
-                                readOnly
-                            />
-                        </div>
-                        <div className="grid gap-2">
                             <label htmlFor="name" className="text-sm font-medium">
                                 Título
                             </label>

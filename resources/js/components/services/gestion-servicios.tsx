@@ -41,7 +41,7 @@ export default function GestionServicios({ services }: { services: Servicio[] })
             setIsCreating(false);
         } else {
             setEditingServicio({
-                service_id: `SERV${(servicios.length + 1).toString().padStart(3, "0")}`,
+                service_id: "",
                 user_id: "",
                 name: "",
                 description: "",
@@ -71,6 +71,9 @@ export default function GestionServicios({ services }: { services: Servicio[] })
                             duration: 3000,
                             position: "top-right",
                         });
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 3000);
                     },
                 });
             } else {
@@ -82,6 +85,10 @@ export default function GestionServicios({ services }: { services: Servicio[] })
                             duration: 3000,
                             position: "top-right",
                         });
+
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 3000);
                     },
                 });
             }
@@ -103,6 +110,10 @@ export default function GestionServicios({ services }: { services: Servicio[] })
                     duration: 3000,
                     position: "top-right",
                 });
+
+                setTimeout(() => {
+                    window.location.reload();
+                }, 3000);
             },
         });
     };
