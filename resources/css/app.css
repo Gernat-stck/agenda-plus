@@ -168,3 +168,25 @@
         display: none; /* Chrome, Safari and Opera */
     }
 }
+
+.custom-scrollbar::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+.dark .custom-scrollbar::-webkit-scrollbar-track {
+    background: #333;
+}
+.dark .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #666;
+}
