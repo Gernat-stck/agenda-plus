@@ -14,8 +14,8 @@ class ServiceRequest extends FormRequest
     public function rules()
     {
         return [
-            'user_id' => 'required|string',
-            'service_id' => 'required|string',
+            'user_id' => 'nullable|string',
+            'service_id' => 'nullable|string',
             'category' => 'required|string|max:255',
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',

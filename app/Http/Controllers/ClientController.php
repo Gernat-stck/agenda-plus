@@ -21,14 +21,24 @@ class ClientController extends Controller
         // Obtenemos todos los clientes con sus datos completos
         $clients = Client::whereIn('client_id', $clientIds)->get();
         //extraer unicamente el nombre de la categoria y el service_id
-        $category = Service::where('user_id', auth()->user()->user_id)->get()
-            ->map(function ($service) {
-                return [
-                    'service_id' => $service->service_id,
-                    'category' => $service->category
-                ];
-            })
-            ->unique('category');
+        // Primero obtenemos todos los servicios del usuario
+        $services = Service::where('user_id', auth()->user()->user_id)->get();
+
+        // Agrupamos los servicios por categoría
+        $categories = $services->groupBy('category')->map(function ($servicesInCategory, $categoryName) {
+            return [
+                'name' => $categoryName,
+                'services' => $servicesInCategory->map(function ($service) {
+                    return [
+                        'service_id' => $service->service_id,
+                        'name' => $service->name,
+                        'price' => $service->price,
+                        'duration' => $service->duration,
+                        // Otros campos que necesites del servicio
+                    ];
+                })->values()->all()
+            ];
+        })->values()->all();
 
         // Para cada cliente, buscamos sus citas relacionadas con el usuario actual
         $formattedClients = $clients->map(function ($client) use ($userId) {
@@ -58,7 +68,7 @@ class ClientController extends Controller
             ];
         });
 
-        return Inertia::render('Clients/Index', ['clients' => $formattedClients, 'category' => $category]);
+        return Inertia::render('Clients/Index', ['clients' => $formattedClients, 'category' => $categories]);
     }
 
     public function store(Request $request)

@@ -4,18 +4,58 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\AppointmentRequest;
 use App\Models\Appointments;
+use App\Models\Service;
 use Inertia\Inertia;
 
 class AppointmentController extends Controller
 {
     public function index()
     {
-        $appointments = Appointments::with(['user', 'client', 'service'])->where('user_id', auth()->user()->user_id)->get();
-        return Inertia::render('Appointments/Index', [
-            'appointments' => $appointments,
+        // Cargar las citas con la relación del cliente
+        $appointmentsData = Appointments::with('client')
+            ->where('user_id', auth()->user()->user_id)
+            ->get()
+            ->map(function ($appointment) {
+                return [
+                    'id' => $appointment->id,
+                    'appointment_id' => $appointment->appointment_id,
+                    'user_id' => $appointment->user_id,
+                    'client_id' => $appointment->client_id,
+                    'service_id' => $appointment->service_id,
+                    'title' => $appointment->title,
+                    'start_time' => $appointment->start_time,
+                    'end_time' => $appointment->end_time,
+                    'payment_type' => $appointment->payment_type,
+                    'status' => $appointment->status,
+                    'created_at' => $appointment->created_at,
+                    'updated_at' => $appointment->updated_at,
+                    'client_name' => $appointment->client ? $appointment->client->name : 'Cliente sin nombre'
+                ];
+            });
+
+        // Primero obtenemos todos los servicios del usuario
+        $services = Service::where('user_id', auth()->user()->user_id)->get();
+
+        // Agrupamos los servicios por categoría
+        $categories = $services->groupBy('category')->map(function ($servicesInCategory, $categoryName) {
+            return [
+                'name' => $categoryName,
+                'services' => $servicesInCategory->map(function ($service) {
+                    return [
+                        'service_id' => $service->service_id,
+                        'name' => $service->name,
+                        'price' => $service->price,
+                        'duration' => $service->duration,
+                    ];
+                })->values()->all()
+            ];
+        })->values()->all();
+
+        return Inertia::render('Calendar/Index', [
+            'appointments' => $appointmentsData,
+            'categories' => $categories
         ]);
     }
-
 
     private function generateAppointmentId($user_id, $service_id, $client_id)
     {
@@ -42,7 +82,7 @@ class AppointmentController extends Controller
             'appointment_id' => $appointmentId,
         ]));
 
-        return redirect()->route('appointments.index')->with('success', 'Cita creada correctamente.');
+        return redirect()->route('calendar.index')->with('success', 'Cita creada correctamente.');
     }
     public function storeClientsPage(AppointmentRequest $request)
     {
@@ -63,21 +103,27 @@ class AppointmentController extends Controller
     }
     public function show($id)
     {
-        $appointment = Appointments::with(['user', 'client', 'service'])->findOrFail($id);
+        $appointment = Appointments::with(['user', 'client', 'service'])->findOrFail('appointment_id', $id);
         return response()->json($appointment);
     }
 
     public function update(AppointmentRequest $request, $id)
     {
-        $appointment = Appointments::findOrFail($id);
+        $appointment = Appointments::where('appointment_id', $id)->firstOrFail();
         $appointment->update($request->validated());
         return redirect()->route('appointments.index')->with('success', 'Cita actualizada correctamente.');
     }
 
     public function destroy($id)
     {
-        $appointment = Appointments::findOrFail($id);
+        $appointment = Appointments::where('appointment_id', $id)->firstOrFail();
         $appointment->delete();
         return redirect()->route('appointments.index')->with('success', 'Cita eliminada correctamente.');
+    }
+    public function destroyClientsPage($appointment_id)
+    {
+        $appointment = Appointments::where('appointment_id', $appointment_id)->firstOrFail();
+        $appointment->delete();
+        return redirect()->route('clients.index')->with('success', 'Cita eliminada correctamente.');
     }
 }

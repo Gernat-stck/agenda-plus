@@ -14,10 +14,26 @@ class ServiceController extends Controller
             'services' => $services,
         ]);
     }
+    private function generateServiceId($user_id, $service_name)
+    {
+        $userInitials = strtoupper(substr($user_id, 0, 2));
+        $serviceInitials = strtoupper(substr($service_name, 0, 2));
+        $randomNumber = str_pad(rand(0, 9999), 4, '0', STR_PAD_LEFT);
+
+        return $userInitials . $serviceInitials . $randomNumber;
+    }
     public function store(ServiceRequest $data)
     {
-        Service::create($data->all());
+        $validateData = $data->validated();
+        $validateData['user_id'] = auth()->user()->user_id;
 
+        $serviceId = $this->generateServiceId(
+            auth()->user()->user_id,
+            $validateData['name']
+        );
+        $service = Service::create(array_merge($validateData, [
+            'service_id' => $serviceId,
+        ]));
         return redirect()->route('services.index')->with('success', 'Servicio creado correctamente.');
     }
 
