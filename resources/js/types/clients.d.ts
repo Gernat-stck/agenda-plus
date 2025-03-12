@@ -6,6 +6,8 @@ export interface Cita {
     end_time: Date;
     status: 'pendiente' | 'en curso' | 'finalizado' | 'cancelado';
     payment_type: 'tarjeta' | 'efectivo' | '';
+    client_name?: string;
+    client_id?: string;
 }
 
 export interface Cliente {
