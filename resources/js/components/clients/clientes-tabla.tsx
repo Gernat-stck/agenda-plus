@@ -13,7 +13,6 @@ import { toast } from "sonner"
 import { AppointmentDialog } from "../calendar/appointment-dialog"
 import { router } from "@inertiajs/react"
 import { category } from "@/types/services"
-//TODO: Cambiar el estilo del overflow del display citas en details
 export default function ListaClientes({ clients, category }: { clients: Cliente[], category: category[] }) {
     const [clientes, setClientes] = useState<Cliente[]>(clients)
     const [searchTerm, setSearchTerm] = useState("")
@@ -33,7 +32,6 @@ export default function ListaClientes({ clients, category }: { clients: Cliente[
             cliente.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
             cliente.client_id.toLowerCase().includes(searchTerm.toLowerCase()),
     )
-    console.log(category)
     const openModal = (cliente: Cliente) => {
         setSelectedCliente(cliente)
         setIsEditing(false)
@@ -70,6 +68,9 @@ export default function ListaClientes({ clients, category }: { clients: Cliente[
                     description: `El cliente "${updatedCliente.name}" ha sido actualizado correctamente.`,
                     duration: 3000,
                 })
+                setTimeout(() => {
+                    window.location.reload();
+                }, 3000);
             },
             onError: (error: any) => {
                 const errorMessage = error.response?.data?.message || "Error desconocido al actualizar el cliente";
@@ -94,7 +95,6 @@ export default function ListaClientes({ clients, category }: { clients: Cliente[
     }
 
     const handleCreateSave = (newCliente: Cliente) => {
-        console.log(newCliente)
         router.post('clients/create', {
             client_id: newCliente.client_id,
             name: newCliente.name,
@@ -109,6 +109,9 @@ export default function ListaClientes({ clients, category }: { clients: Cliente[
                     description: `El cliente "${newCliente.name}" ha sido creado correctamente.`,
                     duration: 3000,
                 })
+                setTimeout(() => {
+                    window.location.reload();
+                }, 3000);
             },
             onError: (error: any) => {
                 const errorMessage = error.response?.data?.message || "Error desconocido al crear el cliente";
@@ -139,7 +142,10 @@ export default function ListaClientes({ clients, category }: { clients: Cliente[
     }
 
     const handleFinalDeleteConfirm = () => {
-        if (!clienteToDelete) return;
+        if (!clienteToDelete) return toast.error("Error al eliminar el cliente", {
+            description: "No se ha seleccionado ningún cliente para eliminar.",
+            duration: 3000,
+        });
 
         router.delete((`clients/${clienteToDelete.client_id}`), {
             onSuccess: () => {
@@ -150,6 +156,9 @@ export default function ListaClientes({ clients, category }: { clients: Cliente[
                     description: `El cliente ha sido eliminado correctamente.`,
                     duration: 3000,
                 })
+                setTimeout(() => {
+                    window.location.reload();
+                }, 3000);
             },
             onError: (error: any) => {
                 const errorMessage = error.response?.data?.message || "Error desconocido al eliminar el cliente";
@@ -166,10 +175,11 @@ export default function ListaClientes({ clients, category }: { clients: Cliente[
         setShowFinalDeleteConfirmation(false)
     }
     const handleDeleteCita = (clienteclient_id: string, citaclient_id: string) => {
-        router.post('appointments/delete', {
-            client_id: clienteclient_id,
-            appointment_id: citaclient_id
-        }, {
+        if (!clienteclient_id || !citaclient_id) return toast.error("Error al eliminar la cita", {
+            description: "No se ha seleccionado ningún cliente o cita para eliminar.",
+            duration: 3000,
+        });
+        router.delete((`appointments/client/${citaclient_id}`), {
             onSuccess: () => {
                 const updatedClientes = clientes.map((cliente) => {
                     if (cliente.client_id === clienteclient_id) {
@@ -191,6 +201,9 @@ export default function ListaClientes({ clients, category }: { clients: Cliente[
                     description: `La cita ha sido eliminada correctamente.`,
                     duration: 3000,
                 })
+                setTimeout(() => {
+                    window.location.reload();
+                }, 3000);
             },
             onError: (error: any) => {
                 const errorMessage = error.response?.data?.message || "Error desconocido al eliminar la cita";

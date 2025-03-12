@@ -1,7 +1,7 @@
 import type React from "react"
-import { useState, useEffect, use } from "react"
+import { useState, useEffect } from "react"
 import { CalendarClock, Trash2 } from "lucide-react"
-import type { Cliente, Cita } from "@/types/clients"
+import type { Cliente } from "@/types/clients"
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
@@ -38,7 +38,7 @@ export default function DetallesCliente({
 
     useEffect(() => {
         setEditedCliente(cliente)
-    }, [cliente]);
+    }, [cliente])
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target
@@ -55,13 +55,13 @@ export default function DetallesCliente({
 
     const getBadgeStyles = (estado: string) => {
         switch (estado) {
-            case "Programado":
+            case "pendiente":
                 return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300 hover:bg-yellow-100 dark:hover:bg-yellow-900"
-            case "Completado":
+            case "finalizado":
                 return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300 hover:bg-green-100 dark:hover:bg-green-900"
-            case "Pendiente":
+            case "en curso":
                 return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900"
-            case "Cancelado":
+            case "cancelado":
                 return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300 hover:bg-red-100 dark:hover:bg-red-900"
             default:
                 return "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300"
@@ -94,7 +94,7 @@ export default function DetallesCliente({
     return (
         <>
             <Dialog open={true} onOpenChange={() => onCancel()}>
-                <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+                <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-hidden">
                     <DialogHeader>
                         <DialogTitle>
                             {isCreating ? "Crear Nuevo Cliente" : isEditing ? "Editar Cliente" : "Detalles del Cliente"}
@@ -134,23 +134,17 @@ export default function DetallesCliente({
                         <div className="space-y-2">
                             <Label htmlFor="email">Correo</Label>
                             {isEditing || isCreating ? (
-                                <Input
-                                    id="email"
-                                    name="email"
-                                    type="email"
-                                    value={editedCliente.email}
-                                    onChange={handleInputChange}
-                                />
+                                <Input id="email" name="email" type="email" value={editedCliente.email} onChange={handleInputChange} />
                             ) : (
                                 <div className="font-medium">{editedCliente.email}</div>
                             )}
                         </div>
                     </div>
 
-                    {!isCreating && editedCliente.citas && editedCliente.citas.length > 0 && (
+                    {(!isCreating && editedCliente.citas && editedCliente.citas.length > 0 && (
                         <div className="mt-4">
                             <h3 className="text-lg font-medium mb-2">Historial de Citas</h3>
-                            <div className="rounded-md border">
+                            <div className="rounded-md border max-h-[250px] overflow-auto custom-scrollbar">
                                 <Table>
                                     <TableHeader>
                                         <TableRow>
@@ -189,7 +183,9 @@ export default function DetallesCliente({
                                 </Table>
                             </div>
                         </div>
-                    ) || <NoData title="No hay citas aun" description="No existen registro de citas aun" icon={<CalendarClock />} />}
+                    )) || (
+                            <NoData title="No hay citas aun" description="No existen registro de citas aun" icon={<CalendarClock />} />
+                        )}
 
                     <DialogFooter className="mt-4">
                         {isEditing || isCreating ? (
@@ -231,3 +227,4 @@ export default function DetallesCliente({
         </>
     )
 }
+
