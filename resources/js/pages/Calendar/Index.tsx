@@ -12,7 +12,6 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 export default function Calendar({ appointments, categories }: { appointments: Cita[], categories: category[] }) {
-    console.log(appointments);
     return (
         <AppSidebarLayout breadcrumbs={breadcrumbs}>
             <Head title="Calendar">
