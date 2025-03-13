@@ -13,6 +13,10 @@ import { toast } from "sonner"
 import { AppointmentDialog } from "../calendar/appointment-dialog"
 import { router } from "@inertiajs/react"
 import { category } from "@/types/services"
+import { format } from "date-fns"
+//TODO: Implementar limites de selectores de dias y horas conforme a los indicados por el usuario
+
+
 export default function ListaClientes({ clients, category }: { clients: Cliente[], category: category[] }) {
     const [clientes, setClientes] = useState<Cliente[]>(clients)
     const [searchTerm, setSearchTerm] = useState("")
@@ -216,13 +220,15 @@ export default function ListaClientes({ clients, category }: { clients: Cliente[
     }
 
     const handleSaveAppointment = (appointment: Cita) => {
+        const formattedStartTime = format(appointment.start_time, "yyyy-MM-dd HH:mm:ss");
+        const formattedEndTime = format(appointment.end_time, "yyyy-MM-dd HH:mm:ss");
         router.post('appointments/client', {
             client_id: selectedCliente?.client_id,
             appointment_id: appointment.appointment_id,
             service_id: appointment.service_id,
             title: appointment.title,
-            start_time: appointment.start_time,
-            end_time: appointment.end_time,
+            start_time: formattedStartTime,
+            end_time: formattedEndTime,
             status: appointment.status,
             payment_type: appointment.payment_type
         }, {
