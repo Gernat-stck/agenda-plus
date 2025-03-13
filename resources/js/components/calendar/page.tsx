@@ -132,17 +132,27 @@ export default function CalendarComponent({ appointmentsData, categories }: { ap
 
     // Función para eliminar una cita
     const handleDeleteAppointment = (id: string) => {
+        router.delete((`appointments/calendar/${id}`), {
+            onSuccess: () => {
+                toast.success("Cita eliminada", {
+                    description: appointmentToDelete
+                        ? `La cita "${appointmentToDelete.title}" ha sido eliminada.`
+                        : "La cita ha sido eliminada.",
+                    duration: 3000,
+                })
+            },
+            onError: (error) => {
+                toast.error("Error al eliminar la cita", {
+                    description: error.message,
+                    duration: 5000,
+                })
+                return
+            }
+        })
         const appointmentToDelete = appointments.find((apt) => apt.id === id)
         setAppointments(appointments.filter((apt) => apt.id !== id))
         setIsDetailsDialogOpen(false)
         setSelectedAppointment(null)
-
-        toast.success("Cita eliminada", {
-            description: appointmentToDelete
-                ? `La cita "${appointmentToDelete.title}" ha sido eliminada.`
-                : "La cita ha sido eliminada.",
-            duration: 3000,
-        })
     }
 
     // Función para crear una nueva cita
