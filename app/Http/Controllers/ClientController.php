@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\AppointmentRequest;
+use App\Models\Appointments;
 use App\Models\Client;
 use App\Models\ClientsUser;
 use App\Models\Service;
@@ -43,7 +45,7 @@ class ClientController extends Controller
         // Para cada cliente, buscamos sus citas relacionadas con el usuario actual
         $formattedClients = $clients->map(function ($client) use ($userId) {
             // Obtenemos todas las citas para este cliente que están asociadas con el usuario actual
-            $appointments = \App\Models\Appointments::where('client_id', $client->client_id)
+            $appointments = Appointments::where('client_id', $client->client_id)
                 ->where('user_id', $userId)
                 ->get()
                 ->map(function ($appointment) {
@@ -128,28 +130,45 @@ class ClientController extends Controller
         return redirect()->route('clients.index')->with('success', 'Cliente eliminado correctamente.');
     }
 
-    public function attachUser(ClientsUser $request)
+    /**
+     * APPOINTMENTS INTERACTIONS.*
+     */
+    public function destroyClientsAppointments($appointment_id)
     {
-        $validateData = $request->validate([
-            'client_id' => 'required|exists:clients,client_id',
-            'user_id' => 'required|exists:users,user_id',
-            'notes' => 'nullable|string',
-        ]);
-        $clientsUser = ClientsUser::create($validateData->all());
-        return redirect()->route('clients.index')->with('success', 'Usuario asociado al cliente correctamente.');
+        $appointment = Appointments::where('appointment_id', $appointment_id)->firstOrFail();
+        $appointment->delete();
+        return redirect()->route('clients.index')->with('success', 'Cita eliminada correctamente.');
     }
-
-    public function detachUser(Request $request)
+    private function generateAppointmentId($user_id, $service_id, $client_id)
     {
-        $request->validate([
-            'client_id' => 'required|exists:clients,client_id',
-            'user_id' => 'required|exists:users,user_id',
-        ]);
+        $userInitials = strtoupper(substr($user_id, 0, 2));
+        $serviceInitials = strtoupper(substr($service_id, 0, 2));
+        $clientInitials = strtoupper(substr($client_id, 0, 2));
+        $randomNumber = str_pad(rand(0, 9999), 4, '0', STR_PAD_LEFT);
 
-        ClientsUser::where('client_id', $request->client_id)
-            ->where('user_id', $request->user_id)
-            ->delete();
+        return $userInitials . $serviceInitials . $clientInitials . $randomNumber;
+    }
+    public function storeClientsAppointments(AppointmentRequest $request)
+    {
+        $validatedData = $request->validated();
+        $validatedData['user_id'] = auth()->user()->user_id;
 
-        return redirect()->route('clients.index')->with('success', 'Usuario desasociado del cliente correctamente.');
+        $appointmentId = $this->generateAppointmentId(
+            auth()->user()->user_id,
+            $validatedData['service_id'],
+            $validatedData['client_id']
+        );
+
+        $appointment = Appointments::create(array_merge($validatedData, [
+            'appointment_id' => $appointmentId,
+        ]));
+
+        return redirect()->route('clients.index')->with('success', 'Cita creada correctamente.');
+    }
+    public function updateAppointment(AppointmentRequest $request, $id)
+    {
+        $appointment = Appointments::where('appointment_id', $id)->firstOrFail();
+        $appointment->update($request->validated());
+        return redirect()->route('clients.index')->with('success', 'Cita actualizada correctamente.');
     }
 }
