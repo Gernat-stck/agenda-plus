@@ -77,8 +77,17 @@ export function AppointmentDialog({
         !formData.payment_type && toast.error("Debe seleccionar una forma de pago");
         if (hasErrors) return;
 
-        // Si no hay errores, guardar
-        onSave(formData);
+        // formatear las fechas como strings para preservar la hora local correcta
+        const startTimeStr = format(formData.start_time, "yyyy-MM-dd'T'HH:mm:ss");
+        const endTimeStr = format(formData.end_time, "yyyy-MM-dd'T'HH:mm:ss");
+        // Luego convertir de nuevo a Date pero preservando el formato local
+        const citaData: Cita = {
+            ...formData,
+            start_time: new Date(startTimeStr),
+            end_time: new Date(endTimeStr),
+        };
+
+        onSave(citaData);
     }
 
     // Función de utilidad para obtener la duración del servicio
@@ -98,11 +107,16 @@ export function AppointmentDialog({
 
     // Actualiza handleDateChange para usar la función de utilidad
     const handleDateChange = (date: Date | undefined) => {
+        console.log(`Fecha seleccionada: ${date}`);
         if (!date) return;
 
-        // Mantiene la hora actual pero actualiza la fecha
-        const newDate = new Date(formData.start_time);
-        newDate.setFullYear(date.getFullYear(), date.getMonth(), date.getDate());
+        // Crear nueva fecha preservando la hora actual
+        const currentHours = formData.start_time.getHours();
+        const currentMinutes = formData.start_time.getMinutes();
+
+        const newDate = new Date(date);
+        // Mantener la hora actual
+        newDate.setHours(currentHours, currentMinutes, 0, 0);
 
         // Obtener la duración del servicio seleccionado
         const serviceDuration = getServiceDuration(formData.service_id);
@@ -119,14 +133,15 @@ export function AppointmentDialog({
 
     // Actualiza handleTimeChange para usar la función de utilidad
     const handleTimeChange = (value: string) => {
+        // Extraer horas y minutos del valor seleccionado
         const [hours, minutes] = value.split(":").map(Number);
+
+        // Crear nueva fecha preservando año/mes/día
         const newStartDate = new Date(formData.start_time);
+
+        // Establecer horas y minutos locales, no UTC
         newStartDate.setHours(hours, minutes, 0, 0);
-
-        // Obtener la duración del servicio seleccionado
         const serviceDuration = getServiceDuration(formData.service_id);
-
-        // Calcular nueva hora de finalización
         const newEndDate = addMinutes(newStartDate, serviceDuration);
 
         setFormData({
@@ -165,8 +180,6 @@ export function AppointmentDialog({
                 serviceDuration = typeof foundService.duration === 'number'
                     ? foundService.duration
                     : parseInt(String(foundService.duration), 10);
-
-                console.log(`Servicio encontrado: ${serviceName}, Duración: ${serviceDuration} minutos`);
                 break;
             }
         }
