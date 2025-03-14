@@ -4,6 +4,7 @@ use App\Http\Controllers\AppointmentController;
 use App\Http\Controllers\CalendarController;
 use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\ClientController;
+use App\Http\Controllers\SpecialDateController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -22,6 +23,9 @@ Route::middleware(['auth', 'verified'])->group(
         Route::get('clients', function () {
             return Inertia::render('clients');
         })->name('clients');
+        Route::get('calendar/config', function () {
+            return Inertia::render('calendar/config');
+        })->name('calendar.config');
 
         //Services
         Route::get('services', [ServiceController::class, 'index'])->name('services.index');
@@ -47,7 +51,15 @@ Route::middleware(['auth', 'verified'])->group(
         //Calendar
         Route::get('calendar', [CalendarController::class, 'index'])->name('calendar.index');
         Route::post('appointments', [CalendarController::class, 'store'])->name('appointments.store');
+        Route::patch('appointments/calendar/{appointment}', [CalendarController::class, 'updateAppointment'])->name('appointments.update');
         Route::delete('appointments/calendar/{appointment}', [CalendarController::class, 'destroy'])->name('calendar.destroyCalendar');
+        Route::get('/calendar/config', [CalendarController::class, 'configIndex'])->name('calendar.config');
+        Route::post('/calendar/config', [CalendarController::class, 'saveConfig'])->name('calendar.config.save');
+        // Rutas para días especiales
+        Route::post('/special-dates', [SpecialDateController::class, 'store'])->name('special-dates.store');
+        Route::put('/special-dates/{id}', [SpecialDateController::class, 'update'])->name('special-dates.update');
+        Route::delete('/special-dates/{id}', [SpecialDateController::class, 'destroy'])->name('special-dates.destroy');
+
     }
 
 );
