@@ -13,9 +13,9 @@ import { Cita } from "@/types/clients"
 import { router } from "@inertiajs/react"
 import { category } from "@/types/services"
 import ConfirmDeleteDialog from "../confirm-dialog"
-//TODO: Agregar confirmacion al editar una cita cuando se arrastra y suelta
-//TODO: Crear la tabla y el controlador para las configuraciones personalizadas de cada cliente (horarios, dias laborales, etc)
-//TODO: Corroborar que las fechas al realizar el drop de una cita se ajusten a los horarios laborales del cliente y sean los horarios correctos
+import { CalendarConfig, SpecialDate } from "@/types/calendar"
+import ConfirmActionDialog from "../confirm-dialog"
+import { format } from "date-fns";
 
 interface Appointment extends EventInput {
     id: string
@@ -63,56 +63,94 @@ const getRandomColor = () => {
     }
     return color
 }
-export default function CalendarComponent({ appointmentsData, categories }: { appointmentsData: Cita[], categories: category[] }) {
+export default function CalendarComponent(
+    {
+        appointmentsData,
+        categories,
+        config,
+        specialDates
+    }: {
+        appointmentsData: Cita[],
+        categories: category[],
+        config: CalendarConfig,
+        specialDates: SpecialDate[]
+    }) {
     const [appointments, setAppointments] = useState<Appointment[]>(mapCitasToAppointments(appointmentsData))
     const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null)
     const [isAppointmentDialogOpen, setIsAppointmentDialogOpen] = useState(false)
     const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false)
     const [selectedDate, setSelectedDate] = useState<Date | null>(null)
-
-    // Estados para el diálogo de confirmación al arrastrar citas
     const [showDragConfirmation, setShowDragConfirmation] = useState(false)
     const [showFinalDragConfirmation, setShowFinalDragConfirmation] = useState(false)
     const [draggedEventInfo, setDraggedEventInfo] = useState<any>(null)
+    const backgroundEvents: EventInput[] = specialDates?.map(date => ({
+        id: `special-${date.id}`,
+        title: date.title,
+        start: date.date,
+        allDay: true,
+        display: 'background',
+        backgroundColor: date.color || '#ff9f89',
+        extendedProps: {
+            description: date.description,
+            isAvailable: date.is_available,
+            type: 'special-date'
+        }
+    })) || [];
 
     // Función para actualizar una cita existente
-    const handleUpdateAppointment = (citaData: Cita, showToast = false) => {
-        // Convertir de formato Cita a Appointment manteniendo el id original
-        const updatedAppointment: Appointment = {
-            id: selectedAppointment?.id || "",
-            title: citaData.title,
-            start: citaData.start_time,
-            end: citaData.end_time,
-            backgroundColor: selectedAppointment?.backgroundColor,
-            clientName: selectedAppointment?.clientName,
-            clientPhone: selectedAppointment?.clientPhone,
-            clientEmail: selectedAppointment?.clientEmail,
-            description: selectedAppointment?.description,
-            service_id: citaData.service_id,
-            status: citaData.status,
-            payment_type: citaData.payment_type,
-        }
+    const handleUpdateAppointment = (citaData: Cita) => {
+        // Formatear fechas para preservar la zona horaria local
+        const formattedStartTime = format(citaData.start_time, "yyyy-MM-dd HH:mm:ss");
+        const formattedEndTime = format(citaData.end_time, "yyyy-MM-dd HH:mm:ss");
 
-        if (showToast) {
-            router.patch(`appointments/calendar//${updatedAppointment.id}`, updatedAppointment, {
-                onSuccess: () => {
-                    toast.success("Cita actualizada", {
-                        description: `La cita "${updatedAppointment.title}" ha sido modificada.`,
-                        duration: 3000,
-                    })
-                    setAppointments(appointments.map((apt) => (apt.id === updatedAppointment.id ? updatedAppointment : apt)))
-                    setIsAppointmentDialogOpen(false)
-                    setSelectedAppointment(null)
-                },
-                onError: (error) => {
-                    toast.error("Error al actualizar la cita", {
-                        description: error.message,
-                        duration: 5000,
-                    })
-                }
-            })
-        }
-    }
+        // Crear el objeto de datos a enviar al servidor
+        const updateData = {
+            client_id: config.client_id,
+            service_id: citaData.service_id || "",
+            title: citaData.title,
+            start_time: formattedStartTime,
+            end_time: formattedEndTime,
+            status: citaData.status || "pendiente",
+            payment_type: citaData.payment_type || ""
+        };
+
+        router.patch(`appointments/calendar/${citaData.appointment_id}`, updateData, {
+            onSuccess: () => {
+                toast.success("Cita actualizada", {
+                    description: `La cita "${citaData.title}" ha sido modificada.`,
+                    duration: 3000,
+                });
+
+                // Convertir citaData a un objeto Appointment para actualizar el estado local
+                const updatedAppointment: Appointment = {
+                    id: citaData.appointment_id,
+                    title: citaData.title,
+                    start: citaData.start_time,
+                    end: citaData.end_time,
+                    backgroundColor: selectedAppointment?.backgroundColor || getRandomColor(),
+                    clientName: citaData.client_name,
+                    clientId: config.client_id,
+                    service_id: citaData.service_id,
+                    status: citaData.status,
+                    payment_type: citaData.payment_type
+                };
+
+                setAppointments(appointments.map((apt) =>
+                    apt.id === citaData.appointment_id ? updatedAppointment : apt
+                ));
+
+                setIsAppointmentDialogOpen(false);
+                setSelectedAppointment(null);
+            },
+            onError: (error) => {
+                console.error("Error updating appointment:", error);
+                toast.error("Error al actualizar la cita", {
+                    description: error.message || "Verifica los datos e intenta nuevamente",
+                    duration: 5000,
+                });
+            }
+        });
+    };
 
     // Función adaptadora para convertir de Appointment a Cita
     const appointmentToCita = (appointment: Appointment | null): Cita | null => {
@@ -208,11 +246,8 @@ export default function CalendarComponent({ appointmentsData, categories }: { ap
 
     // Manejador para cuando se arrastra y suelta un evento
     const handleEventDrop = (info: any) => {
-        // Guardar la información del evento arrastrado y mostrar confirmación
         setDraggedEventInfo(info);
         setShowDragConfirmation(true);
-
-        // Revertir el movimiento temporalmente hasta que se confirme
         info.revert();
     }
 
@@ -222,6 +257,7 @@ export default function CalendarComponent({ appointmentsData, categories }: { ap
         setShowFinalDragConfirmation(true);
     }
 
+
     const handleFinalDragConfirm = () => {
         setShowFinalDragConfirmation(false);
 
@@ -230,58 +266,59 @@ export default function CalendarComponent({ appointmentsData, categories }: { ap
             const originalAppointment = appointments.find((apt) => apt.id === event.id);
 
             if (originalAppointment) {
-                // Crear un objeto Appointment actualizado
                 const updatedAppointment: Appointment = {
                     ...originalAppointment,
                     start: event.start,
                     end: event.end || new Date(new Date(event.start).getTime() + 60 * 60 * 1000),
                 };
 
-                // Convertir a tipo Cita antes de llamar a handleUpdateAppointment
-                const updatedCita = appointmentToCita(updatedAppointment);
+                // Formatear las fechas como strings para preservar la hora local
+                const formattedStartTime = format(updatedAppointment.start instanceof Date ?
+                    updatedAppointment.start : new Date(updatedAppointment.start),
+                    "yyyy-MM-dd HH:mm:ss");
 
-                if (updatedCita) {
-                    // Actualizar la cita en la interfaz
-                    setAppointments(appointments.map((apt) =>
-                        apt.id === updatedAppointment.id ? updatedAppointment : apt
-                    ));
+                const formattedEndTime = format(updatedAppointment.end instanceof Date ?
+                    updatedAppointment.end : new Date(updatedAppointment.end),
+                    "yyyy-MM-dd HH:mm:ss");
 
-                    // Enviar la solicitud al servidor
-                    router.patch(`appointments/calendar/${updatedAppointment.id}`, {
-                        client_id: updatedAppointment.clientId,
-                        appointment_id: updatedAppointment.id,
-                        service_id: updatedAppointment.service_id,
-                        title: updatedAppointment.title,
-                        start_time: updatedAppointment.start,
-                        end_time: updatedAppointment.end,
-                        status: updatedAppointment.status,
-                        payment_type: updatedAppointment.payment_type
-                    }, {
-                        onSuccess: () => {
-                            toast.success("Cita actualizada", {
-                                description: `La cita "${updatedAppointment.title}" ha sido movida correctamente.`,
-                                duration: 3000,
-                            });
-                        },
-                        onError: (error) => {
-                            toast.error("Error al mover la cita", {
-                                description: error.message,
-                                duration: 5000,
-                            });
-                        }
-                    });
-                }
+                // Actualizar la cita en la interfaz
+                setAppointments(appointments.map((apt) =>
+                    apt.id === updatedAppointment.id ? updatedAppointment : apt
+                ));
+
+                // Enviar la solicitud al servidor con fechas formateadas
+                router.patch(`appointments/calendar/${updatedAppointment.id}`, {
+                    client_id: updatedAppointment.clientId,
+                    appointment_id: updatedAppointment.id,
+                    service_id: updatedAppointment.service_id,
+                    title: updatedAppointment.title,
+                    start_time: formattedStartTime,  // Fecha formateada en texto
+                    end_time: formattedEndTime,      // Fecha formateada en texto
+                    status: updatedAppointment.status,
+                    payment_type: updatedAppointment.payment_type
+                }, {
+                    onSuccess: () => {
+                        toast.success("Cita actualizada", {
+                            description: `La cita "${updatedAppointment.title}" ha sido movida correctamente.`,
+                            duration: 3000,
+                        });
+                    },
+                    onError: (error) => {
+                        toast.error("Error al mover la cita", {
+                            description: error.message,
+                            duration: 5000,
+                        });
+                    }
+                });
             }
             setDraggedEventInfo(null);
         }
     }
-
     const handleDragCancel = () => {
         setDraggedEventInfo(null);
         setShowDragConfirmation(false);
         setShowFinalDragConfirmation(false);
     }
-
     // Función para obtener la duración del servicio
     const getServiceDuration = (serviceId: string | undefined): number => {
         if (!serviceId) return 60; // Duración predeterminada si no hay servicio seleccionado
@@ -294,7 +331,8 @@ export default function CalendarComponent({ appointmentsData, categories }: { ap
         }
         return 60; // Duración predeterminada si no se encuentra el servicio
     }
-
+    console.log(config.business_days)
+    const allEvents: EventInput[] = [...appointments, ...backgroundEvents];
     return (
         <>
             <div className="text-foreground p-2 rounded-2xl text-[0.99rem]">
@@ -307,22 +345,22 @@ export default function CalendarComponent({ appointmentsData, categories }: { ap
                         right: "dayGridMonth,timeGridWeek,timeGridDay,listWeek",
                     }}
                     locale={esLocale}
-                    events={appointments}
+                    events={allEvents}
                     eventClick={handleEventClick}
                     dateClick={handleDateClick}
                     selectable={true}
                     selectMirror={true}
                     allDaySlot={false}
                     dayMaxEvents={true}
-                    weekends={false} //TODO: Esto se sustituira por configuracion del usuario
+                    weekends={config.show_weekend}
                     height="85vh"
                     businessHours={{
-                        daysOfWeek: [1, 2, 3, 4, 5], // Lunes a viernes TODO: Esto se sustituira por configuracion del usuario
-                        startTime: "09:00",//TODO: Esto se sustituira por configuracion del usuario
-                        endTime: "18:00",//TODO: Esto se sustituira por configuracion del usuario
+                        daysOfWeek: config.business_days,
+                        startTime: config.start_time || "08:00",
+                        endTime: config.end_time || "19:00",
                     }}
-                    slotMinTime="08:00"//TODO: Esto se sustituira por configuracion del usuario
-                    slotMaxTime="19:00" //TODO: Esto se sustituira por configuracion del usuario
+                    slotMinTime={config.slot_min_time || "07:00"}
+                    slotMaxTime={config.slot_max_time || "20:00"}
                     editable={true}
                     eventDrop={handleEventDrop}
                     droppable={true}
@@ -359,23 +397,29 @@ export default function CalendarComponent({ appointmentsData, categories }: { ap
             )}
 
             {/* Diálogo de confirmación para arrastrar citas */}
-            <ConfirmDeleteDialog
+            <ConfirmActionDialog
                 open={showDragConfirmation}
                 onOpenChange={setShowDragConfirmation}
                 onConfirm={handleDragConfirm}
                 onCancel={handleDragCancel}
+                title="Mover cita"
                 displayMessage="mover esta cita"
+                confirmText="Continuar"
                 finalConfirmation={false}
+                isDestructive={false}
             />
 
             {/* Confirmación final para arrastrar citas */}
-            <ConfirmDeleteDialog
+            <ConfirmActionDialog
                 open={showFinalDragConfirmation}
                 onOpenChange={setShowFinalDragConfirmation}
                 onConfirm={handleFinalDragConfirm}
                 onCancel={handleDragCancel}
+                title="Confirmar cambio"
                 displayMessage="mover esta cita a una nueva fecha y hora"
+                confirmText="Mover cita"
                 finalConfirmation={true}
+                isDestructive={false}
             />
         </>
     )
