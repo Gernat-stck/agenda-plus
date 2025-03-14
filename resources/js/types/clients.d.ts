@@ -8,6 +8,7 @@ export interface Cita {
     payment_type: 'tarjeta' | 'efectivo' | '';
     client_name?: string;
     client_id?: string;
+    [key: string]: any;
 }
 
 export interface Cliente {

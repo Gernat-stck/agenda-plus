@@ -40,7 +40,7 @@ export default function ListaClientes({ clients, category }: { clients: Cliente[
         setSelectedCliente(cliente)
         setIsEditing(false)
         setIsViewDetails(true)
-        setIsCreatingAppointment(false) // Asegúrate de que el diálogo de cita esté cerrado
+        setIsCreatingAppointment(false)
     }
 
     const closeModal = () => {
@@ -54,7 +54,7 @@ export default function ListaClientes({ clients, category }: { clients: Cliente[
         setSelectedCliente(cliente)
         setIsEditing(true)
         setIsViewDetails(true)
-        setIsCreatingAppointment(false) // Asegúrate de que el diálogo de cita esté cerrado
+        setIsCreatingAppointment(false)
     }
 
     const handleSave = (updatedCliente: Cliente) => {
