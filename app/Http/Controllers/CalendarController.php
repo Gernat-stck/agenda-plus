@@ -4,17 +4,21 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\AppointmentRequest;
 use App\Models\Appointments;
+use App\Models\CalendarConfig;
 use App\Models\Service;
+use App\Models\SpecialDate;
 use Inertia\Inertia;
+use Illuminate\Http\Request;
 
 
 class CalendarController extends Controller
 {
     public function index()
     {
+        $userId = auth()->user()->user_id;
         // Cargar las citas con la relación del cliente
         $appointmentsData = Appointments::with('client')
-            ->where('user_id', auth()->user()->user_id)
+            ->where('user_id', $userId)
             ->get()
             ->map(function ($appointment) {
                 return [
@@ -35,8 +39,11 @@ class CalendarController extends Controller
             });
 
         // Primero obtenemos todos los servicios del usuario
-        $services = Service::where('user_id', auth()->user()->user_id)->get();
-
+        $services = Service::where('user_id', $userId)->get();
+        // Obtener días especiales
+        $specialDates = SpecialDate::where('user_id', $userId)->get();
+        //Obtener config del calendario 
+        $config = CalendarConfig::where('user_id', $userId)->first();
         // Agrupamos los servicios por categoría
         $categories = $services->groupBy('category')->map(function ($servicesInCategory, $categoryName) {
             return [
@@ -54,7 +61,9 @@ class CalendarController extends Controller
 
         return Inertia::render('Calendar/Index', [
             'appointments' => $appointmentsData,
-            'categories' => $categories
+            'categories' => $categories,
+            'specialDates' => $specialDates,
+            'configCalendar' => $config
         ]);
     }
 
@@ -97,4 +106,44 @@ class CalendarController extends Controller
         $appointment->delete();
         return redirect()->route('calendar.index')->with('success', 'Cita eliminada correctamente.');
     }
+    public function configIndex()
+    {
+        // Obtener configuración actual o usar valores predeterminados
+        $config = CalendarConfig::firstOrNew(['user_id' => auth()->user()->user_id], [
+            'show_weekend' => false,
+            'start_time' => '08:00',
+            'end_time' => '20:00',
+            'business_days' => [1, 2, 3, 4, 5]
+        ]);
+        // Obtener fechas especiales
+        $specialDates = SpecialDate::where('user_id', auth()->user()->user_id)->get();
+
+        // Convertir a array para poder añadir la propiedad special_dates
+        $configArray = $config->toArray();
+        // Añadir special_dates como una propiedad de config
+        $configArray['special_dates'] = $specialDates;
+
+        return Inertia::render('Calendar/Config', [
+            'config' => $configArray
+        ]);
+
+    }
+    public function saveConfig(Request $request)
+    {
+        $validated = $request->validate([
+            'show_weekend' => 'boolean',
+            'start_time' => 'required|string',
+            'end_time' => 'required|string',
+            'business_days' => 'required|array'
+        ]);
+
+        $config = CalendarConfig::updateOrCreate(
+            ['user_id' => auth()->user()->user_id],
+            $validated
+        );
+
+        return redirect()->route('calendar.config')
+            ->with('success', 'Configuración guardada correctamente');
+    }
+
 }
