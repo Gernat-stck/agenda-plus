@@ -1,3 +1,4 @@
+import React from "react";
 import {
     AlertDialog,
     AlertDialogAction,
@@ -7,46 +8,63 @@ import {
     AlertDialogFooter,
     AlertDialogHeader,
     AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
+} from "@/components/ui/alert-dialog";
 
-interface ConfirmDeleteDialogProps {
-    open: boolean
-    onOpenChange: (open: boolean) => void
-    onConfirm: () => void
-    onCancel: () => void
-    displayMessage: string | undefined
-    finalConfirmation?: boolean
+interface ConfirmActionDialogProps {
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+    onConfirm: () => void;
+    onCancel: () => void;
+    title?: string;
+    displayMessage: string;
+    confirmText?: string;
+    cancelText?: string;
+    finalConfirmation?: boolean;
+    isDestructive?: boolean;
 }
 
-export default function ConfirmDeleteDialog({
+export default function ConfirmActionDialog({
     open,
     onOpenChange,
     onConfirm,
     onCancel,
+    title = "¿Estás seguro?",
     displayMessage,
+    confirmText,
+    cancelText = "Cancelar",
     finalConfirmation = false,
-}: ConfirmDeleteDialogProps) {
+    isDestructive = false,
+}: ConfirmActionDialogProps) {
+    // Determina el texto del botón de confirmación basado en el contexto
+    const defaultConfirmText = isDestructive ? "Eliminar" : "Confirmar";
+    const actualConfirmText = confirmText || defaultConfirmText;
+
     return (
         <AlertDialog open={open} onOpenChange={onOpenChange}>
             <AlertDialogContent>
                 <AlertDialogHeader>
-                    <AlertDialogTitle>{finalConfirmation ? "Confirmación final" : "¿Eliminar cliente?"}</AlertDialogTitle>
+                    <AlertDialogTitle>{title}</AlertDialogTitle>
                     <AlertDialogDescription>
                         {finalConfirmation
-                            ? `Esta acción no se puede deshacer. ¿Estás completamente seguro de que deseas eliminar permanentemente ${displayMessage}?`
-                            : `¿Estás seguro de que deseas eliminar ${displayMessage}? Esta acción eliminará también todas sus citas.`}
+                            ? `Esta acción no se puede deshacer. ¿Estás seguro de que deseas ${displayMessage}?`
+                            : `¿Estás seguro de que deseas ${displayMessage}?`}
                     </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                    <AlertDialogCancel onClick={onCancel}>Cancelar</AlertDialogCancel>
+                    <AlertDialogCancel onClick={onCancel}>
+                        {cancelText}
+                    </AlertDialogCancel>
                     <AlertDialogAction
                         onClick={onConfirm}
-                        className={finalConfirmation ? "bg-destructive text-secondary hover:bg-destructive/90 dark:text-white" : ""}
+                        className={isDestructive ? "bg-destructive hover:bg-destructive/90" : undefined}
                     >
-                        {finalConfirmation ? "Eliminar permanentemente" : "Continuar"}
+                        {actualConfirmText}
                     </AlertDialogAction>
                 </AlertDialogFooter>
             </AlertDialogContent>
         </AlertDialog>
-    )
+    );
 }
+
+// Para mantener compatibilidad con el código existente
+export { ConfirmActionDialog as ConfirmDeleteDialog };
