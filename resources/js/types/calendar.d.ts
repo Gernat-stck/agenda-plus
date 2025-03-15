@@ -13,6 +13,7 @@ export interface CalendarConfig {
 export interface SpecialDate {
     id: number;
     user_id: string;
+    specialdate_id: string;
     title: string;
     date: string;
     is_available: boolean;

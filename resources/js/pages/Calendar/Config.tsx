@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/dialog"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { cn } from "@/lib/utils"
-import { format } from "date-fns"
+import { format, parseISO } from "date-fns"
 import { es } from "date-fns/locale"
 import { Calendar as CalendarComponent } from "@/components/ui/calendar"
 import { Textarea } from "@/components/ui/textarea"
@@ -42,6 +42,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Badge } from "@/components/ui/badge"
 import { toast } from "sonner"
+import { DatePicker } from "@/components/ui/date-picker"
 
 // Extendemos la interfaz CalendarConfig para incluir special_dates
 interface ExtendedCalendarConfig extends CalendarConfig {
@@ -84,7 +85,7 @@ const predefinedColors = [
 ]
 //TODO: Probar metodos edit y delete de citas
 export default function CalendarConfigPage({ config }: { config: ExtendedCalendarConfig }) {
-    const { data, setData, post, processing, errors, reset } = useForm<ExtendedCalendarConfig>({
+    const { data, setData, processing, errors, reset } = useForm<ExtendedCalendarConfig>({
         ...config,
         special_dates: config.special_dates || [],
     })
@@ -151,7 +152,7 @@ export default function CalendarConfigPage({ config }: { config: ExtendedCalenda
     }
 
     // Modificar el método handleAddSpecialDate
-    const handleAddSpecialDate = () => {  // Cambia la sintaxis de la función
+    const handleAddSpecialDate = () => {
         if (!newSpecialDate.title || !newSpecialDate.date) {
             toast.error("Error", {
                 duration: 5000,
@@ -166,16 +167,13 @@ export default function CalendarConfigPage({ config }: { config: ExtendedCalenda
         const specialDateToAdd: SpecialDate = {
             id: tempId,
             user_id: "current_user",
+            specialdate_id: tempId.toString(),
             title: newSpecialDate.title || "",
             date: newSpecialDate.date || "",
             is_available: newSpecialDate.is_available || false,
             color: newSpecialDate.color,
             description: newSpecialDate.description,
         };
-
-        // Actualizar el estado local
-        setData("special_dates", [...data.special_dates, specialDateToAdd]);
-
         // Enviar al servidor (corregido)
         router.post('/special-dates', specialDateToAdd as unknown as Record<string, any>, {
             onSuccess: () => {
@@ -183,13 +181,11 @@ export default function CalendarConfigPage({ config }: { config: ExtendedCalenda
                     duration: 5000,
                     description: "La fecha especial se ha guardado en el servidor.",
                 });
-
-                setTimeout(() => {
-                    window.location.reload();
-                }, 3000);
             }
         });
 
+        // Actualizar el estado local
+        setData("special_dates", [...data.special_dates, specialDateToAdd]);
         // Resetear el formulario
         setNewSpecialDate({
             title: "",
@@ -200,11 +196,6 @@ export default function CalendarConfigPage({ config }: { config: ExtendedCalenda
         });
 
         setIsAddDialogOpen(false);
-
-        toast.success("Fecha especial añadida", {
-            duration: 5000,
-            description: "La fecha especial se ha añadido correctamente.",
-        });
     }
 
     const handleEditSpecialDate = () => {
@@ -216,6 +207,15 @@ export default function CalendarConfigPage({ config }: { config: ExtendedCalenda
             return
         }
 
+        router.patch(`/special-dates/${currentSpecialDate.specialdate_id}`, currentSpecialDate as unknown as Record<string, any>, {
+            onSuccess: () => {
+                toast.success("Fecha especial actualizada", {
+                    duration: 5000,
+                    description: "La fecha especial se ha actualizado correctamente.",
+                });
+            }
+        });
+
         const updatedSpecialDates = data.special_dates.map((date) =>
             date.id === currentSpecialDate.id ? currentSpecialDate : date,
         )
@@ -223,24 +223,33 @@ export default function CalendarConfigPage({ config }: { config: ExtendedCalenda
         setData("special_dates", updatedSpecialDates)
         setIsEditDialogOpen(false)
 
-        toast.success("Fecha especial actualizada", {
-            duration: 5000,
-            description: "La fecha especial se ha actualizado correctamente. Recuerda guardar los cambios.",
-        }
-        )
     }
 
-    const handleDeleteSpecialDate = (id: number) => {
-        const updatedSpecialDates = data.special_dates.filter((date) => date.id !== id)
-        setData("special_dates", updatedSpecialDates)
-
-        toast("Fecha especial eliminada", {
+    const handleDeleteSpecialDate = (id: string) => {
+        if (!id) return toast.error("Error", {
             duration: 5000,
-            description: "La fecha especial ha sido eliminada correctamente.",
+            description: "Falta el ID."
         })
 
-    }
+        const updatedSpecialDates = data.special_dates.filter((date) => date.specialdate_id !== id)
+        setData("special_dates", updatedSpecialDates)
 
+        router.delete(`/special-dates/${id}`, {
+            onSuccess: () => {
+                toast.success("Fecha especial eliminada", {
+                    duration: 5000,
+                    description: "La fecha especial se ha eliminado correctamente.",
+                });
+            }, onError: () => {
+                toast.error("Error", {
+                    duration: 5000,
+                    description: "No se pudo eliminar la fecha especial.",
+                });
+            }
+        }
+        );
+
+    }
     const openEditDialog = (specialDate: SpecialDate) => {
         setCurrentSpecialDate(specialDate)
         setIsEditDialogOpen(true)
@@ -368,37 +377,15 @@ export default function CalendarConfigPage({ config }: { config: ExtendedCalenda
                                                     </div>
                                                     <div className="grid gap-2">
                                                         <Label htmlFor="date">Fecha</Label>
-                                                        <Popover>
-                                                            <PopoverTrigger asChild>
-                                                                <Button
-                                                                    variant="outline"
-                                                                    className={cn(
-                                                                        "w-full justify-start text-left font-normal",
-                                                                        !newSpecialDate.date && "text-muted-foreground",
-                                                                    )}
-                                                                >
-                                                                    <CalendarIcon className="mr-2 h-4 w-4" />
-                                                                    {newSpecialDate.date ? (
-                                                                        format(new Date(newSpecialDate.date), "PPP", { locale: es })
-                                                                    ) : (
-                                                                        <span>Selecciona una fecha</span>
-                                                                    )}
-                                                                </Button>
-                                                            </PopoverTrigger>
-                                                            <PopoverContent className="w-auto p-0">
-                                                                <CalendarComponent
-                                                                    mode="single"
-                                                                    selected={newSpecialDate.date ? new Date(newSpecialDate.date) : undefined}
-                                                                    onSelect={(date) =>
-                                                                        setNewSpecialDate({
-                                                                            ...newSpecialDate,
-                                                                            date: date ? format(date, "yyyy-MM-dd") : "",
-                                                                        })
-                                                                    }
-                                                                    initialFocus
-                                                                />
-                                                            </PopoverContent>
-                                                        </Popover>
+                                                        <DatePicker
+                                                            date={newSpecialDate.date || ""}
+                                                            onDateChange={(newDate) =>
+                                                                setNewSpecialDate({
+                                                                    ...newSpecialDate,
+                                                                    date: newDate
+                                                                })
+                                                            }
+                                                        />
                                                     </div>
                                                     <div className="grid gap-2">
                                                         <Label>Disponibilidad</Label>
@@ -476,7 +463,13 @@ export default function CalendarConfigPage({ config }: { config: ExtendedCalenda
                                                                 {specialDate.title}
                                                             </div>
                                                         </TableCell>
-                                                        <TableCell>{format(new Date(specialDate.date), "dd MMM yyyy", { locale: es })}</TableCell>
+                                                        <TableCell>
+                                                            {format(
+                                                                new Date(specialDate.date.substring(0, 10) + 'T12:00:00'),
+                                                                "dd MMM yyyy",
+                                                                { locale: es }
+                                                            )}
+                                                        </TableCell>
                                                         <TableCell>
                                                             <Badge variant={specialDate.is_available ? "outline" : "secondary"}>
                                                                 {specialDate.is_available ? "Disponible" : "No disponible"}
@@ -484,13 +477,13 @@ export default function CalendarConfigPage({ config }: { config: ExtendedCalenda
                                                         </TableCell>
                                                         <TableCell className="text-right">
                                                             <div className="flex justify-end gap-2">
-                                                                <Button variant="ghost" size="icon" onClick={() => openEditDialog(specialDate)}>
+                                                                <Button variant="ghost" size="icon" type="button" onClick={() => openEditDialog(specialDate)}>
                                                                     <Edit className="h-4 w-4" />
                                                                     <span className="sr-only">Editar</span>
                                                                 </Button>
                                                                 <AlertDialog>
                                                                     <AlertDialogTrigger asChild>
-                                                                        <Button variant="ghost" size="icon">
+                                                                        <Button variant="ghost" size="icon" type="button">
                                                                             <Trash2 className="h-4 w-4 text-destructive" />
                                                                             <span className="sr-only">Eliminar</span>
                                                                         </Button>
@@ -506,7 +499,7 @@ export default function CalendarConfigPage({ config }: { config: ExtendedCalenda
                                                                         <AlertDialogFooter>
                                                                             <AlertDialogCancel>Cancelar</AlertDialogCancel>
                                                                             <AlertDialogAction
-                                                                                onClick={() => handleDeleteSpecialDate(specialDate.id)}
+                                                                                onClick={() => handleDeleteSpecialDate(specialDate.specialdate_id)}
                                                                                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                                                                             >
                                                                                 Eliminar
@@ -528,7 +521,7 @@ export default function CalendarConfigPage({ config }: { config: ExtendedCalenda
                                                 Añade fechas especiales como días festivos, vacaciones o cualquier día atípico que afecte a tu
                                                 calendario.
                                             </p>
-                                            <Button variant="outline" onClick={() => setIsAddDialogOpen(true)}>
+                                            <Button variant="outline" type="button" onClick={() => setIsAddDialogOpen(true)}>
                                                 <Plus className="mr-2 h-4 w-4" />
                                                 Añadir primera fecha
                                             </Button>
@@ -571,27 +564,18 @@ export default function CalendarConfigPage({ config }: { config: ExtendedCalenda
                             </div>
                             <div className="grid gap-2">
                                 <Label htmlFor="edit-date">Fecha</Label>
-                                <Popover>
-                                    <PopoverTrigger asChild>
-                                        <Button variant="outline" className="w-full justify-start text-left font-normal">
-                                            <CalendarIcon className="mr-2 h-4 w-4" />
-                                            {format(new Date(currentSpecialDate.date), "PPP", { locale: es })}
-                                        </Button>
-                                    </PopoverTrigger>
-                                    <PopoverContent className="w-auto p-0">
-                                        <CalendarComponent
-                                            mode="single"
-                                            selected={new Date(currentSpecialDate.date)}
-                                            onSelect={(date) =>
-                                                setCurrentSpecialDate({
-                                                    ...currentSpecialDate,
-                                                    date: date ? format(date, "yyyy-MM-dd") : currentSpecialDate.date,
-                                                })
-                                            }
-                                            initialFocus
-                                        />
-                                    </PopoverContent>
-                                </Popover>
+                                <div className="grid gap-2">
+                                    <Label htmlFor="date">Fecha</Label>
+                                    <DatePicker
+                                        date={currentSpecialDate.date}
+                                        onDateChange={(newDate) =>
+                                            setCurrentSpecialDate({
+                                                ...currentSpecialDate,
+                                                date: newDate
+                                            })
+                                        }
+                                    />
+                                </div>
                             </div>
                             <div className="grid gap-2">
                                 <Label>Disponibilidad</Label>

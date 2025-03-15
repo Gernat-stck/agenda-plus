@@ -13,6 +13,8 @@ import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { cn } from "@/lib/utils"
 import { CalendarIcon } from "lucide-react"
+import { CalendarConfig, SpecialDate } from "@/types/calendar"
+import { TimePicker } from "../ui/time-picker"
 
 interface AppointmentDialogProps {
     isOpen: boolean
@@ -25,6 +27,8 @@ interface AppointmentDialogProps {
     clientPhone: string
     clientEmail: string
     category: category[]
+    config: CalendarConfig
+    specialDates: SpecialDate[]
 }
 
 export function AppointmentDialog({
@@ -36,6 +40,8 @@ export function AppointmentDialog({
     clientId,
     clientName,
     category,
+    config,
+    specialDates
 }: AppointmentDialogProps) {
     const [formData, setFormData] = useState<Cita>({
         appointment_id: "",
@@ -48,14 +54,11 @@ export function AppointmentDialog({
     })
     useEffect(() => {
         if (appointment) {
-            // Si hay una cita existente, la cargamos en el formulario
             setFormData(appointment)
         } else if (selectedDate) {
-            // Si no hay cita pero hay una fecha seleccionada, la usamos como inicio para una nueva cita
             const startTime = new Date(selectedDate)
             const endTime = new Date(startTime)
-            endTime.setHours(startTime.getHours() + 1) // Por defecto 1 hora de duración
-
+            endTime.setHours(startTime.getHours() + 1)
             setFormData({
                 appointment_id: "",
                 service_id: "",
@@ -71,16 +74,62 @@ export function AppointmentDialog({
     }, [appointment, selectedDate, clientName])
 
     const handleSubmit = () => {
+        // 1. Validar campos obligatorios (código existente)
         const hasErrors = !formData.title || !formData.service_id || !formData.payment_type;
         !formData.title && toast.error("El título es obligatorio");
         !formData.service_id && toast.error("Debe seleccionar un servicio");
         !formData.payment_type && toast.error("Debe seleccionar una forma de pago");
         if (hasErrors) return;
 
-        // formatear las fechas como strings para preservar la hora local correcta
+        // 2. NUEVA VALIDACIÓN: Verificar si la fecha seleccionada es un día no laboral
+        const dayOfWeek = formData.start_time.getDay();
+        if (!config.business_days.includes(dayOfWeek)) {
+            toast.error("Día no disponible", {
+                description: "No se pueden programar citas en días no laborables.",
+                duration: 3000,
+            });
+            return;
+        }
+
+        // 3. NUEVA VALIDACIÓN: Verificar si es una fecha especial no disponible
+        const dateString = format(formData.start_time, "yyyy-MM-dd");
+        const isSpecialDateDisabled = specialDates?.some(specialDate => {
+            const specialDateString = specialDate.date.substring(0, 10);
+            return specialDateString === dateString && !specialDate.is_available;
+        });
+        if (isSpecialDateDisabled) {
+            toast.error("Fecha no disponible", {
+                description: "Esta fecha está marcada como no disponible en el calendario.",
+                duration: 3000,
+            });
+            return;
+        }
+
+        // 4. NUEVA VALIDACIÓN: Verificar horario laboral
+        const timeString = format(formData.start_time, "HH:mm");
+        const endTimeString = format(formData.end_time, "HH:mm");
+
+        if (timeString < config.start_time || timeString > config.end_time) {
+            toast.error("Horario no disponible", {
+                description: `El horario laboral es de ${config.start_time} a ${config.end_time}.`,
+                duration: 3000,
+            });
+            return;
+        }
+
+        // Advertir si la cita termina después del horario laboral
+        if (endTimeString > config.end_time) {
+            toast.warning("La cita excede el horario laboral", {
+                description: "La hora de finalización queda fuera del horario configurado.",
+                duration: 3000,
+            });
+            // Opcional: return; si quieres bloquear totalmente citas que exceden el horario
+        }
+
+        // Continuar con la lógica existente si pasa todas las validaciones
         const startTimeStr = format(formData.start_time, "yyyy-MM-dd'T'HH:mm:ss");
         const endTimeStr = format(formData.end_time, "yyyy-MM-dd'T'HH:mm:ss");
-        // Luego convertir de nuevo a Date pero preservando el formato local
+
         const citaData: Cita = {
             ...formData,
             start_time: new Date(startTimeStr),
@@ -107,7 +156,6 @@ export function AppointmentDialog({
 
     // Actualiza handleDateChange para usar la función de utilidad
     const handleDateChange = (date: Date | undefined) => {
-        console.log(`Fecha seleccionada: ${date}`);
         if (!date) return;
 
         // Crear nueva fecha preservando la hora actual
@@ -141,9 +189,26 @@ export function AppointmentDialog({
 
         // Establecer horas y minutos locales, no UTC
         newStartDate.setHours(hours, minutes, 0, 0);
+
+        const timeString = format(newStartDate, "HH:mm");
+        if (timeString < config.start_time || timeString > config.end_time) {
+            toast.error("Hora fuera de horario laboral", {
+                description: `Por favor selecciona una hora entre ${config.start_time} y ${config.end_time}`,
+                duration: 3000,
+            });
+            return;
+        }
+        // Calcular la duración del servicio y la hora de fin
         const serviceDuration = getServiceDuration(formData.service_id);
         const newEndDate = addMinutes(newStartDate, serviceDuration);
 
+        // Si la hora de fin excede el horario laboral, mostrar advertencia
+        if (format(newEndDate, "HH:mm") > config.end_time) {
+            toast.warning("La cita excede el horario laboral", {
+                description: "La hora de fin queda fuera del horario configurado",
+                duration: 3000,
+            });
+        }
         setFormData({
             ...formData,
             start_time: newStartDate,
@@ -162,7 +227,6 @@ export function AppointmentDialog({
             }
             return;
         }
-
         // Variables para almacenar información del servicio
         let serviceName = "";
         let categoryName = "";
@@ -277,6 +341,16 @@ export function AppointmentDialog({
                                         selected={formData.start_time}
                                         onSelect={handleDateChange}
                                         initialFocus
+                                        disabled={(date) => {
+                                            const dateString = format(date, "yyyy-MM-dd");
+                                            const dayOfWeek = date.getDay();
+                                            const isDayDisabled = !config.business_days.includes(dayOfWeek);
+                                            const isSpecialDateDisabled = specialDates?.some(specialDate => {
+                                                const specialDateString = specialDate.date.substring(0, 10);
+                                                return specialDateString === dateString && !specialDate.is_available;
+                                            });
+                                            return isDayDisabled || isSpecialDateDisabled;
+                                        }}
                                     />
                                 </PopoverContent>
                             </Popover>
@@ -284,18 +358,24 @@ export function AppointmentDialog({
                     </div>
 
                     {/* Selector de hora */}
-                    <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="start-time" className="text-right">
-                            Hora
-                        </Label>
-                        <Input
-                            id="start-time"
-                            type="time"
-                            value={format(formData.start_time, "HH:mm")}
-                            onChange={(e) => handleTimeChange(e.target.value)}
-                            className="col-span-3"
-                        />
-                    </div>
+                    <TimePicker
+                        value={formData.start_time}
+                        onChange={(newDate) => {
+                            // Calcular la duración del servicio y la hora de fin
+                            const serviceDuration = getServiceDuration(formData.service_id);
+                            const newEndDate = addMinutes(newDate, serviceDuration);
+
+                            // Actualizar el estado del formulario
+                            setFormData({
+                                ...formData,
+                                start_time: newDate,
+                                end_time: newEndDate,
+                            });
+                        }}
+                        minTime={config.start_time}
+                        maxTime={config.end_time}
+                        label="Hora"
+                    />
 
                     {/* Información de duración */}
                     <div className="grid grid-cols-4 items-center gap-4">

@@ -12,7 +12,6 @@ import { toast } from "sonner"
 import { Cita } from "@/types/clients"
 import { router } from "@inertiajs/react"
 import { category } from "@/types/services"
-import ConfirmDeleteDialog from "../confirm-dialog"
 import { CalendarConfig, SpecialDate } from "@/types/calendar"
 import ConfirmActionDialog from "../confirm-dialog"
 import { format } from "date-fns";
@@ -83,20 +82,24 @@ export default function CalendarComponent(
     const [showDragConfirmation, setShowDragConfirmation] = useState(false)
     const [showFinalDragConfirmation, setShowFinalDragConfirmation] = useState(false)
     const [draggedEventInfo, setDraggedEventInfo] = useState<any>(null)
-    const backgroundEvents: EventInput[] = specialDates?.map(date => ({
-        id: `special-${date.id}`,
-        title: date.title,
-        start: date.date,
-        allDay: true,
-        display: 'background',
-        backgroundColor: date.color || '#ff9f89',
-        extendedProps: {
-            description: date.description,
-            isAvailable: date.is_available,
-            type: 'special-date'
-        }
-    })) || [];
+    const backgroundEvents: EventInput[] = specialDates?.map(date => {
+        // Extraer solo la parte de la fecha (YYYY-MM-DD) de manera consistente con dayCellClassNames
+        const specialDateStr = date.date.substring(0, 10);
 
+        return {
+            id: `special-${date.id}`,
+            title: date.title,
+            start: specialDateStr, // Usar directamente el string extraído
+            allDay: true,
+            display: 'background',
+            backgroundColor: date.color || '#ff9f89',
+            extendedProps: {
+                description: date.description,
+                isAvailable: date.is_available,
+                type: 'special-date'
+            }
+        };
+    }) || [];
     // Función para actualizar una cita existente
     const handleUpdateAppointment = (citaData: Cita) => {
         // Formatear fechas para preservar la zona horaria local
@@ -246,6 +249,48 @@ export default function CalendarComponent(
 
     // Manejador para cuando se arrastra y suelta un evento
     const handleEventDrop = (info: any) => {
+        // Extraer información del evento
+        const { event } = info;
+        const newDate = event.start;
+        const dayOfWeek = newDate.getDay();
+        const newTimeString = format(newDate, "HH:mm");
+
+        // Verificar si es un día permitido
+        if (!config.business_days.includes(dayOfWeek)) {
+            info.revert();
+            toast.error("Día no disponible", {
+                description: "No puedes programar citas en días no laborables.",
+                duration: 3000,
+            });
+            return;
+        }
+
+        // Verificar si es un horario permitido
+        if (newTimeString < config.start_time || newTimeString > config.end_time) {
+            info.revert();
+            toast.error("Horario no disponible", {
+                description: `El horario laboral es de ${config.start_time} a ${config.end_time}.`,
+                duration: 3000,
+            });
+            return;
+        }
+
+        // Verificar si es una fecha especial no disponible
+        const dateString = format(newDate, "yyyy-MM-dd");
+        const isSpecialDateDisabled = specialDates?.some(
+            specialDate =>
+                specialDate.date === dateString &&
+                !specialDate.is_available
+        );
+
+        if (isSpecialDateDisabled) {
+            info.revert();
+            toast.error("Fecha no disponible", {
+                description: "Esta fecha está marcada como no disponible en el calendario.",
+                duration: 3000,
+            });
+            return;
+        }
         setDraggedEventInfo(info);
         setShowDragConfirmation(true);
         info.revert();
@@ -265,11 +310,23 @@ export default function CalendarComponent(
             const { event } = draggedEventInfo;
             const originalAppointment = appointments.find((apt) => apt.id === event.id);
 
+
             if (originalAppointment) {
+                const serviceDuration = getServiceDuration(originalAppointment.service_id);
+                const newStart = event.start;
+                const newEnd = new Date(newStart.getTime() + serviceDuration * 60000);
+
+                if (format(newEnd, "HH:mm") > config.end_time) {
+                    toast.warning("La cita excede el horario laboral", {
+                        description: "La hora de finalización queda fuera del horario configurado.",
+                        duration: 3000,
+                    });
+                }
+
                 const updatedAppointment: Appointment = {
                     ...originalAppointment,
-                    start: event.start,
-                    end: event.end || new Date(new Date(event.start).getTime() + 60 * 60 * 1000),
+                    start: newStart,
+                    end: newEnd,
                 };
 
                 // Formatear las fechas como strings para preservar la hora local
@@ -292,8 +349,8 @@ export default function CalendarComponent(
                     appointment_id: updatedAppointment.id,
                     service_id: updatedAppointment.service_id,
                     title: updatedAppointment.title,
-                    start_time: formattedStartTime,  // Fecha formateada en texto
-                    end_time: formattedEndTime,      // Fecha formateada en texto
+                    start_time: formattedStartTime,
+                    end_time: formattedEndTime,
                     status: updatedAppointment.status,
                     payment_type: updatedAppointment.payment_type
                 }, {
@@ -331,7 +388,6 @@ export default function CalendarComponent(
         }
         return 60; // Duración predeterminada si no se encuentra el servicio
     }
-    console.log(config.business_days)
     const allEvents: EventInput[] = [...appointments, ...backgroundEvents];
     return (
         <>
@@ -366,7 +422,28 @@ export default function CalendarComponent(
                     droppable={true}
                     viewClassNames={["dark:bg-gray-700"]}
                     nowIndicator={true}
+                    eventResizableFromStart={false}
                     now={new Date()}
+                    eventConstraint={{
+                        daysOfWeek: config.business_days,
+                        startTime: config.start_time,
+                        endTime: config.end_time,
+                    }}
+                    dayCellClassNames={(arg) => {
+                        const dateStr = format(arg.date, "yyyy-MM-dd");
+                        const dayOfWeek = arg.date.getDay();
+                        const specialDate = specialDates?.find(date => {
+                            const specialDateStr = date.date.substring(0, 10);
+                            return specialDateStr === dateStr && !date.is_available;
+                        });
+                        const isNonBusinessDay = !config.business_days.includes(dayOfWeek);
+                        if (specialDate) {
+                            return `bg-[${specialDate.color}] dark:bg-opacity-20 text-white dark:text-black`;
+                        } else if (isNonBusinessDay) {
+                            return 'bg-gray-100 dark:bg-gray-800/30';
+                        }
+                        return '';
+                    }}
                 />
             </div>
 
@@ -382,6 +459,8 @@ export default function CalendarComponent(
                 clientPhone={selectedAppointment?.clientPhone || ""}
                 clientEmail={selectedAppointment?.clientEmail || ""}
                 category={categories}
+                config={config}
+                specialDates={specialDates}
             />
 
             {/* Diálogo para ver detalles de citas */}
