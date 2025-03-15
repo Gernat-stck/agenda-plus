@@ -15,7 +15,13 @@ class SpecialDateController extends Controller
 
         return response()->json($specialDates);
     }
+    private function generateSpecialDateId($user_id)
+    {
+        $userInitials = strtoupper(substr($user_id, 0, 2));
+        $randomNumber = str_pad(rand(0, 9999), 4, '0', STR_PAD_LEFT);
 
+        return $userInitials . "DTE" . $randomNumber;
+    }
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -27,6 +33,7 @@ class SpecialDateController extends Controller
         ]);
 
         $validated['user_id'] = auth()->user()->user_id;
+        $validated['special_date_id'] = $this->generateSpecialDateId(auth()->user()->user_id);
 
         $specialDate = SpecialDate::create($validated);
 
@@ -35,7 +42,7 @@ class SpecialDateController extends Controller
 
     public function update(Request $request, $id)
     {
-        $specialDate = SpecialDate::findOrFail($id);
+        $specialDate = SpecialDate::where('special_date_id', $id)->first();
 
         // Verificar que el usuario es el dueño del registro
         if ($specialDate->user_id !== auth()->user()->user_id) {

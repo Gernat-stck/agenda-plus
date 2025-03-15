@@ -4,9 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\AppointmentRequest;
 use App\Models\Appointments;
+use App\Models\CalendarConfig;
 use App\Models\Client;
 use App\Models\ClientsUser;
 use App\Models\Service;
+use App\Models\SpecialDate;
 use DB;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -69,8 +71,9 @@ class ClientController extends Controller
                 'citas' => $appointments
             ];
         });
-
-        return Inertia::render('Clients/Index', ['clients' => $formattedClients, 'category' => $categories]);
+        $config = CalendarConfig::where('user_id', $userId)->first();
+        $specialDates = SpecialDate::where('user_id', $userId)->get();
+        return Inertia::render('Clients/Index', ['clients' => $formattedClients, 'category' => $categories, 'config' => $config, 'specialDates' => $specialDates]);
     }
 
     public function store(Request $request)
