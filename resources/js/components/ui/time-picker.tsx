@@ -1,3 +1,4 @@
+"use client"
 
 import { useState, useEffect, useCallback, useRef } from "react"
 import { format } from "date-fns"
@@ -110,10 +111,10 @@ export function TimePicker({
             <div className="col-span-3 flex items-center">
                 <div className="flex items-center">
                     <Select value={selectedHour} onValueChange={handleHourChange}>
-                        <SelectTrigger className="w-[65px] rounded-r-none border-r-0">
+                        <SelectTrigger className="w-16">
                             <SelectValue placeholder={selectedHour} />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent className="max-h-52 overflow-y-auto">
                             {hours.map((hour) => (
                                 <SelectItem key={hour} value={hour}>
                                     {hour}
@@ -122,13 +123,13 @@ export function TimePicker({
                         </SelectContent>
                     </Select>
 
-                    <div className="px-1 border-y border-input h-10 flex items-center bg-background">:</div>
+                    <div className="px-1 h-10 flex items-center bg-background-transparent">:</div>
 
                     <Select value={selectedMinute} onValueChange={setSelectedMinute}>
-                        <SelectTrigger className="w-[65px] rounded-l-none border-l-0">
+                        <SelectTrigger className="w-16">
                             <SelectValue placeholder={selectedMinute} />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent className="max-h-52 overflow-y-auto">
                             {minutes.map((minute) => (
                                 <SelectItem key={minute} value={minute}>
                                     {minute}
@@ -145,3 +146,4 @@ export function TimePicker({
         </div>
     )
 }
+
