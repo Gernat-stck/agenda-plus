@@ -43,7 +43,12 @@ class CalendarController extends Controller
         // Obtener días especiales
         $specialDates = SpecialDate::where('user_id', $userId)->get();
         //Obtener config del calendario 
-        $config = CalendarConfig::where('user_id', $userId)->first();
+        $config = CalendarConfig::firstOrNew(['user_id' => auth()->user()->user_id], [
+            'show_weekend' => false,
+            'start_time' => '08:00',
+            'end_time' => '20:00',
+            'business_days' => [1, 2, 3, 4, 5]
+        ]);
         // Agrupamos los servicios por categoría
         $categories = $services->groupBy('category')->map(function ($servicesInCategory, $categoryName) {
             return [

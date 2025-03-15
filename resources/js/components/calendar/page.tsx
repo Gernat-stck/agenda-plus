@@ -74,6 +74,16 @@ export default function CalendarComponent(
         config: CalendarConfig,
         specialDates: SpecialDate[]
     }) {
+    // Crear una configuración segura con valores predeterminados
+    const safeConfig = config || {
+        show_weekend: true,
+        business_days: [1, 2, 3, 4, 5],
+        start_time: "08:00",
+        end_time: "18:00",
+        slot_min_time: "07:00",
+        slot_max_time: "20:00",
+        user_id: ""
+    }
     const [appointments, setAppointments] = useState<Appointment[]>(mapCitasToAppointments(appointmentsData))
     const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null)
     const [isAppointmentDialogOpen, setIsAppointmentDialogOpen] = useState(false)
@@ -408,15 +418,16 @@ export default function CalendarComponent(
                     selectMirror={true}
                     allDaySlot={false}
                     dayMaxEvents={true}
-                    weekends={config.show_weekend}
+                    weekends={safeConfig.show_weekend}
                     height="85vh"
                     businessHours={{
-                        daysOfWeek: config.business_days,
-                        startTime: config.start_time || "08:00",
-                        endTime: config.end_time || "19:00",
+                        daysOfWeek: safeConfig.business_days,
+                        startTime: safeConfig.start_time,
+                        endTime: safeConfig.end_time,
                     }}
-                    slotMinTime={config.slot_min_time || "07:00"}
-                    slotMaxTime={config.slot_max_time || "20:00"}
+                    slotMinTime={safeConfig.slot_min_time}
+                    slotMaxTime={safeConfig.slot_max_time}
+
                     editable={true}
                     eventDrop={handleEventDrop}
                     droppable={true}
@@ -425,9 +436,9 @@ export default function CalendarComponent(
                     eventResizableFromStart={false}
                     now={new Date()}
                     eventConstraint={{
-                        daysOfWeek: config.business_days,
-                        startTime: config.start_time,
-                        endTime: config.end_time,
+                        daysOfWeek: safeConfig.business_days,
+                        startTime: safeConfig.start_time,
+                        endTime: safeConfig.end_time,
                     }}
                     dayCellClassNames={(arg) => {
                         const dateStr = format(arg.date, "yyyy-MM-dd");
@@ -436,7 +447,7 @@ export default function CalendarComponent(
                             const specialDateStr = date.date.substring(0, 10);
                             return specialDateStr === dateStr && !date.is_available;
                         });
-                        const isNonBusinessDay = !config.business_days.includes(dayOfWeek);
+                        const isNonBusinessDay = !safeConfig.business_days.includes(dayOfWeek);
                         if (specialDate) {
                             return `bg-[${specialDate.color}] dark:bg-opacity-20 text-white dark:text-black`;
                         } else if (isNonBusinessDay) {
