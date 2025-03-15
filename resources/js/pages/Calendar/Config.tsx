@@ -22,11 +22,8 @@ import {
     DialogTitle,
     DialogTrigger,
 } from "@/components/ui/dialog"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { cn } from "@/lib/utils"
-import { format, parseISO } from "date-fns"
+import { format } from "date-fns"
 import { es } from "date-fns/locale"
-import { Calendar as CalendarComponent } from "@/components/ui/calendar"
 import { Textarea } from "@/components/ui/textarea"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import {
@@ -83,7 +80,6 @@ const predefinedColors = [
     "#ec4899", // Rosa
     "#6b7280", // Gris
 ]
-//TODO: Probar metodos edit y delete de citas
 export default function CalendarConfigPage({ config }: { config: ExtendedCalendarConfig }) {
     const { data, setData, processing, errors, reset } = useForm<ExtendedCalendarConfig>({
         ...config,
@@ -210,9 +206,12 @@ export default function CalendarConfigPage({ config }: { config: ExtendedCalenda
         router.patch(`/special-dates/${currentSpecialDate.specialdate_id}`, currentSpecialDate as unknown as Record<string, any>, {
             onSuccess: () => {
                 toast.success("Fecha especial actualizada", {
-                    duration: 5000,
+                    duration: 3000,
                     description: "La fecha especial se ha actualizado correctamente.",
                 });
+                setTimeout(() => {
+                    window.location.reload();
+                }, 3000);
             }
         });
 
