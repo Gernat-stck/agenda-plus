@@ -57,7 +57,7 @@ Route::middleware(['auth', 'verified'])->group(
         Route::post('/calendar/config', [CalendarController::class, 'saveConfig'])->name('calendar.config.save');
         // Rutas para días especiales
         Route::post('/special-dates', [SpecialDateController::class, 'store'])->name('special-dates.store');
-        Route::put('/special-dates/{id}', [SpecialDateController::class, 'update'])->name('special-dates.update');
+        Route::patch('/special-dates/{id}', [SpecialDateController::class, 'update'])->name('special-dates.update');
         Route::delete('/special-dates/{id}', [SpecialDateController::class, 'destroy'])->name('special-dates.destroy');
 
     }
