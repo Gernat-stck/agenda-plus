@@ -15,8 +15,6 @@ import { router } from "@inertiajs/react"
 import { category } from "@/types/services"
 import { format } from "date-fns"
 import { CalendarConfig, SpecialDate } from "@/types/calendar"
-//TODO: Implementar limites de selectores de dias y horas conforme a los indicados por el usuario
-
 
 export default function ListaClientes(
     {
