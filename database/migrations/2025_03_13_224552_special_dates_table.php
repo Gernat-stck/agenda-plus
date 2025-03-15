@@ -13,6 +13,7 @@ return new class extends Migration {
         Schema::create('special_dates', function (Blueprint $table) {
             $table->id();
             $table->string('user_id');
+            $table->string('specialdate_id')->unique();
             $table->string('title');
             $table->date('date');
             $table->boolean('is_available')->default(false);

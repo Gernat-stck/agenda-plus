@@ -11,6 +11,7 @@ class SpecialDate extends Model
 
     protected $fillable = [
         'user_id',
+        'specialdate_id',
         'title',
         'date',
         'is_available',
