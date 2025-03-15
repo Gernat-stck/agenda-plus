@@ -14,10 +14,22 @@ import { AppointmentDialog } from "../calendar/appointment-dialog"
 import { router } from "@inertiajs/react"
 import { category } from "@/types/services"
 import { format } from "date-fns"
+import { CalendarConfig, SpecialDate } from "@/types/calendar"
 //TODO: Implementar limites de selectores de dias y horas conforme a los indicados por el usuario
 
 
-export default function ListaClientes({ clients, category }: { clients: Cliente[], category: category[] }) {
+export default function ListaClientes(
+    {
+        clients,
+        category,
+        config,
+        specialDates
+    }: {
+        clients: Cliente[],
+        category: category[],
+        config: CalendarConfig,
+        specialDates: SpecialDate[]
+    }) {
     const [clientes, setClientes] = useState<Cliente[]>(clients)
     const [searchTerm, setSearchTerm] = useState("")
     const [selectedCliente, setSelectedCliente] = useState<Cliente | null>(null)
@@ -389,6 +401,8 @@ export default function ListaClientes({ clients, category }: { clients: Cliente[
                     clientPhone={selectedCliente.contact_number.toString()}
                     clientEmail={selectedCliente.email}
                     category={category}
+                    config={config}
+                    specialDates={specialDates}
 
                 />
             )}
