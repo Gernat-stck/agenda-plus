@@ -27,22 +27,21 @@ class SpecialDateController extends Controller
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'date' => 'required|date',
-            'is_available' => 'boolean',
+            'is_available' => 'required|boolean',
             'color' => 'nullable|string|max:50',
             'description' => 'nullable|string',
         ]);
-
         $validated['user_id'] = auth()->user()->user_id;
-        $validated['special_date_id'] = $this->generateSpecialDateId(auth()->user()->user_id);
-
-        $specialDate = SpecialDate::create($validated);
-
-        return redirect()->back()->with('success', 'Día especial creado correctamente');
+        $validated['specialdate_id'] = $this->generateSpecialDateId(auth()->user()->user_id);
+        $specialDate = SpecialDate::create(array_merge($validated, [
+            'specialdate_id' => $validated['specialdate_id'],
+        ]));
+        return redirect()->back()->with('success', `Día especial creado correctamente, codigo $specialDate->specialdate_id`);
     }
 
     public function update(Request $request, $id)
     {
-        $specialDate = SpecialDate::where('special_date_id', $id)->first();
+        $specialDate = SpecialDate::where('specialdate_id', $id)->first();
 
         // Verificar que el usuario es el dueño del registro
         if ($specialDate->user_id !== auth()->user()->user_id) {
@@ -64,7 +63,7 @@ class SpecialDateController extends Controller
 
     public function destroy($id)
     {
-        $specialDate = SpecialDate::findOrFail($id);
+        $specialDate = SpecialDate::where('specialdate_id', $id)->first();
 
         // Verificar que el usuario es el dueño del registro
         if ($specialDate->user_id !== auth()->user()->user_id) {
