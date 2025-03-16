@@ -76,17 +76,30 @@ class ClientController extends Controller
         return Inertia::render('Clients/Index', ['clients' => $formattedClients, 'category' => $categories, 'config' => $config, 'specialDates' => $specialDates]);
     }
 
+    private function generateClientId($user_id)
+    {
+        $userInitials = strtoupper(substr($user_id, 0, 2));
+        $randomNumber = str_pad(rand(0, 9999), 4, '0', STR_PAD_LEFT);
+
+        return $userInitials . "CL-" . $randomNumber;
+    }
     public function store(Request $request)
     {
         $validatedData = $request->validate([
-            'client_id' => 'required|string|max:255',
+            'client_id' => 'nullable|string|max:255',
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:clients,email',
             'contact_number' => 'nullable|string|max:20',
         ]);
 
+
         DB::transaction(function () use ($validatedData) {
-            $client = Client::create($validatedData);
+            $validatedData['client_id'] = $this->generateClientId(
+                auth()->user()->user_id,
+            );
+            $client = Client::create(array_merge($validatedData, [
+                'client_id' => $validatedData['client_id'],
+            ]));
 
             // Asociar el usuario al cliente en la tabla pivote
             ClientsUser::create([
