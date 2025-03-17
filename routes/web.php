@@ -5,6 +5,7 @@ use App\Http\Controllers\CalendarController;
 use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\ClientController;
 use App\Http\Controllers\SpecialDateController;
+use App\Http\Controllers\WhatsappController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -59,6 +60,10 @@ Route::middleware(['auth', 'verified'])->group(
         Route::post('/special-dates', [SpecialDateController::class, 'store'])->name('special-dates.store');
         Route::patch('/special-dates/{id}', [SpecialDateController::class, 'update'])->name('special-dates.update');
         Route::delete('/special-dates/{id}', [SpecialDateController::class, 'destroy'])->name('special-dates.destroy');
+        // Rutas para configuración de WhatsApp
+        Route::resource('whatsapp-configurations', WhatsappController::class);
+        Route::post('whatsapp-configurations/{configuration}/connect', [WhatsappController::class, 'connect'])->name('whatsapp-configurations.connect');
+        Route::post('whatsapp-configurations/{configuration}/disconnect', [WhatsappController::class, 'disconnect'])->name('whatsapp-configurations.disconnect');
 
     }
 
