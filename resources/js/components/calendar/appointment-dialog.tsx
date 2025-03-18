@@ -70,6 +70,19 @@ export function AppointmentDialog({
                 client_name: clientName || "",
                 client_id: clientId || ""
             })
+        } else {
+            const startTime = selectedDate ? new Date(selectedDate) : null;
+            const endTime = startTime ? new Date(startTime.getTime() + 60 * 60 * 1000) : null;
+
+            setFormData({
+                appointment_id: "",
+                service_id: "",
+                title: "",
+                start_time: startTime || new Date(),
+                end_time: endTime || new Date(new Date().getTime() + 60 * 60 * 1000),
+                status: 'pendiente',
+                payment_type: "",
+            })
         }
     }, [appointment, selectedDate, clientName])
 
