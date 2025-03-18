@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\WhatsappConfiguration;
+use App\Services\TwilioService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Http;
@@ -82,5 +83,18 @@ class WhatsappController extends Controller
     {
         $configuration->update(['status' => 'disconnected']);
         return redirect()->route('whatsapp-configurations.index');
+    }
+    public function sendTestMessage(Request $request)
+    {
+        $to = "whatsapp:" . $request->get('to'); // Asegúrate de que el número incluya el prefijo "whatsapp:"
+        $body = "Hola, este es un mensaje de prueba enviado desde Twilio en Laravel.";
+
+        $twilio = new TwilioService();
+        $message = $twilio->sendWhatsappMessage($to, $body);
+
+        return response()->json([
+            'message_sid' => $message->sid,
+            'status' => $message->status,
+        ]);
     }
 }
