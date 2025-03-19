@@ -53,8 +53,13 @@ export function AppointmentDialog({
         payment_type: "",
     })
     useEffect(() => {
+        const currentTime = new Date();
+
         if (appointment) {
-            setFormData(appointment)
+            // Asegurar que appointment tiene start_time y end_time válidos
+            if (!appointment.start_time) appointment.start_time = currentTime;
+            if (!appointment.end_time) appointment.end_time = new Date(currentTime.getTime() + 60 * 60 * 1000);
+            setFormData(appointment);
         } else if (selectedDate) {
             const startTime = new Date(selectedDate)
             const endTime = new Date(startTime)
@@ -71,22 +76,30 @@ export function AppointmentDialog({
                 client_id: clientId || ""
             })
         } else {
-            const startTime = selectedDate ? new Date(selectedDate) : null;
-            const endTime = startTime ? new Date(startTime.getTime() + 60 * 60 * 1000) : null;
+            const startTime = new Date();
+            const endTime = new Date(startTime.getTime() + 60 * 60 * 1000);
 
             setFormData({
                 appointment_id: "",
                 service_id: "",
                 title: "",
-                start_time: startTime || new Date(),
-                end_time: endTime || new Date(new Date().getTime() + 60 * 60 * 1000),
+                start_time: startTime,
+                end_time: endTime,
                 status: 'pendiente',
                 payment_type: "",
-            })
+            });
         }
     }, [appointment, selectedDate, clientName])
 
     const handleSubmit = () => {
+        // Verificación más robusta al inicio de la función
+        if (!formData || !formData.start_time || !formData.end_time) {
+            toast.error("Error en los datos de la cita", {
+                description: "La información de la cita está incompleta",
+                duration: 3000,
+            });
+            return;
+        }
         // 1. Validar campos obligatorios (código existente)
         const hasErrors = !formData.title || !formData.service_id || !formData.payment_type;
         !formData.title && toast.error("El título es obligatorio");
@@ -106,8 +119,9 @@ export function AppointmentDialog({
 
         // 3. NUEVA VALIDACIÓN: Verificar si es una fecha especial no disponible
         const dateString = format(formData.start_time, "yyyy-MM-dd");
-        const isSpecialDateDisabled = specialDates?.some(specialDate => {
-            const specialDateString = specialDate.date.substring(0, 10);
+        // Verificar que specialDates existe antes de usarlo
+        const isSpecialDateDisabled = specialDates && specialDates.some(specialDate => {
+            const specialDateString = specialDate.date?.substring(0, 10);
             return specialDateString === dateString && !specialDate.is_available;
         });
         if (isSpecialDateDisabled) {
@@ -117,7 +131,6 @@ export function AppointmentDialog({
             });
             return;
         }
-
         // 4. NUEVA VALIDACIÓN: Verificar horario laboral
         const timeString = format(formData.start_time, "HH:mm");
         const endTimeString = format(formData.end_time, "HH:mm");
