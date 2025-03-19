@@ -230,6 +230,13 @@ export default function ListaClientes(
     }
 
     const handleSaveAppointment = (appointment: Cita) => {
+        if (!appointment || !appointment.start_time || !appointment.end_time) {
+            toast.error("Error al guardar la cita", {
+                description: "Datos de cita incompletos. Por favor verifica la información.",
+                duration: 3000,
+            });
+            return;
+        }
         const formattedStartTime = format(appointment.start_time, "yyyy-MM-dd HH:mm:ss");
         const formattedEndTime = format(appointment.end_time, "yyyy-MM-dd HH:mm:ss");
         router.post('appointments/client', {
