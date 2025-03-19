@@ -23,8 +23,6 @@ export default function Dashboard({ auth }: { auth: any }) {
     useEffect(() => {
         setUser(auth.user);
     }, [auth.user, setUser]);
-    //TODO: Intentar extraer las queries a un documento a parte para la reutilización de las mismas
-    //TODO: Hacer los componentes responsive
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Dashboard" />

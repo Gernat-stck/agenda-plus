@@ -12,11 +12,15 @@ return new class extends Migration {
     {
         Schema::create('whatsapp_configurations', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained();  // Usuario del SaaS
-            $table->string('instance_id');                // ID de instancia Ultramsg
-            $table->string('token');                      // Token de API
-            $table->string('phone_number')->nullable();   // Número vinculado
-            $table->enum('status', ['pending', 'active', 'disconnected']);
+            $table->foreignId('user_id')->constrained();
+            // Para Twilio
+            $table->string('account_sid')->nullable();
+            $table->string('auth_token')->nullable();
+
+            // Información general
+            $table->string('phone_number')->nullable();
+            $table->enum('provider', ['twilio'])->default('twilio');
+            $table->enum('status', ['pending', 'active', 'disconnected'])->default('pending');
             $table->timestamps();
         });
     }

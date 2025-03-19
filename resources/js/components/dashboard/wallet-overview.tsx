@@ -4,7 +4,6 @@ import { Card, CardHeader, CardTitle, CardContent } from "../ui/card"
 import { useState } from "react"
 
 export default function WalletOverview() {
-    //TODO: Crear la logica para traer los datos a mostrar en el overview de wallet
     const [selectedPeriod, setSelectedPeriod] = useState('Semanal');
     return (
         <Card className="h-full w-full flex flex-col">

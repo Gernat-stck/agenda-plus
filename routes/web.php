@@ -6,6 +6,7 @@ use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\ClientController;
 use App\Http\Controllers\SpecialDateController;
 use App\Http\Controllers\WhatsappController;
+use App\Http\Controllers\WhatsappWebhookController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -64,6 +65,12 @@ Route::middleware(['auth', 'verified'])->group(
         Route::resource('whatsapp-configurations', WhatsappController::class);
         Route::post('whatsapp-configurations/{configuration}/connect', [WhatsappController::class, 'connect'])->name('whatsapp-configurations.connect');
         Route::post('whatsapp-configurations/{configuration}/disconnect', [WhatsappController::class, 'disconnect'])->name('whatsapp-configurations.disconnect');
+
+        // Ruta para enviar mensajes
+        Route::post('/whatsapp/send', [WhatsappController::class, 'sendTestMessage']);
+
+        // Ruta para recibir webhooks de Twilio (por ejemplo, actualizaciones de estado de mensaje)
+        Route::post('/whatsapp/webhook', [WhatsappWebhookController::class, 'handleWebhook']);
 
     }
 

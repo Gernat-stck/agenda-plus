@@ -2,7 +2,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Users2 } from "lucide-react";
 
 export default function ClientesOverview() {
-    //TODO: Crear la logica para traer los datos a mostrar en el overview de clientes
     return (
         <Card className="h-full w-full flex flex-col">
             <CardHeader className="flex flex-row items-center justify-between p-3 sm:p-4 md:p-5">
