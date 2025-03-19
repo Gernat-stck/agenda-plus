@@ -284,7 +284,7 @@ export function AppointmentDialog({
             end_time: newEndDate,
         });
     }
-
+    console.log(config.start_time + " " + config.end_time)
     return (
         <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
             <DialogContent className="sm:max-w-[425px]">
@@ -398,8 +398,8 @@ export function AppointmentDialog({
                                 end_time: newEndDate,
                             });
                         }}
-                        minTime={config.start_time}
-                        maxTime={config.end_time}
+                        minTime={config.slot_min_time}
+                        maxTime={config.slot_max_time}
                         label="Hora"
                     />
 
