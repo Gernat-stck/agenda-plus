@@ -366,7 +366,7 @@ export function AppointmentDialog({
                                         mode="single"
                                         selected={formData.start_time}
                                         onSelect={handleDateChange}
-                                        initialFocus
+                                        autoFocus
                                         disabled={(date) => {
                                             const dateString = format(date, "yyyy-MM-dd");
                                             const dayOfWeek = date.getDay();

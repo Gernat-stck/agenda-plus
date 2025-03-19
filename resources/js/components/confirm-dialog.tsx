@@ -21,6 +21,7 @@ interface ConfirmActionDialogProps {
     cancelText?: string;
     finalConfirmation?: boolean;
     isDestructive?: boolean;
+    appointment?: any; // Este prop es opcional y podría ser nulo=
 }
 
 export default function ConfirmActionDialog({
@@ -34,6 +35,7 @@ export default function ConfirmActionDialog({
     cancelText = "Cancelar",
     finalConfirmation = false,
     isDestructive = false,
+    appointment, // Prop opcional que puede ser indefinido
 }: ConfirmActionDialogProps) {
     // Determina el texto del botón de confirmación basado en el contexto
     const defaultConfirmText = isDestructive ? "Eliminar" : "Confirmar";
