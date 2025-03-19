@@ -258,7 +258,6 @@ export function AppointmentDialog({
             end_time: newEndDate,
         });
     }
-
     return (
         <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
             <DialogContent className="sm:max-w-[425px]">
