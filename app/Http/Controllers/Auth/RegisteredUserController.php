@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\CalendarConfig;
 use App\Models\User;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
@@ -42,7 +43,13 @@ class RegisteredUserController extends Controller
             'email' => $request->email,
             'password' => Hash::make($request->password),
         ]);
-
+        $config = CalendarConfig::create([
+            'user_id' => $user->user_id,
+            'show_weekend' => false,
+            'start_time' => '08:00',
+            'end_time' => '20:00',
+            'business_days' => [1, 2, 3, 4, 5]
+        ]);
         event(new Registered($user));
 
         Auth::login($user);

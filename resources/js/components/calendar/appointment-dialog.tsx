@@ -397,8 +397,8 @@ export function AppointmentDialog({
                                 end_time: newEndDate,
                             });
                         }}
-                        minTime={config.slot_min_time ? config.slot_min_time : "07:00"}
-                        maxTime={config.slot_max_time ? config.slot_max_time : "20:00"}
+                        minTime={config && config.slot_min_time ? config.slot_min_time : "07:00"}
+                        maxTime={config && config.slot_max_time ? config.slot_max_time : "20:00"}
                         label="Hora"
                     />
 
