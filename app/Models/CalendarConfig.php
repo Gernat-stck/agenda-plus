@@ -17,6 +17,7 @@ class CalendarConfig extends Model
         'show_weekend',
         'start_time',
         'end_time',
+        'max_appointments',
         'business_days'
     ];
 
