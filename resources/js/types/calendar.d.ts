@@ -5,6 +5,7 @@ export interface CalendarConfig {
     start_time: string;
     end_time: string;
     business_days: number[];
+    max_appointments: number; //Nuevo parametro
     slot_min_time?: string;
     slot_max_time?: string;
     [key: string]: any;

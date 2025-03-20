@@ -14,6 +14,8 @@ Route::get('/', function () {
     return Inertia::render('welcome');
 })->name('home');
 
+Route::get('appointment/register/{userId}', [AppointmentController::class, 'appointmentRegister'])->name('appointment.register');
+
 Route::middleware(['auth', 'verified'])->group(
     function () {
         Route::get('dashboard', function () {
@@ -71,6 +73,7 @@ Route::middleware(['auth', 'verified'])->group(
 
         // Ruta para recibir webhooks de Twilio (por ejemplo, actualizaciones de estado de mensaje)
         Route::post('/whatsapp/webhook', [WhatsappWebhookController::class, 'handleWebhook']);
+        Route::get('register/appointment/link', [AppointmentController::class, 'appointmentRegisterLink'])->name('appointment.register.link');
 
     }
 
