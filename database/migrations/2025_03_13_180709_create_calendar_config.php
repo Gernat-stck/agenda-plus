@@ -16,6 +16,7 @@ return new class extends Migration {
             $table->boolean('show_weekend')->default(false); // Mostrar fin de semana
             $table->string('start_time')->default('09:00'); // Hora de inicio
             $table->string('end_time')->default('18:00'); // Corregido: end_time en lugar de end_date
+            $table->integer('max_appointments')->default(1); // Número máximo de citas por día
             $table->json('business_days')->default(json_encode([1, 2, 3, 4, 5])); // Lunes a viernes
             $table->timestamps();
             $table->foreign('user_id')->references('user_id')->on('users')->onDelete('cascade');
