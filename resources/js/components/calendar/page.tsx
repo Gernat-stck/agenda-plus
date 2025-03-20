@@ -80,6 +80,7 @@ export default function CalendarComponent(
         business_days: [1, 2, 3, 4, 5],
         start_time: "08:00",
         end_time: "18:00",
+        max_appointments: 1,
         slot_min_time: "07:00",
         slot_max_time: "20:00",
         user_id: ""
@@ -427,7 +428,8 @@ export default function CalendarComponent(
                     }}
                     slotMinTime={safeConfig.slot_min_time}
                     slotMaxTime={safeConfig.slot_max_time}
-
+                    slotEventOverlap={false}
+                    eventMaxStack={safeConfig.max_appointments || 1}
                     editable={true}
                     eventDrop={handleEventDrop}
                     droppable={true}
