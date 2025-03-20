@@ -48,6 +48,7 @@ class RegisteredUserController extends Controller
             'show_weekend' => false,
             'start_time' => '08:00',
             'end_time' => '20:00',
+            'max_appointments' => 1,
             'business_days' => [1, 2, 3, 4, 5]
         ]);
         event(new Registered($user));
