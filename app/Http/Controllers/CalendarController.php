@@ -43,26 +43,17 @@ class CalendarController extends Controller
         // Obtener días especiales
         $specialDates = SpecialDate::where('user_id', $userId)->get();
         //Obtener config del calendario 
-        $config = CalendarConfig::firstOrNew(['user_id' => auth()->user()->user_id], [
-            'show_weekend' => false,
-            'start_time' => '08:00',
-            'end_time' => '20:00',
-            'business_days' => [1, 2, 3, 4, 5]
-        ]);
+        $config = CalendarConfig::where('user_id', $userId)->first();
         // Agrupamos los servicios por categoría
-        $categories = $services->groupBy('category')->map(function ($servicesInCategory, $categoryName) {
-            return [
-                'name' => $categoryName,
-                'services' => $servicesInCategory->map(function ($service) {
-                    return [
-                        'service_id' => $service->service_id,
-                        'name' => $service->name,
-                        'price' => $service->price,
-                        'duration' => $service->duration,
-                    ];
-                })->values()->all()
-            ];
-        })->values()->all();
+        $categories = $services->groupBy('category')->map(fn($servicesInCategory, $categoryName) => [
+            'name' => $categoryName,
+            'services' => $servicesInCategory->map(fn($service) => [
+                'service_id' => $service->service_id,
+                'name' => $service->name,
+                'price' => $service->price,
+                'duration' => $service->duration,
+            ])->values()->all()
+        ])->values()->all();
 
         return Inertia::render('Calendar/Index', [
             'appointments' => $appointmentsData,
