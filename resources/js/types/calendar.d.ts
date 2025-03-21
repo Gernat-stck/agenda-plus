@@ -23,3 +23,9 @@ export interface SpecialDate {
     created_at?: string;
     updated_at?: string;
 }
+
+export interface TimeSlot {
+    startTime: string; // HH:mm formato
+    endTime: string; // HH:mm formato
+    available: number; // Plazas disponibles
+}
