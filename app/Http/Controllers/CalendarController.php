@@ -142,4 +142,47 @@ class CalendarController extends Controller
             ->with('success', 'Configuración guardada correctamente');
     }
 
+    public function getAvailableSlots(Request $request)
+    {
+        $date = $request->get('date');
+        $userId = auth()->user()->user_id;
+
+        // Obtener la configuración del usuario
+        $config = CalendarConfig::where('user_id', $userId)->first();
+
+        // Obtener las citas existentes para esa fecha
+        $existingAppointments = Appointments::where('user_id', $userId)
+            ->whereDate('start_time', $date)
+            ->get();
+
+        // Generar slots disponibles
+        $availableSlots = [];
+        $startHour = (int) explode(':', $config->start_time)[0];
+        $endHour = (int) explode(':', $config->end_time)[0];
+
+        // Valor predeterminado o configurado
+        $maxAppointmentsPerHour = $config->max_appointments_per_hour ?? 2;
+
+        for ($hour = $startHour; $hour < $endHour; $hour++) {
+            $startTime = sprintf('%02d:00', $hour);
+            $endTime = sprintf('%02d:00', $hour + 1);
+
+            // Contar citas existentes en esta hora
+            $appointmentsInHour = $existingAppointments->filter(function ($appointment) use ($hour) {
+                return (int) explode(':', $appointment->start_time)[0] === $hour;
+            })->count();
+
+            $available = max(0, $maxAppointmentsPerHour - $appointmentsInHour);
+
+            if ($available > 0) {
+                $availableSlots[] = [
+                    'startTime' => $startTime,
+                    'endTime' => $endTime,
+                    'available' => $available
+                ];
+            }
+        }
+
+        return response()->json(['availableSlots' => $availableSlots]);
+    }
 }
