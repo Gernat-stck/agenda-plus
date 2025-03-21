@@ -1,3 +1,5 @@
+"use client"
+
 import type React from "react"
 import { useState } from "react"
 import { router, useForm } from "@inertiajs/react"
@@ -110,33 +112,33 @@ export default function CalendarConfigPage({ config }: { config: ExtendedCalenda
     }
 
     const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
+        e.preventDefault()
 
         // Detectar si hay días de fin de semana seleccionados
-        const hasWeekendSelected = data.business_days.some(day => day === 0 || day === 6);
+        const hasWeekendSelected = data.business_days.some((day) => day === 0 || day === 6)
 
         // Crear un objeto con los datos actualizados
         const finalData = {
             ...data,
             show_weekend: hasWeekendSelected,
-            special_dates: JSON.stringify(data.special_dates) // Serializar a JSON
-        };
+            special_dates: JSON.stringify(data.special_dates), // Serializar a JSON
+        }
 
         // Enviar los datos actualizados directamente
         router.post("/calendar/config", finalData, {
             onSuccess: () => {
                 // Actualizar el estado local después de éxito
-                setData("show_weekend", hasWeekendSelected);
+                setData("show_weekend", hasWeekendSelected)
 
                 toast.success("Configuración guardada correctamente", {
                     duration: 5000,
                     description: "Los cambios se han guardado correctamente.",
-                });
+                })
                 setTimeout(() => {
-                    window.location.reload();
-                }, 3000);
+                    window.location.reload()
+                }, 3000)
             },
-        });
+        })
     }
 
     const handleReset = () => {
@@ -153,12 +155,12 @@ export default function CalendarConfigPage({ config }: { config: ExtendedCalenda
             toast.error("Error", {
                 duration: 5000,
                 description: "El título y la fecha son obligatorios.",
-            });
-            return;
+            })
+            return
         }
 
         // Generar un ID temporal
-        const tempId = Date.now();
+        const tempId = Date.now()
 
         const specialDateToAdd: SpecialDate = {
             id: tempId,
@@ -169,19 +171,19 @@ export default function CalendarConfigPage({ config }: { config: ExtendedCalenda
             is_available: newSpecialDate.is_available || false,
             color: newSpecialDate.color,
             description: newSpecialDate.description,
-        };
+        }
         // Enviar al servidor (corregido)
-        router.post('/special-dates', specialDateToAdd as unknown as Record<string, any>, {
+        router.post("/special-dates", specialDateToAdd as unknown as Record<string, any>, {
             onSuccess: () => {
                 toast.success("Fecha especial añadida", {
                     duration: 5000,
                     description: "La fecha especial se ha guardado en el servidor.",
-                });
-            }
-        });
+                })
+            },
+        })
 
         // Actualizar el estado local
-        setData("special_dates", [...data.special_dates, specialDateToAdd]);
+        setData("special_dates", [...data.special_dates, specialDateToAdd])
         // Resetear el formulario
         setNewSpecialDate({
             title: "",
@@ -189,9 +191,9 @@ export default function CalendarConfigPage({ config }: { config: ExtendedCalenda
             is_available: false,
             color: predefinedColors[0],
             description: "",
-        });
+        })
 
-        setIsAddDialogOpen(false);
+        setIsAddDialogOpen(false)
     }
 
     const handleEditSpecialDate = () => {
@@ -203,17 +205,21 @@ export default function CalendarConfigPage({ config }: { config: ExtendedCalenda
             return
         }
 
-        router.patch(`/special-dates/${currentSpecialDate.specialdate_id}`, currentSpecialDate as unknown as Record<string, any>, {
-            onSuccess: () => {
-                toast.success("Fecha especial actualizada", {
-                    duration: 3000,
-                    description: "La fecha especial se ha actualizado correctamente.",
-                });
-                setTimeout(() => {
-                    window.location.reload();
-                }, 3000);
-            }
-        });
+        router.patch(
+            `/special-dates/${currentSpecialDate.specialdate_id}`,
+            currentSpecialDate as unknown as Record<string, any>,
+            {
+                onSuccess: () => {
+                    toast.success("Fecha especial actualizada", {
+                        duration: 3000,
+                        description: "La fecha especial se ha actualizado correctamente.",
+                    })
+                    setTimeout(() => {
+                        window.location.reload()
+                    }, 3000)
+                },
+            },
+        )
 
         const updatedSpecialDates = data.special_dates.map((date) =>
             date.id === currentSpecialDate.id ? currentSpecialDate : date,
@@ -221,14 +227,14 @@ export default function CalendarConfigPage({ config }: { config: ExtendedCalenda
 
         setData("special_dates", updatedSpecialDates)
         setIsEditDialogOpen(false)
-
     }
 
     const handleDeleteSpecialDate = (id: string) => {
-        if (!id) return toast.error("Error", {
-            duration: 5000,
-            description: "Falta el ID."
-        })
+        if (!id)
+            return toast.error("Error", {
+                duration: 5000,
+                description: "Falta el ID.",
+            })
 
         const updatedSpecialDates = data.special_dates.filter((date) => date.specialdate_id !== id)
         setData("special_dates", updatedSpecialDates)
@@ -238,16 +244,15 @@ export default function CalendarConfigPage({ config }: { config: ExtendedCalenda
                 toast.success("Fecha especial eliminada", {
                     duration: 5000,
                     description: "La fecha especial se ha eliminado correctamente.",
-                });
-            }, onError: () => {
+                })
+            },
+            onError: () => {
                 toast.error("Error", {
                     duration: 5000,
                     description: "No se pudo eliminar la fecha especial.",
-                });
-            }
-        }
-        );
-
+                })
+            },
+        })
     }
     const openEditDialog = (specialDate: SpecialDate) => {
         setCurrentSpecialDate(specialDate)
@@ -305,6 +310,21 @@ export default function CalendarConfigPage({ config }: { config: ExtendedCalenda
                                             />
                                             {errors.end_time && <p className="text-sm text-destructive">{errors.end_time}</p>}
                                         </div>
+                                    </div>
+                                    <div className="space-y-2 mt-6">
+                                        <Label htmlFor="max_appointments">Número máximo de citas por franja</Label>
+                                        <Input
+                                            id="max_appointments"
+                                            type="number"
+                                            min="1"
+                                            value={data.max_appointments}
+                                            onChange={(e) => setData("max_appointments", Number.parseInt(e.target.value))}
+                                            className="w-full"
+                                        />
+                                        {errors.max_appointments && <p className="text-sm text-destructive">{errors.max_appointments}</p>}
+                                        <p className="text-sm text-muted-foreground">
+                                            Define cuántas citas pueden agendarse simultáneamente en una misma franja horaria.
+                                        </p>
                                     </div>
                                 </CardContent>
                             </Card>
@@ -381,7 +401,7 @@ export default function CalendarConfigPage({ config }: { config: ExtendedCalenda
                                                             onDateChange={(newDate) =>
                                                                 setNewSpecialDate({
                                                                     ...newSpecialDate,
-                                                                    date: newDate
+                                                                    date: newDate,
                                                                 })
                                                             }
                                                         />
@@ -463,11 +483,9 @@ export default function CalendarConfigPage({ config }: { config: ExtendedCalenda
                                                             </div>
                                                         </TableCell>
                                                         <TableCell>
-                                                            {format(
-                                                                new Date(specialDate.date.substring(0, 10) + 'T12:00:00'),
-                                                                "dd MMM yyyy",
-                                                                { locale: es }
-                                                            )}
+                                                            {format(new Date(specialDate.date.substring(0, 10) + "T12:00:00"), "dd MMM yyyy", {
+                                                                locale: es,
+                                                            })}
                                                         </TableCell>
                                                         <TableCell>
                                                             <Badge variant={specialDate.is_available ? "outline" : "secondary"}>
@@ -476,7 +494,12 @@ export default function CalendarConfigPage({ config }: { config: ExtendedCalenda
                                                         </TableCell>
                                                         <TableCell className="text-right">
                                                             <div className="flex justify-end gap-2">
-                                                                <Button variant="ghost" size="icon" type="button" onClick={() => openEditDialog(specialDate)}>
+                                                                <Button
+                                                                    variant="ghost"
+                                                                    size="icon"
+                                                                    type="button"
+                                                                    onClick={() => openEditDialog(specialDate)}
+                                                                >
                                                                     <Edit className="h-4 w-4" />
                                                                     <span className="sr-only">Editar</span>
                                                                 </Button>
@@ -570,7 +593,7 @@ export default function CalendarConfigPage({ config }: { config: ExtendedCalenda
                                         onDateChange={(newDate) =>
                                             setCurrentSpecialDate({
                                                 ...currentSpecialDate,
-                                                date: newDate
+                                                date: newDate,
                                             })
                                         }
                                     />

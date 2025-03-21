@@ -6,14 +6,14 @@ import interactionPlugin from "@fullcalendar/interaction"
 import listPlugin from "@fullcalendar/list"
 import esLocale from "@fullcalendar/core/locales/es"
 import type { EventInput } from "@fullcalendar/core"
-import { AppointmentDialog } from "./appointment-dialog"
-import { AppointmentDetailsDialog } from "./appointment-details-dialog"
+import { AppointmentDialog } from "../appointments/appointment-dialog"
+import { AppointmentDetailsDialog } from "../appointments/appointment-details-dialog"
 import { toast } from "sonner"
 import { Cita } from "@/types/clients"
 import { router } from "@inertiajs/react"
 import { category } from "@/types/services"
 import { CalendarConfig, SpecialDate } from "@/types/calendar"
-import ConfirmActionDialog from "../confirm-dialog"
+import ConfirmActionDialog from "../shared/confirm-dialog"
 import { format } from "date-fns";
 
 interface Appointment extends EventInput {
@@ -80,6 +80,7 @@ export default function CalendarComponent(
         business_days: [1, 2, 3, 4, 5],
         start_time: "08:00",
         end_time: "18:00",
+        max_appointments: 1,
         slot_min_time: "07:00",
         slot_max_time: "20:00",
         user_id: ""
@@ -427,7 +428,8 @@ export default function CalendarComponent(
                     }}
                     slotMinTime={safeConfig.slot_min_time}
                     slotMaxTime={safeConfig.slot_max_time}
-
+                    slotEventOverlap={false}
+                    eventMaxStack={safeConfig.max_appointments || 1}
                     editable={true}
                     eventDrop={handleEventDrop}
                     droppable={true}

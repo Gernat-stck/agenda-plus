@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button"
 import { format } from "date-fns"
 import { es } from "date-fns/locale"
 import { CalendarIcon, Clock, FileCog, User } from "lucide-react"
-import ConfirmDeleteDialog from "@/components/confirm-dialog"
+import ConfirmDeleteDialog from "@/components/shared/confirm-dialog"
 import { useState } from "react"
 
 interface AppointmentDetailsDialogProps {

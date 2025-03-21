@@ -5,7 +5,7 @@ import { type Servicio } from "@/types/services";
 import { ServicioDialog } from "./service-dialog";
 import { TablaServicios } from "./tabla-servicios";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
-import { NoData } from "../no-data";
+import { NoData } from "../shared/no-data";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "../ui/select";

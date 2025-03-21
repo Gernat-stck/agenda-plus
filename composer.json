@@ -1,11 +1,12 @@
 {
     "$schema": "https://getcomposer.org/schema.json",
-    "name": "laravel/react-starter-kit",
+    "name": "laravel/agenda-plus",
     "type": "project",
-    "description": "The skeleton application for the Laravel framework.",
+    "description": "App para optimizar el control y registro de citas.",
     "keywords": [
         "laravel",
-        "framework"
+        "framework",
+        "php"
     ],
     "license": "MIT",
     "require": {

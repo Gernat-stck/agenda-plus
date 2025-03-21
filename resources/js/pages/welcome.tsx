@@ -1,9 +1,9 @@
-import Navbar from '@/components/navbar-home';
+import Navbar from '@/components/shared/navbar-home';
 import { Button } from '@/components/ui/button';
 import { Head } from '@inertiajs/react';
 import { CalendarClock, CheckCircle, MessageSquare, Users } from 'lucide-react';
 import placeholderImage from "@/../img/placeholder.svg"
-import Footer from '@/components/footer';
+import Footer from '@/components/shared/footer';
 export default function Welcome() {
     //TODO: Crear un playground para interactuar con la app
 
