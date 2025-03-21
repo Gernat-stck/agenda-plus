@@ -1,4 +1,4 @@
-import AppLogoIcon from '@/components/app-logo-icon';
+import AppLogoIcon from '@/components/shared/app-logo-icon';
 import { type PropsWithChildren } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { Link } from '@inertiajs/react';
