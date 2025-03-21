@@ -57,24 +57,25 @@ Route::middleware(['auth', 'verified'])->group(
         Route::post('appointments', [CalendarController::class, 'store'])->name('appointments.store');
         Route::patch('appointments/calendar/{appointment}', [CalendarController::class, 'updateAppointment'])->name('appointments.update');
         Route::delete('appointments/calendar/{appointment}', [CalendarController::class, 'destroy'])->name('calendar.destroyCalendar');
-        Route::get('/calendar/config', [CalendarController::class, 'configIndex'])->name('calendar.config');
-        Route::post('/calendar/config', [CalendarController::class, 'saveConfig'])->name('calendar.config.save');
+        Route::get('calendar/config', [CalendarController::class, 'configIndex'])->name('calendar.config');
+        Route::post('calendar/config', [CalendarController::class, 'saveConfig'])->name('calendar.config.save');
         // Rutas para días especiales
-        Route::post('/special-dates', [SpecialDateController::class, 'store'])->name('special-dates.store');
-        Route::patch('/special-dates/{id}', [SpecialDateController::class, 'update'])->name('special-dates.update');
-        Route::delete('/special-dates/{id}', [SpecialDateController::class, 'destroy'])->name('special-dates.destroy');
+        Route::post('special-dates', [SpecialDateController::class, 'store'])->name('special-dates.store');
+        Route::patch('special-dates/{id}', [SpecialDateController::class, 'update'])->name('special-dates.update');
+        Route::delete('special-dates/{id}', [SpecialDateController::class, 'destroy'])->name('special-dates.destroy');
         // Rutas para configuración de WhatsApp
         Route::resource('whatsapp-configurations', WhatsappController::class);
         Route::post('whatsapp-configurations/{configuration}/connect', [WhatsappController::class, 'connect'])->name('whatsapp-configurations.connect');
         Route::post('whatsapp-configurations/{configuration}/disconnect', [WhatsappController::class, 'disconnect'])->name('whatsapp-configurations.disconnect');
 
         // Ruta para enviar mensajes
-        Route::post('/whatsapp/send', [WhatsappController::class, 'sendTestMessage']);
+        Route::post('whatsapp/send', [WhatsappController::class, 'sendTestMessage']);
 
         // Ruta para recibir webhooks de Twilio (por ejemplo, actualizaciones de estado de mensaje)
-        Route::post('/whatsapp/webhook', [WhatsappWebhookController::class, 'handleWebhook']);
+        Route::post('whatsapp/webhook', [WhatsappWebhookController::class, 'handleWebhook']);
         Route::get('register/appointment/link', [AppointmentController::class, 'appointmentRegisterLink'])->name('appointment.register.link');
-
+        Route::get('appointments/date/{date}', [AppointmentController::class, 'getAppointmentsByDate']);
+        Route::get('available/slots/{date}', [CalendarController::class, 'getAvailableSlots']);
     }
 
 );
