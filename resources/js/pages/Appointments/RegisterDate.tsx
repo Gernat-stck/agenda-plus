@@ -1,11 +1,10 @@
 import { useState } from "react"
-import { Head, usePage, router } from "@inertiajs/react" // Importar router directamente
+import { Head } from "@inertiajs/react"
 import { Toaster } from "sonner"
 
 import { AppointmentForm } from "@/components/shared/appointment-form"
 import { useAppointmentRegistration } from "@/hooks/use-appointment-registration"
 
-import type { Cita } from "@/types/clients"
 import type { category } from "@/types/services"
 import type { CalendarConfig, SpecialDate } from "@/types/calendar"
 import { AppointmentInfoSidebar } from "@/components/appointments/appointment-info-sidebar"
@@ -77,6 +76,7 @@ export default function RegisterDate({ userId, categories, config, specialDates 
                                 config={calendarConfig}
                                 specialDates={specialDates}
                                 isSubmitting={isSubmitting}
+                                slotUrl={'/book/appointments/slots'}
                             />
                         </div>
 
