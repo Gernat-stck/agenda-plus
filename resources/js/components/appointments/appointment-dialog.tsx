@@ -17,7 +17,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { cn } from "@/lib/utils";
 import { CalendarIcon } from "lucide-react";
 import { es } from "date-fns/locale";
-import { toast, Toaster } from "sonner";
+import { toast } from "sonner";
 
 interface AppointmentDialogProps {
     isOpen: boolean;
@@ -154,7 +154,6 @@ export function AppointmentDialog({
     return (
 
         <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-            <Toaster />
             <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader>
                     <DialogTitle>{appointment ? "Editar cita" : "Nueva cita"}</DialogTitle>
