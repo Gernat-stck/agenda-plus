@@ -29,7 +29,7 @@ export default function clients(
                 <link rel="preconnect" href="https://fonts.bunny.net" />
                 <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600" rel="stylesheet" />
             </Head>
-            <main className="size-full flex-col p-2 bg-background rounded-b-2xl m-auto">
+            <main className="size-full flex-col p-1 bg-background rounded-b-2xl m-auto">
                 <ListaClientes clients={clients} category={category} config={config} specialDates={specialDates} />
             </main>
         </AppSidebarLayout>

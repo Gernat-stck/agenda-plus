@@ -1,20 +1,16 @@
 import { useState } from "react"
-import { Search, Info, Edit, Plus, Trash2, PlusCircle } from "lucide-react"
-import DetallesCliente from "./clientes-details"
-import { NoData } from "../shared/no-data"
 import type { Cliente, Cita } from "@/types/clients"
-
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import DetallesCliente from "./clientes-details"
 import ConfirmDeleteDialog from "../shared/confirm-dialog"
-import { toast } from "sonner"
 import { AppointmentDialog } from "../appointments/appointment-dialog"
+import { toast } from "sonner"
 import { router } from "@inertiajs/react"
 import { category } from "@/types/services"
 import { format } from "date-fns"
 import { CalendarConfig, SpecialDate } from "@/types/calendar"
+import { BusquedaClientes } from "./busqueda-clientes"
+import { TablaClientes } from "./tabla-clientes"
 
 export default function ListaClientes(
     {
@@ -28,8 +24,15 @@ export default function ListaClientes(
         config: CalendarConfig,
         specialDates: SpecialDate[]
     }) {
+    // Estado general
     const [clientes, setClientes] = useState<Cliente[]>(clients)
     const [searchTerm, setSearchTerm] = useState("")
+
+    // Estado para paginación
+    const [currentPage, setCurrentPage] = useState(1)
+    const itemsPerPage = 8
+
+    // Estado para modales
     const [selectedCliente, setSelectedCliente] = useState<Cliente | null>(null)
     const [isEditing, setIsEditing] = useState(false)
     const [isCreating, setIsCreating] = useState(false)
@@ -41,11 +44,21 @@ export default function ListaClientes(
     const [isAppointmentDialogOpen, setIsAppointmentDialogOpen] = useState(false)
     const [isCreatingAppointment, setIsCreatingAppointment] = useState(false)
     const [isViewDetails, setIsViewDetails] = useState(false)
+
+    // Filtramos los clientes según la búsqueda
     const filteredClientes = clientes.filter(
         (cliente) =>
             cliente.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
             cliente.client_id.toLowerCase().includes(searchTerm.toLowerCase()),
     )
+
+    // Cuando cambia el filtro, reset a la primera página
+    const handleSearchChange = (value: string) => {
+        setSearchTerm(value);
+        setCurrentPage(1);
+    }
+
+    // Handlers
     const openModal = (cliente: Cliente) => {
         setSelectedCliente(cliente)
         setIsEditing(false)
@@ -105,7 +118,7 @@ export default function ListaClientes(
             email: "",
             citas: [],
         })
-        setIsViewDetails(false) // Asegúrate de que el diálogo de detalles esté cerrado
+        setIsViewDetails(false)
     }
 
     const handleCreateSave = (newCliente: Cliente) => {
@@ -183,11 +196,13 @@ export default function ListaClientes(
             }
         });
     }
+
     const handleDeleteCancel = () => {
         setClienteToDelete(null)
         setShowDeleteConfirmation(false)
         setShowFinalDeleteConfirmation(false)
     }
+
     const handleDeleteCita = (clienteclient_id: string, citaclient_id: string) => {
         if (!clienteclient_id || !citaclient_id) return toast.error("Error al eliminar la cita", {
             description: "No se ha seleccionado ningún cliente o cita para eliminar.",
@@ -211,10 +226,6 @@ export default function ListaClientes(
                         setSelectedCliente(updatedCliente)
                     }
                 }
-                toast.success("Cita eliminada", {
-                    description: `La cita ha sido eliminada correctamente.`,
-                    duration: 3000,
-                })
                 setTimeout(() => {
                     window.location.reload();
                 }, 3000);
@@ -227,6 +238,15 @@ export default function ListaClientes(
                 })
             }
         });
+    }
+
+    const handleCreateAppointment = (cliente: Cliente) => {
+        setSelectedCliente(cliente)
+        setIsCreatingAppointment(true)
+        setSelectedDate(new Date())
+        setSelectedAppointment(null)
+        setIsAppointmentDialogOpen(true)
+        setIsViewDetails(false)
     }
 
     const handleSaveAppointment = (appointment: Cita) => {
@@ -270,99 +290,33 @@ export default function ListaClientes(
             }
         });
     }
+
     return (
         <Card className="container mx-auto p-3 border-0 shadow-none ">
             <CardHeader className="pb-0">
                 <CardTitle className="text-3xl font-bold">Clientes</CardTitle>
             </CardHeader>
             <CardContent className="p-6">
-                <div className="mb-6 flex flex-col sm:flex-row items-center gap-4">
-                    <div className="relative flex-grow w-full">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
-                        <Input
-                            type="text"
-                            placeholder="Buscar por nombre o ID de cliente..."
-                            className="w-full pl-10"
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                        />
-                    </div>
-                    <Button onClick={handleCreate} className="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600 transition-colors" variant="default">
-                        <Plus size={18} className="mr-2" />
-                        Nuevo Cliente
-                    </Button>
-                </div>
+                {/* Componente de búsqueda y botón de crear */}
+                <BusquedaClientes
+                    searchTerm={searchTerm}
+                    onSearchChange={handleSearchChange}
+                    onCreateClick={handleCreate}
+                />
 
-                {clientes.length === 0 ? (
-                    <NoData />
-                ) : (
-                    <div className="rounded-md border">
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead className="w-1/12">ID</TableHead>
-                                    <TableHead className="w-3/12">Nombre</TableHead>
-                                    <TableHead className="w-2/12">Contacto</TableHead>
-                                    <TableHead className="w-3/12">Correo</TableHead>
-                                    <TableHead className="w-3/12">Acciones</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {filteredClientes.map((cliente) => (
-                                    <TableRow key={cliente.client_id}>
-                                        <TableCell className="w-1/12 font-medium">{cliente.client_id}</TableCell>
-                                        <TableCell className="w-3/12">{cliente.name}</TableCell>
-                                        <TableCell className="w-2/12">{cliente.contact_number}</TableCell>
-                                        <TableCell className="w-3/12">{cliente.email}</TableCell>
-                                        <TableCell className="w-3/12 p-2">
-                                            <div className="flex flex-col sm:flex-row gap-2">
-                                                <Button
-                                                    variant="ghost"
-                                                    size="sm"
-                                                    className="text-primary hover:text-primary/80 hover:bg-primary/10 justify-start"
-                                                    onClick={() => openModal(cliente)}
-                                                >
-                                                    <Info size={16} className="mr-1" /> Detalles
-                                                </Button>
-                                                <Button
-                                                    variant="ghost"
-                                                    size="sm"
-                                                    className="text-primary hover:text-primary/80 hover:bg-primary/10 justify-start"
-                                                    onClick={() => handleEdit(cliente)}
-                                                >
-                                                    <Edit size={16} className="mr-1" /> Editar
-                                                </Button>
-                                                <Button
-                                                    variant="ghost"
-                                                    size="sm"
-                                                    className="text-destructive hover:text-destructive/80 hover:bg-destructive/20 justify-start"
-                                                    onClick={() => handleDeleteClick(cliente)}
-                                                >
-                                                    <Trash2 size={16} className="mr-1" /> Eliminar
-                                                </Button>
-                                                <Button
-                                                    variant="ghost"
-                                                    size="sm"
-                                                    className="text-green-600 hover:text-green-600/80 hover:bg-green-700/10 justify-start"
-                                                    onClick={() => {
-                                                        setSelectedCliente(cliente)
-                                                        setIsCreatingAppointment(true)
-                                                        setSelectedDate(new Date())
-                                                        setSelectedAppointment(null)
-                                                        setIsAppointmentDialogOpen(true)
-                                                        setIsViewDetails(false) // Asegúrate de que el diálogo de detalles esté cerrado
-                                                    }}
-                                                >
-                                                    <PlusCircle size={16} className="mr-1" /> Cita
-                                                </Button>
-                                            </div>
-                                        </TableCell>
-                                    </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
-                    </div>
-                )}
+                {/* Tabla de clientes con paginación */}
+                <TablaClientes
+                    clientes={filteredClientes}
+                    currentPage={currentPage}
+                    itemsPerPage={itemsPerPage}
+                    onPageChange={setCurrentPage}
+                    onViewDetails={openModal}
+                    onEdit={handleEdit}
+                    onDelete={handleDeleteClick}
+                    onCreateAppointment={handleCreateAppointment}
+                />
 
+                {/* Modales y diálogos */}
                 {selectedCliente && (isViewDetails || isCreating) && (
                     <DetallesCliente
                         cliente={selectedCliente!}
@@ -392,25 +346,25 @@ export default function ListaClientes(
                     displayMessage={`al cliente ${clienteToDelete?.name}`}
                     finalConfirmation={true}
                 />
-            </CardContent>
-            {/* Diálogo para crear/editar citas */}
-            {selectedCliente && isCreatingAppointment && (
-                <AppointmentDialog
-                    isOpen={isAppointmentDialogOpen}
-                    onClose={() => { setIsAppointmentDialogOpen(false); setIsCreatingAppointment(false) }}
-                    onSave={handleSaveAppointment}
-                    appointment={selectedAppointment}
-                    selectedDate={selectedDate}
-                    clientId={selectedCliente.client_id}
-                    clientName={selectedCliente.name}
-                    clientPhone={selectedCliente.contact_number.toString()}
-                    clientEmail={selectedCliente.email}
-                    category={category}
-                    config={config}
-                    specialDates={specialDates}
 
-                />
-            )}
+                {/* Diálogo para crear/editar citas */}
+                {selectedCliente && isCreatingAppointment && (
+                    <AppointmentDialog
+                        isOpen={isAppointmentDialogOpen}
+                        onClose={() => { setIsAppointmentDialogOpen(false); setIsCreatingAppointment(false) }}
+                        onSave={handleSaveAppointment}
+                        appointment={selectedAppointment}
+                        selectedDate={selectedDate}
+                        clientId={selectedCliente.client_id}
+                        clientName={selectedCliente.name}
+                        clientPhone={selectedCliente.contact_number.toString()}
+                        clientEmail={selectedCliente.email}
+                        category={category}
+                        config={config}
+                        specialDates={specialDates}
+                    />
+                )}
+            </CardContent>
         </Card>
     )
 }

@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import FullCalendar from "@fullcalendar/react"
 import dayGridPlugin from "@fullcalendar/daygrid"
 import timeGridPlugin from "@fullcalendar/timegrid"
@@ -111,6 +111,10 @@ export default function CalendarComponent(
             }
         };
     }) || [];
+    useEffect(() => {
+        console.log('CalendarComponent mounted');
+        return () => console.log('CalendarComponent unmounted');
+    }, []);
     // Función para actualizar una cita existente
     const handleUpdateAppointment = (citaData: Cita) => {
         // Formatear fechas para preservar la zona horaria local
@@ -185,6 +189,8 @@ export default function CalendarComponent(
 
     // Función para eliminar una cita
     const handleDeleteAppointment = (id: string) => {
+        const appointmentToDelete = appointments.find((apt) => apt.id === id)
+
         router.delete((`appointments/calendar/${id}`), {
             onSuccess: () => {
                 toast.success("Cita eliminada", {
@@ -193,46 +199,67 @@ export default function CalendarComponent(
                         : "La cita ha sido eliminada.",
                     duration: 3000,
                 })
+
+                // Actualizar estado después de la confirmación del servidor
+                setAppointments(appointments.filter((apt) => apt.id !== id))
+                setIsDetailsDialogOpen(false)
+                setSelectedAppointment(null)
             },
             onError: (error) => {
                 toast.error("Error al eliminar la cita", {
                     description: error.message,
                     duration: 5000,
                 })
-                return
             }
         })
-        const appointmentToDelete = appointments.find((apt) => apt.id === id)
-        setAppointments(appointments.filter((apt) => apt.id !== id))
-        setIsDetailsDialogOpen(false)
-        setSelectedAppointment(null)
     }
 
     // Función para crear una nueva cita
     const handleCreateAppointment = (citaData: Cita) => {
         // Convertir de formato Cita a Appointment
-        const newAppointment: Appointment = {
-            id: Date.now().toString(), // ID temporal
-            title: citaData.title,
-            start: citaData.start_time,
-            end: citaData.end_time,
-            backgroundColor: getRandomColor(),
-            clientName: citaData.client_name,
-            clientId: citaData.client_id,
+        const formattedStartTime = format(citaData.start_time, "yyyy-MM-dd HH:mm:ss");
+        const formattedEndTime = format(citaData.end_time, "yyyy-MM-dd HH:mm:ss");
+
+        router.post('appointments/calendar', {
+            client_id: citaData.client_id,
+            appointment_id: citaData.appointment_id,
             service_id: citaData.service_id,
-            status: citaData.status,
-            payment_type: citaData.payment_type,
-        }
+            title: citaData.title,
+            start_time: formattedStartTime,
+            end_time: formattedEndTime,
+            status: citaData.status || "pendiente",
+            payment_type: citaData.payment_type || ""
+        }, {
+            onSuccess: () => {
+                const newAppointment: Appointment = {
+                    id: citaData.appointment_id || Date.now().toString(),
+                    title: citaData.title,
+                    start: citaData.start_time,
+                    end: citaData.end_time,
+                    backgroundColor: getRandomColor(),
+                    clientName: citaData.client_name,
+                    clientId: citaData.client_id,
+                    service_id: citaData.service_id,
+                    status: citaData.status,
+                    payment_type: citaData.payment_type,
+                };
 
-        setAppointments([...appointments, newAppointment])
-        setIsAppointmentDialogOpen(false)
+                setAppointments([...appointments, newAppointment]);
+                setIsAppointmentDialogOpen(false);
 
-        toast.success("Cita creada", {
-            description: `Se ha creado la cita "${newAppointment.title}" correctamente.`,
-            duration: 3000,
-        })
+                toast.success("Cita creada", {
+                    description: `Se ha creado la cita "${newAppointment.title}" correctamente.`,
+                    duration: 3000,
+                });
+            },
+            onError: (error) => {
+                toast.error("Error al crear la cita", {
+                    description: error.message || "Verifica los datos e intenta nuevamente",
+                    duration: 5000,
+                });
+            }
+        });
     }
-
     // Manejador para hacer clic en una fecha
     const handleDateClick = (info: any) => {
         setSelectedDate(info.date)
@@ -415,8 +442,8 @@ export default function CalendarComponent(
                     events={allEvents}
                     eventClick={handleEventClick}
                     dateClick={handleDateClick}
-                    selectable={true}
-                    selectMirror={true}
+                    selectable={false}
+                    selectMirror={false}
                     allDaySlot={false}
                     dayMaxEvents={true}
                     weekends={safeConfig.show_weekend}
@@ -429,7 +456,6 @@ export default function CalendarComponent(
                     slotMinTime={safeConfig.slot_min_time}
                     slotMaxTime={safeConfig.slot_max_time}
                     slotEventOverlap={false}
-                    eventMaxStack={safeConfig.max_appointments || 1}
                     editable={true}
                     eventDrop={handleEventDrop}
                     droppable={true}

@@ -14,8 +14,6 @@ Route::get('/', function () {
     return Inertia::render('welcome');
 })->name('home');
 
-Route::get('appointment/register/{userId}', [AppointmentController::class, 'appointmentRegister'])->name('appointment.register');
-
 Route::middleware(['auth', 'verified'])->group(
     function () {
         Route::get('dashboard', function () {
@@ -35,7 +33,7 @@ Route::middleware(['auth', 'verified'])->group(
         Route::get('services', [ServiceController::class, 'index'])->name('services.index');
         Route::post('services', [ServiceController::class, 'store'])->name('services.store');
         Route::patch('services/{service}', [ServiceController::class, 'update'])->name('services.update');
-        Route::delete('services/{service}', [ServiceController::class, 'destroy'])->name('services.destroy');
+        Route::delete('services/destroy/{service}', [ServiceController::class, 'destroy'])->name('services.destroy');
 
         //Clients
         Route::get('clients', [ClientController::class, 'index'])->name('clients.index');
@@ -82,3 +80,4 @@ Route::middleware(['auth', 'verified'])->group(
 
 require __DIR__ . '/settings.php';
 require __DIR__ . '/auth.php';
+require __DIR__ . '/public.php';

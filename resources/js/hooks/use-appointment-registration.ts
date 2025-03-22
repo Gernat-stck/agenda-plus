@@ -27,13 +27,11 @@ export function useAppointmentRegistration({ userId, redirectRoute }: UseAppoint
         };
 
         // Enviar los datos al servidor usando Inertia
-        router.post(route('appointments.store'), formattedAppointment, {
+        router.post(route('appointments.public.store'), formattedAppointment, {
             onSuccess: () => {
                 toast.success('Cita agendada correctamente', {
                     description: `${appointment.title} para el ${format(appointment.start_time, 'PPP', { locale: es })} a las ${format(appointment.start_time, 'HH:mm')}`,
                 });
-                // Redirigir a la página de citas o donde sea necesario
-                router.visit(redirectRoute);
             },
             onError: (errors) => {
                 // Mostrar errores
