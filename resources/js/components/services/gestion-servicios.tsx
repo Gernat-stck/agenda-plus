@@ -102,7 +102,6 @@ export default function GestionServicios({ services }: { services: Servicio[] })
     };
 
     const handleDelete = (id: string) => {
-        console.log(id);
         router.delete((`services/${id}`), {
             onSuccess: () => {
                 setServicios(servicios.filter((s) => s.id !== id));

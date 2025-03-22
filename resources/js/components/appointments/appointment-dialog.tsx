@@ -81,7 +81,6 @@ export function AppointmentDialog({
             const response = await axios.get(`/available/slots/${dateStr}`);
 
             // Añade estos logs para depurar
-            console.log('Respuesta completa:', response);
 
             // Verifica si response.data es un array o un objeto con diferentes propiedades
             if (Array.isArray(response.data)) {
