@@ -33,7 +33,7 @@ Route::middleware(['auth', 'verified'])->group(
         Route::get('services', [ServiceController::class, 'index'])->name('services.index');
         Route::post('services', [ServiceController::class, 'store'])->name('services.store');
         Route::patch('services/{service}', [ServiceController::class, 'update'])->name('services.update');
-        Route::delete('services/{service}', [ServiceController::class, 'destroy'])->name('services.destroy');
+        Route::delete('services/destroy/{service}', [ServiceController::class, 'destroy'])->name('services.destroy');
 
         //Clients
         Route::get('clients', [ClientController::class, 'index'])->name('clients.index');
