@@ -14,8 +14,6 @@ Route::get('/', function () {
     return Inertia::render('welcome');
 })->name('home');
 
-Route::get('appointment/register/{userId}', [AppointmentController::class, 'appointmentRegister'])->name('appointment.register');
-
 Route::middleware(['auth', 'verified'])->group(
     function () {
         Route::get('dashboard', function () {
@@ -82,3 +80,4 @@ Route::middleware(['auth', 'verified'])->group(
 
 require __DIR__ . '/settings.php';
 require __DIR__ . '/auth.php';
+require __DIR__ . '/public.php';
