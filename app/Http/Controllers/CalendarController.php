@@ -8,6 +8,7 @@ use App\Models\CalendarConfig;
 use App\Models\Service;
 use App\Models\SpecialDate;
 use Cache;
+use Carbon\Carbon;
 use Inertia\Inertia;
 use Illuminate\Http\Request;
 
@@ -168,6 +169,10 @@ class CalendarController extends Controller
         // Usar el user_id proporcionado en la URL o el del usuario autenticado
         $userId = $user_id ?? auth()->user()->user_id;
 
+        if (!Carbon::hasFormat($date, 'Y-m-d')) {
+            return response()->json(['error' => 'Formato de fecha inválido'], 400);
+        }
+
         // Validar que tengamos un ID de usuario válido
         if (!$userId) {
             return response()->json(['error' => 'Usuario no identificado'], 403);
@@ -181,53 +186,80 @@ class CalendarController extends Controller
         if (!$config) {
             return response()->json(['error' => 'No se encontró configuración para este usuario'], 404);
         }
+
+        // Obtener el día de la semana (0 = domingo, 6 = sábado)
+        $dayOfWeek = Carbon::parse($date)->dayOfWeek;
+
+        // Verificar si es un día laborable según la configuración
+        if (!in_array($dayOfWeek, $config->business_days)) {
+            return response()->json(['availableSlots' => [], 'message' => 'Este día no es laborable']);
+        }
+
+        // Verificar si es una fecha especial no disponible
+        $specialDate = SpecialDate::where('user_id', $userId)
+            ->where('date', $date)
+            ->first();
+
+        if ($specialDate && !$specialDate->is_available) {
+            return response()->json(['availableSlots' => [], 'message' => $specialDate->description ?? 'Esta fecha no está disponible']);
+        }
+
         // Obtener las citas existentes para esa fecha
         $existingAppointments = Appointments::select('start_time', 'end_time')
             ->where('user_id', $userId)
             ->whereDate('start_time', $date)
             ->get();
 
+        // Determinar la duración del slot basada en el servicio si existe
+        $slotDuration = 30; // Duración por defecto en minutos
+
         // Generar slots disponibles
         $availableSlots = [];
         $startHour = (int) explode(':', $config->start_time)[0];
+        $startMinute = (int) explode(':', $config->start_time)[1];
         $endHour = (int) explode(':', $config->end_time)[0];
+        $endMinute = (int) explode(':', $config->end_time)[1];
 
         // Asegurarse de tener el valor correcto para max_appointments (por defecto 1)
         $maxAppointmentsPerHour = $config->max_appointments ?? 1;
-        $slotDuration = 60; // Duración en minutos de cada slot
 
-        // Crear slots cada hora
-        for ($hour = $startHour; $hour < $endHour; $hour++) {
-            // Para cada hora del día
-            for ($minute = 0; $minute < 60; $minute += 30) { // Crear slots cada 30 minutos
-                $slotStart = \Carbon\Carbon::parse("$date $hour:$minute:00");
-                $slotEnd = (clone $slotStart)->addMinutes($slotDuration);
+        // Crear slots cada 30 minutos (o el intervalo que desees)
+        $slotInterval = 30; // Minutos entre cada slot
 
-                // Contar cuántas citas se solapan con este slot
-                $overlappingAppointments = $existingAppointments->filter(function ($appointment) use ($slotStart, $slotEnd) {
-                    $appointmentStart = \Carbon\Carbon::parse($appointment->start_time);
-                    $appointmentEnd = \Carbon\Carbon::parse($appointment->end_time);
+        $currentTime = Carbon::parse("$date $startHour:$startMinute:00");
+        $endTime = Carbon::parse("$date $endHour:$endMinute:00");
 
-                    // Verificar si hay solapamiento
-                    return $slotStart->lessThan($appointmentEnd) &&
-                        $appointmentStart->lessThan($slotEnd);
-                })->count();
+        while ($currentTime < $endTime) {
+            $slotStart = clone $currentTime;
+            $slotEnd = (clone $slotStart)->addMinutes($slotDuration);
 
-                // Si max_appointments es 1 y hay citas solapadas, no mostrar este slot
-                if ($maxAppointmentsPerHour == 1 && $overlappingAppointments > 0) {
-                    continue;
-                }
-
-                $available = max(0, $maxAppointmentsPerHour - $overlappingAppointments);
-
-                if ($available > 0) {
-                    $availableSlots[] = [
-                        'startTime' => $slotStart->format('H:i'),
-                        'endTime' => $slotEnd->format('H:i'),
-                        'available' => $available
-                    ];
-                }
+            // Si el slot termina después del horario de cierre, no lo incluimos
+            if ($slotEnd > $endTime) {
+                $currentTime->addMinutes($slotInterval);
+                continue;
             }
+
+            // Contar cuántas citas se solapan con este slot
+            $overlappingAppointments = $existingAppointments->filter(function ($appointment) use ($slotStart, $slotEnd) {
+                $appointmentStart = Carbon::parse($appointment->start_time);
+                $appointmentEnd = Carbon::parse($appointment->end_time);
+
+                // Verificar si hay solapamiento
+                return $slotStart->lessThan($appointmentEnd) && $appointmentStart->lessThan($slotEnd);
+            })->count();
+
+            // Verificar disponibilidad según max_appointments
+            $available = max(0, $maxAppointmentsPerHour - $overlappingAppointments);
+
+            if ($available > 0) {
+                $availableSlots[] = [
+                    'startTime' => $slotStart->format('H:i'),
+                    'endTime' => $slotEnd->format('H:i'),
+                    'available' => $available
+                ];
+            }
+
+            $currentTime->addMinutes($slotInterval);
         }
 
         return response()->json(['availableSlots' => $availableSlots]);
