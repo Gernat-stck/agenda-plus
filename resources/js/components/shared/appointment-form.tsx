@@ -1,3 +1,5 @@
+"use client"
+
 import { useState, useEffect } from "react"
 import { format, addMinutes } from "date-fns"
 import { es } from "date-fns/locale"
@@ -19,6 +21,7 @@ import type { category } from "@/types/services"
 import type { CalendarConfig, SpecialDate, TimeSlot } from "@/types/calendar"
 import { AvailableTimeSlots } from "../appointments/AvailableTimeSlots"
 import { Button } from "../ui/button"
+import { Input } from "../ui/input"
 
 // Modificar la interfaz para incluir isSubmitting
 interface AppointmentFormProps {
@@ -34,6 +37,7 @@ interface AppointmentFormProps {
     config: CalendarConfig
     specialDates: SpecialDate[]
     isSubmitting?: boolean
+    slotUrl: string
 }
 
 export function AppointmentForm({
@@ -43,10 +47,13 @@ export function AppointmentForm({
     selectedDate,
     clientId,
     clientName,
+    clientPhone,
+    clientEmail,
     category,
     config,
     specialDates,
     isSubmitting,
+    slotUrl,
 }: AppointmentFormProps) {
     const [formData, setFormData] = useState<Cita>({
         appointment_id: "",
@@ -56,10 +63,13 @@ export function AppointmentForm({
         end_time: new Date(new Date().getTime() + 60 * 60 * 1000),
         status: "pendiente",
         payment_type: "",
+        client_name: clientName || "",
+        client_phone: clientPhone || "",
+        client_email: clientEmail || "",
     })
 
     const [selectedCategory, setSelectedCategory] = useState<string>("")
-    const [step, setStep] = useState<number>(1)
+    const [step, setStep] = useState<number>(0)
     const [isLoading, setIsLoading] = useState<boolean>(false)
 
     // Añadir estos nuevos estados para los slots disponibles
@@ -99,6 +109,8 @@ export function AppointmentForm({
                 payment_type: "",
                 client_name: clientName || "",
                 client_id: clientId || "",
+                client_phone: clientPhone || "",
+                client_email: clientEmail || "",
             })
         } else {
             const startTime = new Date()
@@ -112,10 +124,13 @@ export function AppointmentForm({
                 end_time: endTime,
                 status: "pendiente",
                 payment_type: "",
+                client_name: clientName || "",
+                client_phone: clientPhone || "",
+                client_email: clientEmail || "",
             })
         }
-    }, [appointment, selectedDate, clientName, clientId, category])
-
+    }, [appointment, selectedDate, clientName, clientId, clientPhone, clientEmail, category])
+    console.log(formData)
     // Función de utilidad para obtener la duración del servicio
     const getServiceDuration = (serviceId: string): number => {
         if (!serviceId) return 60 // Duración por defecto
@@ -133,7 +148,7 @@ export function AppointmentForm({
         setLoadingSlots(true)
         try {
             const dateStr = format(date, "yyyy-MM-dd")
-            const response = await axios.get(`/available/slots/${dateStr}`)
+            const response = await axios.get(`${slotUrl}/${dateStr}/${config.user_id}`)
 
             // Manejar diferentes formatos de respuesta
             if (Array.isArray(response.data)) {
@@ -143,11 +158,19 @@ export function AppointmentForm({
             } else if (response.data && response.data.availableSlots) {
                 setAvailableSlots(response.data.availableSlots)
             } else {
-                console.error('Formato de respuesta inesperado:', response.data)
+                console.error("Formato de respuesta inesperado:", response.data)
+                toast.error("Error al cargar los horarios disponibles", {
+                    description: "No se pudieron cargar los horarios disponibles para la fecha seleccionada",
+                    duration: 3000,
+                })
                 setAvailableSlots([])
             }
         } catch (error) {
             console.error("Error al cargar los horarios disponibles:", error)
+            toast.error("Error al cargar los horarios disponibles", {
+                description: "No se pudieron cargar los horarios disponibles para la fecha seleccionada",
+                duration: 3000,
+            })
             setAvailableSlots([])
         } finally {
             setLoadingSlots(false)
@@ -261,7 +284,7 @@ export function AppointmentForm({
     }
 
     const handleSlotSelect = (startTime: string, endTime: string) => {
-        const [startHour, startMinute] = startTime.split(':').map(n => parseInt(n))
+        const [startHour, startMinute] = startTime.split(":").map((n) => Number.parseInt(n))
         const newDate = new Date(formData.start_time)
         newDate.setHours(startHour, startMinute, 0, 0)
 
@@ -283,10 +306,19 @@ export function AppointmentForm({
         }
 
         // 1. Validar campos obligatorios
-        const hasErrors = !formData.title || !formData.service_id || !formData.payment_type
+        const hasErrors =
+            !formData.title ||
+            !formData.service_id ||
+            !formData.payment_type ||
+            !formData.client_name ||
+            !formData.client_email ||
+            !formData.client_phone
         !formData.title && toast.error("El título es obligatorio")
         !formData.service_id && toast.error("Debe seleccionar un servicio")
         !formData.payment_type && toast.error("Debe seleccionar una forma de pago")
+        !formData.client_name && toast.error("Debe ingresar su nombre")
+        !formData.client_email && toast.error("Debe ingresar su correo electrónico")
+        !formData.client_phone && toast.error("Debe ingresar su número de teléfono")
 
         if (hasErrors) {
             setIsLoading(false)
@@ -377,6 +409,21 @@ export function AppointmentForm({
     }
 
     const nextStep = () => {
+        if (step === 0) {
+            if (!formData.client_name) {
+                toast.error("Debe ingresar su nombre para continuar")
+                return
+            }
+            if (!formData.client_email) {
+                toast.error("Debe ingresar su correo electrónico para continuar")
+                return
+            }
+            if (!formData.client_phone) {
+                toast.error("Debe ingresar su número de teléfono para continuar")
+                return
+            }
+        }
+
         if (step === 1 && !formData.service_id) {
             toast.error("Debe seleccionar un servicio para continuar")
             return
@@ -397,7 +444,7 @@ export function AppointmentForm({
     }
 
     const prevStep = () => {
-        setStep((prev) => Math.max(prev - 1, 1))
+        setStep((prev) => Math.max(prev - 1, 0))
     }
 
     return (
@@ -410,11 +457,22 @@ export function AppointmentForm({
             <CardContent className="p-6">
                 {/* Indicador de pasos */}
                 <div className="flex justify-between mb-6">
+                    <div className={`flex flex-col items-center ${step >= 0 ? "text-primary" : "text-muted-foreground"}`}>
+                        <div
+                            className={`w-8 h-8 rounded-full flex items-center justify-center mb-1 ${step >= 0 ? "bg-primary text-primary-foreground" : "bg-muted"}`}
+                        >
+                            1
+                        </div>
+                        <span className="text-xs">Datos</span>
+                    </div>
+                    <div className="grow mx-2 flex items-center">
+                        <div className={`h-0.5 w-full ${step >= 1 ? "bg-primary" : "bg-muted"}`}></div>
+                    </div>
                     <div className={`flex flex-col items-center ${step >= 1 ? "text-primary" : "text-muted-foreground"}`}>
                         <div
                             className={`w-8 h-8 rounded-full flex items-center justify-center mb-1 ${step >= 1 ? "bg-primary text-primary-foreground" : "bg-muted"}`}
                         >
-                            1
+                            2
                         </div>
                         <span className="text-xs">Servicio</span>
                     </div>
@@ -425,7 +483,7 @@ export function AppointmentForm({
                         <div
                             className={`w-8 h-8 rounded-full flex items-center justify-center mb-1 ${step >= 2 ? "bg-primary text-primary-foreground" : "bg-muted"}`}
                         >
-                            2
+                            3
                         </div>
                         <span className="text-xs">Fecha/Hora</span>
                     </div>
@@ -436,11 +494,56 @@ export function AppointmentForm({
                         <div
                             className={`w-8 h-8 rounded-full flex items-center justify-center mb-1 ${step >= 3 ? "bg-primary text-primary-foreground" : "bg-muted"}`}
                         >
-                            3
+                            4
                         </div>
                         <span className="text-xs">Confirmar</span>
                     </div>
                 </div>
+
+                {/* Paso 0: Información del usuario */}
+                {step === 0 && (
+                    <div className="space-y-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="client_name" className="text-sm font-medium">
+                                Nombre completo
+                            </Label>
+                            <Input
+                                id="client_name"
+                                value={formData.client_name || ""}
+                                onChange={(e) => setFormData({ ...formData, client_name: e.target.value })}
+                                placeholder="Ingrese su nombre completo"
+                                required
+                            />
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label htmlFor="client_email" className="text-sm font-medium">
+                                Correo electrónico
+                            </Label>
+                            <Input
+                                id="client_email"
+                                type="email"
+                                value={formData.client_email || ""}
+                                onChange={(e) => setFormData({ ...formData, client_email: e.target.value })}
+                                placeholder="ejemplo@correo.com"
+                                required
+                            />
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label htmlFor="client_phone" className="text-sm font-medium">
+                                Número de teléfono
+                            </Label>
+                            <Input
+                                id="client_phone"
+                                value={formData.client_phone || ""}
+                                onChange={(e) => setFormData({ ...formData, client_phone: e.target.value })}
+                                placeholder="Ej: 555-123-4567"
+                                required
+                            />
+                        </div>
+                    </div>
+                )}
 
                 {/* Paso 1: Selección de servicio */}
                 {step === 1 && (
@@ -679,12 +782,14 @@ export function AppointmentForm({
                             </div>
                         </div>
 
-                        {clientName && (
+                        {!clientName && (
                             <div className="mt-4 flex items-start gap-2 p-3 bg-blue-50 text-blue-700 rounded-lg">
                                 <Info className="h-5 w-5 flex-shrink-0 mt-0.5" />
                                 <div>
                                     <p className="text-sm font-medium">Información del cliente</p>
-                                    <p className="text-xs">{clientName}</p>
+                                    <p className="text-xs">Nombre: {formData.client_name}</p>
+                                    <p className="text-xs">Email: {formData.client_email}</p>
+                                    <p className="text-xs">Teléfono: {formData.client_phone}</p>
                                 </div>
                             </div>
                         )}
@@ -693,7 +798,7 @@ export function AppointmentForm({
             </CardContent>
 
             <CardFooter className="flex justify-between p-6 pt-0">
-                {step > 1 ? (
+                {step > 0 ? (
                     <Button variant="outline" onClick={prevStep}>
                         Atrás
                     </Button>
@@ -706,18 +811,15 @@ export function AppointmentForm({
                 {step < 3 ? (
                     <Button onClick={nextStep}>Continuar</Button>
                 ) : (
-                    <Button
-                        type="submit"
-                        onClick={handleSubmit}
-                        disabled={isSubmitting}
-                        className="w-full"
-                    >
+                    <Button type="submit" onClick={handleSubmit} disabled={isSubmitting}>
                         {isSubmitting ? (
                             <>
                                 <span className="animate-spin mr-2">⏳</span>
                                 Guardando...
                             </>
-                        ) : "Guardar Cita"}
+                        ) : (
+                            "Guardar Cita"
+                        )}
                     </Button>
                 )}
             </CardFooter>
