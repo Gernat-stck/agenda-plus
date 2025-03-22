@@ -130,7 +130,6 @@ export function AppointmentForm({
             })
         }
     }, [appointment, selectedDate, clientName, clientId, clientPhone, clientEmail, category])
-    console.log(formData)
     // Función de utilidad para obtener la duración del servicio
     const getServiceDuration = (serviceId: string): number => {
         if (!serviceId) return 60 // Duración por defecto
