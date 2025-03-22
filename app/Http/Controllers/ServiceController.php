@@ -14,6 +14,7 @@ class ServiceController extends Controller
             'services' => $services,
         ]);
     }
+
     private function generateServiceId($user_id, $service_name)
     {
         $userInitials = strtoupper(substr($user_id, 0, 2));
@@ -22,6 +23,7 @@ class ServiceController extends Controller
 
         return $userInitials . $serviceInitials . $randomNumber;
     }
+
     public function store(ServiceRequest $data)
     {
         $validateData = $data->validated();
@@ -31,10 +33,19 @@ class ServiceController extends Controller
             auth()->user()->user_id,
             $validateData['name']
         );
+
         $service = Service::create(array_merge($validateData, [
             'service_id' => $serviceId,
         ]));
-        return redirect()->route('services.index')->with('success', 'Servicio creado correctamente.');
+
+        // Siempre devolver una respuesta Inertia
+        return Inertia::render('Services/Index', [
+            'services' => Service::where('user_id', auth()->user()->user_id)->get(),
+            'flash' => [
+                'success' => 'Servicio creado correctamente.',
+                'newService' => $service // Pasar el nuevo servicio para que el frontend pueda identificarlo
+            ]
+        ]);
     }
 
     public function update(ServiceRequest $request, $serviceId)
@@ -45,7 +56,14 @@ class ServiceController extends Controller
 
         $service->update($request->all());
 
-        return redirect()->route('services.index')->with('success', 'Servicio actualizado correctamente.');
+        // Siempre devolver una respuesta Inertia
+        return Inertia::render('Services/Index', [
+            'services' => Service::where('user_id', auth()->user()->user_id)->get(),
+            'flash' => [
+                'success' => 'Servicio actualizado correctamente.',
+                'updatedService' => $service->fresh() // Pasar el servicio actualizado
+            ]
+        ]);
     }
 
     public function destroy($serviceId)
@@ -53,9 +71,11 @@ class ServiceController extends Controller
         $service = Service::where('service_id', $serviceId)
             ->where('user_id', auth()->user()->user_id)
             ->firstOrFail();
+
         $service->delete();
 
+        // Siempre devolver una respuesta Inertia
         return redirect()->route('services.index')->with('success', 'Servicio eliminado correctamente.');
-    }
 
+    }
 }
