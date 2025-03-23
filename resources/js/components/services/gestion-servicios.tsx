@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { Handshake } from "lucide-react";
 import { router, usePage } from "@inertiajs/react";
 import { type Servicio } from "@/types/services";
-import { ServicioDialog } from "./service-dialog";
 import { TablaServicios } from "./tabla-servicios";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { NoData } from "../shared/no-data";
@@ -11,6 +10,8 @@ import { useAuth } from "@/context/AuthContext";
 import { FiltersBar } from "./filters-bar";
 import { Pagination } from "../shared/pagination";
 import ConfirmActionDialog from "../shared/confirm-dialog";
+import { EntityForm } from "../shared/clients/entity-form"
+import { ServicioFormFields } from "./servicio-form-fields";
 
 export default function GestionServicios({ services }: { services: Servicio[] }) {
     const { user } = useAuth();
@@ -23,6 +24,7 @@ export default function GestionServicios({ services }: { services: Servicio[] })
     const [isCreating, setIsCreating] = useState(false);
     const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
     const [serviceIdToDelete, setServiceIdToDelete] = useState<string | null>(null);
+    const [newCategoria, setNewCategoria] = useState("");
 
     const { flash } = usePage().props as any;
 
@@ -52,6 +54,32 @@ export default function GestionServicios({ services }: { services: Servicio[] })
             });
         }
     }, [flash]);
+
+    // Función para añadir nueva categoría
+    const addNewCategoria = () => {
+        if (!newCategoria.trim()) {
+            toast.error("Ingrese un nombre para la categoría");
+            return;
+        }
+
+        if (categorias.includes(newCategoria.trim())) {
+            toast.error("Esta categoría ya existe");
+            return;
+        }
+
+        setCategorias([...categorias, newCategoria.trim()]);
+
+        // Si hay un servicio en edición, actualizar su categoría
+        if (editingServicio) {
+            setEditingServicio({
+                ...editingServicio,
+                category: newCategoria.trim()
+            });
+        }
+
+        setNewCategoria("");
+        toast.success("Categoría añadida");
+    };
 
     const filteredServicios = servicios.filter(
         (servicio) =>
@@ -88,6 +116,7 @@ export default function GestionServicios({ services }: { services: Servicio[] })
         setIsModalOpen(false);
         setEditingServicio(null);
         setIsCreating(false);
+        setNewCategoria("");
     };
 
     const handleSave = (servicio: Servicio) => {
@@ -103,7 +132,6 @@ export default function GestionServicios({ services }: { services: Servicio[] })
         setServiceIdToDelete(id);
         setIsConfirmDialogOpen(true);
     };
-
 
     const confirmDelete = () => {
         if (!serviceIdToDelete) return;
@@ -127,6 +155,7 @@ export default function GestionServicios({ services }: { services: Servicio[] })
             }
         });
     };
+
     return (
         <Card className="container mx-auto p-6 border-0">
             <CardHeader className="pb-0">
@@ -168,14 +197,20 @@ export default function GestionServicios({ services }: { services: Servicio[] })
                 )}
 
                 {isModalOpen && (
-                    <ServicioDialog
-                        servicio={editingServicio}
-                        open={isModalOpen}
+                    <EntityForm
+                        entity={editingServicio}
+                        entityType="service"
+                        fields={ServicioFormFields({
+                            categorias,
+                            newCategoria,
+                            setNewCategoria,
+                            addNewCategoria
+                        })}
+                        isOpen={isModalOpen}
+                        isCreating={isCreating}
                         onOpenChange={setIsModalOpen}
                         onSave={handleSave}
-                        categorias={categorias}
-                        setCategorias={setCategorias}
-                        isCreating={isCreating}
+                        onCancel={closeModal}
                     />
                 )}
                 {isConfirmDialogOpen && (
