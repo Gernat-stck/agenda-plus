@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import ConfirmDeleteDialog from "../shared/confirm-dialog"
 import { NoData } from "../shared/no-data"
+import { useConfirmation } from "@/hooks/use-confirmation"
 interface DetallesClienteProps {
     cliente: Cliente
     onClose: () => void
@@ -33,8 +34,13 @@ export default function DetallesCliente({
 }: DetallesClienteProps) {
     const [editedCliente, setEditedCliente] = useState<Cliente>(cliente)
     const [citaToDelete, setCitaToDelete] = useState<string | null>(null)
-    const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false)
-    const [showFinalDeleteConfirmation, setShowFinalDeleteConfirmation] = useState(false)
+    const {
+        showConfirmation,
+        showFinalConfirmation,
+        startConfirmation,
+        proceedToFinalConfirmation,
+        cancelConfirmation
+    } = useConfirmation();
 
     useEffect(() => {
         setEditedCliente(cliente)
@@ -70,26 +76,22 @@ export default function DetallesCliente({
 
     const handleDeleteCitaClick = (citaId: string) => {
         setCitaToDelete(citaId)
-        setShowDeleteConfirmation(true)
+        startConfirmation()
     }
 
-    const handleDeleteConfirm = () => {
-        setShowDeleteConfirmation(false)
-        setShowFinalDeleteConfirmation(true)
-    }
+    const handleDeleteConfirm = proceedToFinalConfirmation;
 
     const handleFinalDeleteConfirm = () => {
         if (citaToDelete) {
             onDeleteCita(cliente.client_id, citaToDelete)
             setCitaToDelete(null)
         }
-        setShowFinalDeleteConfirmation(false)
+        cancelConfirmation()
     }
 
     const handleDeleteCancel = () => {
         setCitaToDelete(null)
-        setShowDeleteConfirmation(false)
-        setShowFinalDeleteConfirmation(false)
+        cancelConfirmation()
     }
     return (
         <>
@@ -208,17 +210,16 @@ export default function DetallesCliente({
 
             {/* Primera confirmación para eliminar cita */}
             <ConfirmDeleteDialog
-                open={showDeleteConfirmation}
-                onOpenChange={setShowDeleteConfirmation}
+                open={showConfirmation}
+                onOpenChange={startConfirmation}
                 onConfirm={handleDeleteConfirm}
                 onCancel={handleDeleteCancel}
                 displayMessage="esta cita"
             />
 
-            {/* Segunda confirmación para eliminar cita */}
             <ConfirmDeleteDialog
-                open={showFinalDeleteConfirmation}
-                onOpenChange={setShowFinalDeleteConfirmation}
+                open={showFinalConfirmation}
+                onOpenChange={cancelConfirmation}
                 onConfirm={handleFinalDeleteConfirm}
                 onCancel={handleDeleteCancel}
                 displayMessage="esta cita"

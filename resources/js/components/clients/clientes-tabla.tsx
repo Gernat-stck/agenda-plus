@@ -11,6 +11,7 @@ import { format } from "date-fns"
 import { CalendarConfig, SpecialDate } from "@/types/calendar"
 import { BusquedaClientes } from "./busqueda-clientes"
 import { TablaClientes } from "./tabla-clientes"
+import { useConfirmation } from "@/hooks/use-confirmation"
 
 export default function ListaClientes(
     {
@@ -37,14 +38,18 @@ export default function ListaClientes(
     const [isEditing, setIsEditing] = useState(false)
     const [isCreating, setIsCreating] = useState(false)
     const [clienteToDelete, setClienteToDelete] = useState<Cliente | null>(null)
-    const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false)
-    const [showFinalDeleteConfirmation, setShowFinalDeleteConfirmation] = useState(false)
     const [selectedDate, setSelectedDate] = useState<Date | null>(null)
     const [selectedAppointment, setSelectedAppointment] = useState<Cita | null>(null)
     const [isAppointmentDialogOpen, setIsAppointmentDialogOpen] = useState(false)
     const [isCreatingAppointment, setIsCreatingAppointment] = useState(false)
     const [isViewDetails, setIsViewDetails] = useState(false)
-
+    const {
+        showConfirmation,
+        showFinalConfirmation,
+        startConfirmation,
+        proceedToFinalConfirmation,
+        cancelConfirmation
+    } = useConfirmation();
     // Filtramos los clientes según la búsqueda
     const filteredClientes = clientes.filter(
         (cliente) =>
@@ -160,13 +165,9 @@ export default function ListaClientes(
 
     const handleDeleteClick = (cliente: Cliente) => {
         setClienteToDelete(cliente)
-        setShowDeleteConfirmation(true)
+        startConfirmation()
     }
-
-    const handleDeleteConfirm = () => {
-        setShowDeleteConfirmation(false)
-        setShowFinalDeleteConfirmation(true)
-    }
+    const handleDeleteConfirm = proceedToFinalConfirmation;
 
     const handleFinalDeleteConfirm = () => {
         if (!clienteToDelete) return toast.error("Error al eliminar el cliente", {
@@ -178,7 +179,7 @@ export default function ListaClientes(
             onSuccess: () => {
                 setClientes(clientes.filter((c) => c.client_id !== clienteToDelete.client_id))
                 setClienteToDelete(null)
-                setShowFinalDeleteConfirmation(false)
+                cancelConfirmation()
                 toast.success("Cliente eliminado", {
                     description: `El cliente ha sido eliminado correctamente.`,
                     duration: 3000,
@@ -199,8 +200,7 @@ export default function ListaClientes(
 
     const handleDeleteCancel = () => {
         setClienteToDelete(null)
-        setShowDeleteConfirmation(false)
-        setShowFinalDeleteConfirmation(false)
+        cancelConfirmation()
     }
 
     const handleDeleteCita = (clienteclient_id: string, citaclient_id: string) => {
@@ -329,21 +329,20 @@ export default function ListaClientes(
                         onDeleteCita={handleDeleteCita}
                     />
                 )}
-
                 <ConfirmDeleteDialog
-                    open={showDeleteConfirmation}
-                    onOpenChange={setShowDeleteConfirmation}
+                    open={showConfirmation}
+                    onOpenChange={startConfirmation}
                     onConfirm={handleDeleteConfirm}
                     onCancel={handleDeleteCancel}
-                    displayMessage={`al cliente ${clienteToDelete?.name} y todos sus datos`}
+                    displayMessage="este cliente"
                 />
 
                 <ConfirmDeleteDialog
-                    open={showFinalDeleteConfirmation}
-                    onOpenChange={setShowFinalDeleteConfirmation}
+                    open={showFinalConfirmation}
+                    onOpenChange={cancelConfirmation}
                     onConfirm={handleFinalDeleteConfirm}
                     onCancel={handleDeleteCancel}
-                    displayMessage={`al cliente ${clienteToDelete?.name}`}
+                    displayMessage="este cliente"
                     finalConfirmation={true}
                 />
 
