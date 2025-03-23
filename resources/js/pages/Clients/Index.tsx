@@ -1,7 +1,7 @@
 import AppSidebarLayout from "@/layouts/app/app-sidebar-layout";
 import { BreadcrumbItem } from "@/types";
 import { Head } from "@inertiajs/react";
-import ListaClientes from "@/components/clients/clientes-tabla";
+import ListaClientes from "@/components/clients/clientes-index";
 import { Cliente } from "@/types/clients";
 import { category } from "@/types/services";
 import { CalendarConfig, SpecialDate } from "@/types/calendar";

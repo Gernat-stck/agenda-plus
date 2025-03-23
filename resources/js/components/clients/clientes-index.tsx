@@ -11,6 +11,9 @@ import { EntityForm } from "../shared/clients/entity-form"
 import { ClienteFormFields } from "./clientes-form-field"
 import { HistorialCitas } from "./historial-citas"
 import { useClienteCrud } from "@/hooks/use-cliente-crud"
+import { NoData } from "../shared/no-data";
+import { User2Icon } from "lucide-react"
+
 
 export default function ListaClientes({
     clients,
@@ -24,7 +27,7 @@ export default function ListaClientes({
     specialDates: SpecialDate[]
 }) {
     // Usamos el hook personalizado para el CRUD
-    const { 
+    const {
         filteredClientes,
         currentPage,
         searchTerm,
@@ -123,27 +126,26 @@ export default function ListaClientes({
         setIsEditing(false);
         setIsViewDetails(false);
     }
-    
+
     const handleCreateSaveCliente = (newCliente: Cliente) => {
         handleCreate(newCliente);
         setIsCreating(false);
         setSelectedCliente(null);
     }
-    
+
     const handleDeleteClienteClick = (cliente: Cliente) => {
         initDeleteCliente(cliente);
     }
-    
+
     const handleDeleteCitaClick = (clienteId: string, citaId: string) => {
         initDeleteCita(clienteId, citaId);
     }
-
     return (
         <Card className="container mx-auto p-3 border-0 shadow-none ">
             <CardHeader className="pb-0">
                 <CardTitle className="text-3xl font-bold">Clientes</CardTitle>
             </CardHeader>
-            <CardContent className="p-6">
+            <CardContent className="p-5">
                 {/* Componente de búsqueda y botón de crear */}
                 <BusquedaClientes
                     searchTerm={searchTerm}
@@ -152,17 +154,25 @@ export default function ListaClientes({
                 />
 
                 {/* Tabla de clientes con paginación */}
-                <TablaClientes
-                    clientes={filteredClientes}
-                    currentPage={currentPage}
-                    itemsPerPage={8}
-                    onPageChange={setCurrentPage}
-                    onViewDetails={openModal}
-                    onEdit={handleEdit}
-                    onDelete={handleDeleteClienteClick}
-                    onCreateAppointment={handleCreateAppointment}
-                />
 
+                {clients.length === 0 ? (
+                    <NoData
+                        title="No hay Clientes"
+                        description="No se han registrado clientes en el sistema."
+                        icon={<User2Icon size={64} />}
+                    />
+                ) : (
+                    <TablaClientes
+                        clientes={filteredClientes}
+                        currentPage={currentPage}
+                        itemsPerPage={6}
+                        onPageChange={setCurrentPage}
+                        onViewDetails={openModal}
+                        onEdit={handleEdit}
+                        onDelete={handleDeleteClienteClick}
+                        onCreateAppointment={handleCreateAppointment}
+                    />
+                )}
                 {/* Modales y diálogos */}
                 {selectedCliente && (isViewDetails || isCreating) && (
                     <EntityForm
@@ -199,7 +209,7 @@ export default function ListaClientes({
                 <ConfirmDeleteDialog
                     open={showFinalConfirmation}
                     onOpenChange={cancelConfirmation}
-                    onConfirm={handleDeleteCliente} 
+                    onConfirm={handleDeleteCliente}
                     onCancel={cancelConfirmation}
                     displayMessage="este cliente"
                     finalConfirmation={true}
