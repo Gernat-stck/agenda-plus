@@ -3,14 +3,12 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAppointmentForm } from '@/hooks/use-appointment-form';
-import type { CalendarConfig, SpecialDate } from '@/types/calendar';
 import type { Cita } from '@/types/clients';
-import type { category } from '@/types/services';
 import { useEffect } from 'react';
 import { toast } from 'sonner';
+import { AppointmentDialogProps } from '../../types/appointment-dialog';
 import { FormField } from '../ui/form-field';
 import { CategoryServiceSelect } from './category-service-select';
-
 // Importar las nuevas utilidades
 import { useAvailableSlots } from '@/hooks/use-available-slots';
 import { isDateAvailable } from '@/utils/appointment-validations';
@@ -19,21 +17,6 @@ import { getServiceDuration } from '@/utils/service-utils';
 
 // Importar el nuevo componente
 import { DateTimePicker } from '@/components/ui/date-time-picker';
-
-interface AppointmentDialogProps {
-    isOpen: boolean;
-    onClose: () => void;
-    onSave: (appointment: Cita) => void;
-    appointment: Cita | null;
-    selectedDate: Date | null;
-    clientId: string;
-    clientName: string;
-    clientPhone: string;
-    clientEmail: string;
-    category: category[];
-    config: CalendarConfig;
-    specialDates: SpecialDate[];
-}
 
 export function AppointmentDialog({
     isOpen,

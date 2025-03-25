@@ -190,3 +190,15 @@
 .dark .custom-scrollbar::-webkit-scrollbar-thumb {
     background: #666;
 }
+
+.fc-scroller {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-border) var(--color-background);
+}
+.fc-scroller::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+.fc-scroller::-webkit-scrollbar-track {
+    background: var(--color-background);
+}
