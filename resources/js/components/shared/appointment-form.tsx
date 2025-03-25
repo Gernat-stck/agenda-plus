@@ -4,7 +4,7 @@ import { Banknote, CalendarIcon, CheckCircle2, CreditCard, Info } from 'lucide-r
 import { useEffect, useState } from 'react';
 
 import { useAvailableSlots } from '@/hooks/use-available-slots';
-import { getServiceDuration, getServiceName, getServicePrice } from '@/utils/service-utils';
+import { getServiceDuration, getServiceInfo, getServiceName, getServicePrice } from '@/utils/service-utils';
 
 import { Calendar } from '@/components/ui/calendar';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -18,6 +18,7 @@ import { toast } from 'sonner';
 import type { CalendarConfig, SpecialDate } from '@/types/calendar';
 import type { Cita } from '@/types/clients';
 import type { category } from '@/types/services';
+import { isDateAvailable, isTimeWithinBusinessHours } from '@/utils/appointment-validations';
 import { formatForDisplay, formatTimeRange } from '@/utils/date-utils';
 import { AvailableTimeSlots } from '../appointments/AvailableTimeSlots';
 import { Button } from '../ui/button';
@@ -148,7 +149,7 @@ export function AppointmentForm({
         newDate.setHours(currentHours, currentMinutes, 0, 0);
 
         // Obtener la duración del servicio seleccionado
-        const serviceDuration = getServiceDuration(formData.service_id);
+        const serviceDuration = getServiceDuration(formData.service_id, category);
 
         // Calcular nueva hora de finalización
         const newEndDate = addMinutes(newDate, serviceDuration);
@@ -594,7 +595,7 @@ export function AppointmentForm({
                                 </div>
                                 <div className="text-xs">
                                     <span className="text-muted-foreground">Duración:</span>
-                                    <div className="font-medium">{getServiceDuration(formData.service_id)} minutos</div>
+                                    <div className="font-medium">{getServiceDuration(formData.service_id, category)} minutos</div>
                                 </div>
                                 <div className="text-xs">
                                     <span className="text-muted-foreground">Fecha:</span>

@@ -1,13 +1,13 @@
-import { useState, useEffect } from "react";
-import { addMinutes, format } from "date-fns";
-import { toast } from "sonner";
-import type { Cita } from "@/types/clients";
-import type { category } from "@/types/services";
-import type { CalendarConfig, SpecialDate } from "@/types/calendar";
+import type { CalendarConfig, SpecialDate } from '@/types/calendar';
+import type { Cita } from '@/types/clients';
+import type { category } from '@/types/services';
+import { addMinutes } from 'date-fns';
+import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 
 // Importar nuevas utilidades
-import { isDateAvailable, isTimeWithinBusinessHours } from "@/utils/appointment-validations";
-import { getServiceDuration, getServiceName } from "@/utils/service-utils";
+import { isDateAvailable, isTimeWithinBusinessHours } from '@/utils/appointment-validations';
+import { getServiceDuration, getServiceName } from '@/utils/service-utils';
 
 interface UseAppointmentFormProps {
     appointment: Cita | null;
@@ -19,15 +19,7 @@ interface UseAppointmentFormProps {
     specialDates: SpecialDate[];
 }
 
-export function useAppointmentForm({ 
-    appointment, 
-    selectedDate, 
-    clientId, 
-    clientName, 
-    category, 
-    config, 
-    specialDates 
-}: UseAppointmentFormProps) {
+export function useAppointmentForm({ appointment, selectedDate, clientId, clientName, category, config, specialDates }: UseAppointmentFormProps) {
     const [formData, setFormData] = useState<Cita>({
         appointment_id: '',
         service_id: '',
@@ -51,7 +43,7 @@ export function useAppointmentForm({
             const startTime = new Date(selectedDate);
             const endTime = new Date(startTime);
             endTime.setHours(startTime.getHours() + 1);
-            
+
             setFormData({
                 appointment_id: '',
                 service_id: '',
@@ -92,19 +84,19 @@ export function useAppointmentForm({
         // Verificar disponibilidad de la fecha
         const dateResult = isDateAvailable(formData.start_time, config, specialDates);
         if (!dateResult.isAvailable) {
-            toast.error("Fecha no disponible", {
+            toast.error('Fecha no disponible', {
                 description: dateResult.errorMessage,
-                duration: 3000
+                duration: 3000,
             });
             return false;
         }
-        
+
         // Verificar horario de la cita
         const timeResult = isTimeWithinBusinessHours(formData.start_time, config);
         if (!timeResult.isWithin) {
-            toast.error("Horario no disponible", {
+            toast.error('Horario no disponible', {
                 description: timeResult.errorMessage,
-                duration: 3000
+                duration: 3000,
             });
             return false;
         }
@@ -169,7 +161,7 @@ export function useAppointmentForm({
         });
     };
 
-    const handlePaymentChange = (value: string) => {
+    const handlePaymentChange = (value: '' | 'tarjeta' | 'efectivo') => {
         setFormData({
             ...formData,
             payment_type: value,
