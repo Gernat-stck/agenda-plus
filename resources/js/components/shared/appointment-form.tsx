@@ -1,18 +1,14 @@
 import { addMinutes } from 'date-fns';
-import { es } from 'date-fns/locale';
-import { Banknote, CalendarIcon, CheckCircle2, CreditCard, Info } from 'lucide-react';
+import { Banknote, CheckCircle2, CreditCard, Info } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 import { useAvailableSlots } from '@/hooks/use-available-slots';
 import { getServiceDuration, getServiceInfo, getServiceName, getServicePrice } from '@/utils/service-utils';
 
-import { Calendar } from '@/components/ui/calendar';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
-import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
 import type { CalendarConfig, SpecialDate } from '@/types/calendar';
@@ -20,8 +16,8 @@ import type { Cita } from '@/types/clients';
 import type { category } from '@/types/services';
 import { isDateAvailable, isTimeWithinBusinessHours } from '@/utils/appointment-validations';
 import { formatForDisplay, formatTimeRange } from '@/utils/date-utils';
-import { AvailableTimeSlots } from '../appointments/AvailableTimeSlots';
 import { Button } from '../ui/button';
+import { DateTimePicker } from '../ui/date-time-picker';
 import { Input } from '../ui/input';
 // Modificar la interfaz para incluir isSubmitting
 interface AppointmentFormProps {
@@ -531,82 +527,66 @@ export function AppointmentForm({
                 {/* Paso 2: Selección de fecha y hora */}
                 {step === 2 && (
                     <div className="space-y-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="date" className="text-sm font-medium">
-                                Fecha de la cita
-                            </Label>
-                            <Popover>
-                                <PopoverTrigger asChild>
-                                    <Button
-                                        variant="outline"
-                                        className={cn('w-full justify-start text-left font-normal', !formData.start_time && 'text-muted-foreground')}
-                                    >
-                                        <CalendarIcon className="mr-2 h-4 w-4" />
-                                        {formData.start_time ? formatForDisplay(formData.start_time) : <span>Selecciona una fecha</span>}
-                                    </Button>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-auto p-0">
-                                    <Calendar
-                                        mode="single"
-                                        selected={formData.start_time}
-                                        onSelect={handleDateChange}
-                                        autoFocus
-                                        disabled={(date) => {
-                                            const result = isDateAvailable(date, config, specialDates);
-                                            return !result.isAvailable;
-                                        }}
-                                        locale={es}
-                                        weekStartsOn={0}
-                                    />
-                                </PopoverContent>
-                            </Popover>
-                        </div>
+                        <DateTimePicker
+                            date={formData.start_time}
+                            onDateChange={(newDate) => {
+                                // Mantener la misma hora al cambiar la fecha
+                                const updatedDate = new Date(newDate);
+                                const serviceDuration = getServiceDuration(formData.service_id, category);
+                                const newEndDate = addMinutes(updatedDate, serviceDuration);
 
-                        {/* Reemplazar TimePicker con AvailableTimeSlots */}
-                        <div className="space-y-2">
-                            <Label htmlFor="time" className="text-sm font-medium">
-                                Hora de la cita
-                            </Label>
+                                setFormData({
+                                    ...formData,
+                                    start_time: updatedDate,
+                                    end_time: newEndDate,
+                                });
 
-                            {loadingSlots ? (
-                                <div className="flex justify-center rounded-md border py-4">
-                                    <div className="border-primary h-6 w-6 animate-spin rounded-full border-b-2"></div>
-                                </div>
-                            ) : (
-                                <AvailableTimeSlots
-                                    date={formData.start_time}
-                                    onSelectSlot={handleSlotSelect}
-                                    availableSlots={availableSlots}
-                                    className="mt-2 rounded-md border p-2"
-                                />
-                            )}
+                                loadAvailableSlots(updatedDate);
+                            }}
+                            onTimeChange={(newTime) => {
+                                // Actualizar hora manteniendo la misma fecha
+                                const serviceDuration = getServiceDuration(formData.service_id, category);
+                                const newEndDate = addMinutes(newTime, serviceDuration);
 
-                            <p className="text-muted-foreground mt-1 text-xs">
-                                Horario disponible: {config.start_time} - {config.end_time}
-                            </p>
-                        </div>
-
-                        <div className="bg-muted/30 mt-4 rounded-lg p-3">
-                            <div className="text-sm font-medium">Resumen de la cita:</div>
-                            <div className="mt-2 grid grid-cols-2 gap-2">
-                                <div className="text-xs">
-                                    <span className="text-muted-foreground">Servicio:</span>
-                                    <div className="font-medium">{getServiceName(formData.service_id, category)}</div>
-                                </div>
-                                <div className="text-xs">
-                                    <span className="text-muted-foreground">Duración:</span>
-                                    <div className="font-medium">{getServiceDuration(formData.service_id, category)} minutos</div>
-                                </div>
-                                <div className="text-xs">
-                                    <span className="text-muted-foreground">Fecha:</span>
-                                    <div className="font-medium">{formatForDisplay(formData.start_time)}</div>
-                                </div>
-                                <div className="text-xs">
-                                    <span className="text-muted-foreground">Hora:</span>
-                                    <div className="font-medium">{formatTimeRange(formData.start_time, formData.end_time)}</div>
+                                setFormData({
+                                    ...formData,
+                                    start_time: newTime,
+                                    end_time: newEndDate,
+                                });
+                            }}
+                            userId={config?.user_id}
+                            config={config}
+                            specialDates={specialDates}
+                            slotUrl={slotUrl}
+                            label="Fecha y hora de la cita"
+                        />{' '}
+                        {formData.service_id && (
+                            <div className="bg-muted/30 mt-4 rounded-lg p-3">
+                                <div className="text-sm font-medium">Resumen de la cita:</div>
+                                <div className="mt-2 grid grid-cols-2 gap-2">
+                                    <div className="text-xs">
+                                        <span className="text-muted-foreground">Servicio:</span>
+                                        <div className="font-medium">{getServiceName(formData.service_id, category)}</div>
+                                    </div>
+                                    <div className="text-xs">
+                                        <span className="text-muted-foreground">Precio:</span>
+                                        <div className="font-medium">${getServicePrice(formData.service_id, category)}</div>
+                                    </div>
+                                    <div className="text-xs">
+                                        <span className="text-muted-foreground">Duración:</span>
+                                        <div className="font-medium">{getServiceDuration(formData.service_id, category)} minutos</div>
+                                    </div>
+                                    <div className="text-xs">
+                                        <span className="text-muted-foreground">Fecha:</span>
+                                        <div className="font-medium">{formatForDisplay(formData.start_time)}</div>
+                                    </div>
+                                    <div className="text-xs">
+                                        <span className="text-muted-foreground">Hora:</span>
+                                        <div className="font-medium">{formatTimeRange(formData.start_time, formData.end_time)}</div>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
+                        )}
                     </div>
                 )}
 

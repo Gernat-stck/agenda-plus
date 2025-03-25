@@ -1,28 +1,24 @@
-import { format } from "date-fns";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { FormField } from "../ui/form-field";
-import { CategoryServiceSelect } from "./category-service-select";
-import { useAppointmentForm } from "@/hooks/use-appointment-form";
-import { useState, useEffect } from "react";
-import { AvailableTimeSlots } from "./AvailableTimeSlots";
-import type { Cita } from "@/types/clients";
-import type { category } from "@/types/services";
-import type { CalendarConfig, SpecialDate } from "@/types/calendar";
-import { Calendar } from "../ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
-import { cn } from "@/lib/utils";
-import { CalendarIcon } from "lucide-react";
-import { es } from "date-fns/locale";
-import { toast } from "sonner";
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useAppointmentForm } from '@/hooks/use-appointment-form';
+import type { CalendarConfig, SpecialDate } from '@/types/calendar';
+import type { Cita } from '@/types/clients';
+import type { category } from '@/types/services';
+import { useEffect } from 'react';
+import { toast } from 'sonner';
+import { FormField } from '../ui/form-field';
+import { CategoryServiceSelect } from './category-service-select';
 
 // Importar las nuevas utilidades
-import { useAvailableSlots } from "@/hooks/use-available-slots";
-import { isDateAvailable } from "@/utils/appointment-validations";
-import { formatForDisplay, formatForAPI } from "@/utils/date-utils";
-import { getServiceDuration } from "@/utils/service-utils";
+import { useAvailableSlots } from '@/hooks/use-available-slots';
+import { isDateAvailable } from '@/utils/appointment-validations';
+import { formatForAPI } from '@/utils/date-utils';
+import { getServiceDuration } from '@/utils/service-utils';
+
+// Importar el nuevo componente
+import { DateTimePicker } from '@/components/ui/date-time-picker';
 
 interface AppointmentDialogProps {
     isOpen: boolean;
@@ -49,26 +45,19 @@ export function AppointmentDialog({
     clientName,
     category,
     config,
-    specialDates
+    specialDates,
 }: AppointmentDialogProps) {
     // Usar el nuevo hook para slots disponibles
-    const { availableSlots, loading, loadAvailableSlots } = useAvailableSlots(config?.user_id);
+    const { loadAvailableSlots } = useAvailableSlots(config?.user_id);
 
-    const {
-        formData,
-        validateAppointment,
-        handleDateChange,
-        handleTimeChange,
-        handleServiceChange,
-        handlePaymentChange,
-    } = useAppointmentForm({
+    const { formData, validateAppointment, handleDateChange, handleTimeChange, handleServiceChange, handlePaymentChange } = useAppointmentForm({
         appointment,
         selectedDate,
         clientId,
         clientName,
         category,
         config,
-        specialDates
+        specialDates,
     });
 
     // Cargar slots disponibles cuando cambia la fecha
@@ -79,7 +68,7 @@ export function AppointmentDialog({
 
     // Manejador para la selección de un slot
     const handleSlotSelect = (startTime: string, endTime: string) => {
-        const [startHour, startMinute] = startTime.split(':').map(n => parseInt(n));
+        const [startHour, startMinute] = startTime.split(':').map((n) => parseInt(n));
         const newDate = new Date(formData.start_time);
         newDate.setHours(startHour, startMinute, 0, 0);
 
@@ -117,9 +106,9 @@ export function AppointmentDialog({
 
     return (
         <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-            <DialogContent className="sm:max-w-[425px]">
+            <DialogContent className="mt-[-50px] sm:w-90">
                 <DialogHeader>
-                    <DialogTitle>{appointment ? "Editar cita" : "Nueva cita"}</DialogTitle>
+                    <DialogTitle>{appointment ? 'Editar cita' : 'Nueva cita'}</DialogTitle>
                 </DialogHeader>
                 <div className="grid gap-4 py-4">
                     {/* Campo de título */}
@@ -129,74 +118,36 @@ export function AppointmentDialog({
 
                     {/* Selector de servicio con categorías */}
                     <FormField label="Servicio" htmlFor="service">
-                        <CategoryServiceSelect
-                            categories={category}
-                            value={formData.service_id}
-                            onChange={handleServiceChange}
-                        />
+                        <CategoryServiceSelect categories={category} value={formData.service_id} onChange={handleServiceChange} />
                     </FormField>
 
-                    {/* Selector de fecha */}
-                    <FormField label="Fecha" htmlFor="date">
-                        <Popover>
-                            <PopoverTrigger asChild>
-                                <Button
-                                    variant="outline"
-                                    className={cn(
-                                        "w-full justify-start text-left font-normal",
-                                        !formData.start_time && "text-muted-foreground"
-                                    )}
-                                >
-                                    <CalendarIcon className="mr-2 h-4 w-4" />
-                                    {formData.start_time ? (
-                                        formatForDisplay(formData.start_time)
-                                    ) : (
-                                        <span>Selecciona una fecha</span>
-                                    )}
-                                </Button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-full p-0" align="start">
-                                <Calendar
-                                    mode="single"
-                                    selected={formData.start_time}
-                                    onSelect={onDatePickerChange}
-                                    autoFocus
-                                    disabled={disableDates}
-                                    className="rounded-md border shadow p-3"
-                                    role="dialog"
-                                    aria-modal="true"
-                                    locale={es}
-                                    weekStartsOn={0}
-                                />
-                            </PopoverContent>
-                        </Popover>
-                    </FormField>
-                    
-                    {/* Selector de hora (slots disponibles) */}
-                    <FormField label="Horario" htmlFor="time">
-                        {loading ? (
-                            <div className="flex justify-center py-4">
-                                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
-                            </div>
-                        ) : (
-                            <AvailableTimeSlots
+                    {/* Selector de fecha y hora */}
+                    <div className="space-y-0">
+                        <FormField label="Fecha y hora" htmlFor="date-time">
+                            <DateTimePicker
                                 date={formData.start_time}
-                                onSelectSlot={handleSlotSelect}
-                                availableSlots={availableSlots}
-                                className="mt-2"
+                                onDateChange={(newDate) => {
+                                    handleDateChange(newDate);
+                                    loadAvailableSlots(newDate);
+                                }}
+                                onTimeChange={(newTime) => {
+                                    handleTimeChange(newTime);
+                                }}
+                                userId={config?.user_id}
+                                config={config}
+                                specialDates={specialDates}
+                                disabledDates={disableDates}
+                                label=""
                             />
-                        )}
-                    </FormField>
-
+                        </FormField>
+                    </div>
                     {/* Información de duración */}
                     <FormField label="Duración">
-                        <div className="text-sm text-muted-foreground">
+                        <div className="text-muted-foreground text-sm">
                             {formData.service_id ? (
-                                <>
-                                    {getServiceDuration(formData.service_id, category)} minutos
-                                </>
+                                <>{getServiceDuration(formData.service_id, category)} minutos</>
                             ) : (
-                                "Seleccione un servicio para calcular la duración"
+                                'Seleccione un servicio para calcular la duración'
                             )}
                         </div>
                     </FormField>
@@ -223,4 +174,3 @@ export function AppointmentDialog({
         </Dialog>
     );
 }
-
