@@ -111,10 +111,6 @@ export default function CalendarComponent(
             }
         };
     }) || [];
-    useEffect(() => {
-        console.log('CalendarComponent mounted');
-        return () => console.log('CalendarComponent unmounted');
-    }, []);
     // Función para actualizar una cita existente
     const handleUpdateAppointment = (citaData: Cita) => {
         // Formatear fechas para preservar la zona horaria local

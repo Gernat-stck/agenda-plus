@@ -8,16 +8,21 @@ import { CategoryServiceSelect } from "./category-service-select";
 import { useAppointmentForm } from "@/hooks/use-appointment-form";
 import { useState, useEffect } from "react";
 import { AvailableTimeSlots } from "./AvailableTimeSlots";
-import axios from "axios";
 import type { Cita } from "@/types/clients";
 import type { category } from "@/types/services";
-import { CalendarConfig, SpecialDate, TimeSlot } from "@/types/calendar";
+import type { CalendarConfig, SpecialDate } from "@/types/calendar";
 import { Calendar } from "../ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { cn } from "@/lib/utils";
 import { CalendarIcon } from "lucide-react";
 import { es } from "date-fns/locale";
 import { toast } from "sonner";
+
+// Importar las nuevas utilidades
+import { useAvailableSlots } from "@/hooks/use-available-slots";
+import { isDateAvailable } from "@/utils/appointment-validations";
+import { formatForDisplay, formatForAPI } from "@/utils/date-utils";
+import { getServiceDuration } from "@/utils/service-utils";
 
 interface AppointmentDialogProps {
     isOpen: boolean;
@@ -46,8 +51,8 @@ export function AppointmentDialog({
     config,
     specialDates
 }: AppointmentDialogProps) {
-    const [availableSlots, setAvailableSlots] = useState<TimeSlot[]>([]);
-    const [loading, setLoading] = useState(false);
+    // Usar el nuevo hook para slots disponibles
+    const { availableSlots, loading, loadAvailableSlots } = useAvailableSlots(config?.user_id);
 
     const {
         formData,
@@ -56,7 +61,6 @@ export function AppointmentDialog({
         handleTimeChange,
         handleServiceChange,
         handlePaymentChange,
-        getServiceDuration,
     } = useAppointmentForm({
         appointment,
         selectedDate,
@@ -73,36 +77,7 @@ export function AppointmentDialog({
         loadAvailableSlots(formData.start_time);
     }, [formData.start_time]);
 
-    // Función para cargar los slots disponibles
-    const loadAvailableSlots = async (date: Date) => {
-        setLoading(true);
-        try {
-            const dateStr = format(date, "yyyy-MM-dd");
-            const response = await axios.get(`/available/slots/${dateStr}`);
-
-            // Añade estos logs para depurar
-
-            // Verifica si response.data es un array o un objeto con diferentes propiedades
-            if (Array.isArray(response.data)) {
-                setAvailableSlots(response.data);
-            } else if (response.data && response.data.slots) {
-                setAvailableSlots(response.data.slots);
-            } else if (response.data && response.data.availableSlots) {
-                // Añade esta condición para manejar el formato {availableSlots: Array(12)}
-                setAvailableSlots(response.data.availableSlots);
-            } else {
-                console.error('Formato de respuesta inesperado:', response.data);
-                setAvailableSlots([]);
-            }
-        } catch (error) {
-            console.error("Error al cargar los horarios disponibles:", error);
-            setAvailableSlots([]);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    // Función para manejar la selección de un slot
+    // Manejador para la selección de un slot
     const handleSlotSelect = (startTime: string, endTime: string) => {
         const [startHour, startMinute] = startTime.split(':').map(n => parseInt(n));
         const newDate = new Date(formData.start_time);
@@ -122,8 +97,8 @@ export function AppointmentDialog({
     const handleSubmit = () => {
         if (!validateAppointment()) return;
 
-        const startTimeStr = format(formData.start_time, "yyyy-MM-dd'T'HH:mm:ss");
-        const endTimeStr = format(formData.end_time, "yyyy-MM-dd'T'HH:mm:ss");
+        const startTimeStr = formatForAPI(formData.start_time);
+        const endTimeStr = formatForAPI(formData.end_time);
 
         const citaData: Cita = {
             ...formData,
@@ -134,25 +109,13 @@ export function AppointmentDialog({
         onSave(citaData);
     };
 
+    // Usar la utilidad de validación de fechas
     const disableDates = (date: Date) => {
-        const dateString = format(date, "yyyy-MM-dd");
-        const dayOfWeek = date.getDay();
-
-        // Verificar si el día es laborable según config
-        const isDayDisabled = !config.business_days.includes(dayOfWeek);
-
-        // Verificar si es una fecha especial no disponible
-        const isSpecialDateDisabled = specialDates?.some(specialDate => {
-            const specialDateString = specialDate.date.substring(0, 10);
-            return specialDateString === dateString && !specialDate.is_available;
-        });
-
-        return isDayDisabled || isSpecialDateDisabled;
+        const result = isDateAvailable(date, config, specialDates);
+        return !result.isAvailable;
     };
 
-
     return (
-
         <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
             <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader>
@@ -186,7 +149,7 @@ export function AppointmentDialog({
                                 >
                                     <CalendarIcon className="mr-2 h-4 w-4" />
                                     {formData.start_time ? (
-                                        format(formData.start_time, "PPP", { locale: es })
+                                        formatForDisplay(formData.start_time)
                                     ) : (
                                         <span>Selecciona una fecha</span>
                                     )}
@@ -208,7 +171,8 @@ export function AppointmentDialog({
                             </PopoverContent>
                         </Popover>
                     </FormField>
-                    {/* Selector de hora (siempre mostrar slots disponibles) */}
+                    
+                    {/* Selector de hora (slots disponibles) */}
                     <FormField label="Horario" htmlFor="time">
                         {loading ? (
                             <div className="flex justify-center py-4">
@@ -224,20 +188,18 @@ export function AppointmentDialog({
                         )}
                     </FormField>
 
-
                     {/* Información de duración */}
                     <FormField label="Duración">
                         <div className="text-sm text-muted-foreground">
                             {formData.service_id ? (
                                 <>
-                                    {getServiceDuration(formData.service_id)} minutos
+                                    {getServiceDuration(formData.service_id, category)} minutos
                                 </>
                             ) : (
                                 "Seleccione un servicio para calcular la duración"
                             )}
                         </div>
                     </FormField>
-
 
                     {/* Forma de pago */}
                     <FormField label="Forma de pago" htmlFor="payment-type">
