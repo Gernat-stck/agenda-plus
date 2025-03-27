@@ -9,7 +9,7 @@ class TwilioService
     protected Client $client;
     protected string $from;
 
-    public function __construct(string $accountSid = null, string $authToken = null, string $from = null)
+    public function __construct(string $accountSid, string $authToken, string $from)
     {
         // Permitir sobrescribir los valores por defecto si en un futuro cada usuario tiene sus propias credenciales.
         $accountSid = $accountSid ?: config('twilio.default.account_sid');
