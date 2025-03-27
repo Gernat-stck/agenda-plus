@@ -10,11 +10,18 @@ use App\Http\Controllers\WhatsappWebhookController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
+// Rutas públicas - Sin middleware de validación de membresía
 Route::get('/', function () {
     return Inertia::render('welcome');
 })->name('home');
 
-Route::middleware(['auth', 'verified'])->group(
+// Ruta de membership debe estar FUERA del middleware de validación
+Route::get('/membership', function () {
+    return Inertia::render('Membership/Index');
+})->name('membership.required');
+
+// Rutas protegidas con autenticación y verificación de membresía
+Route::middleware(['auth', 'verified', 'membership'])->group(
     function () {
         Route::get('dashboard', function () {
             return Inertia::render('dashboard');

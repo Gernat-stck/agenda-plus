@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\PublicController;
+use Illuminate\Support\Facades\Route;
 
 // Rutas públicas para agendar citas
 Route::get('/book/{userId?}', [PublicController::class, 'showRegistrationForm'])->name('appointments.book');
