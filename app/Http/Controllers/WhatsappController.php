@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\WhatsappConfiguration;
 use App\Services\TwilioService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Http;
 
@@ -12,7 +13,10 @@ class WhatsappController extends Controller
 {
     public function index()
     {
-        $configurations = WhatsappConfiguration::where('user_id', auth()->id())->get();
+
+        $userAuth = Auth::user();
+        $userId = $userAuth->user_id;
+        $configurations = WhatsappConfiguration::where('user_id', $userId)->get();
         return Inertia::render('WhatsappConfigurations/Index', ['configurations' => $configurations]);
     }
 
@@ -23,13 +27,16 @@ class WhatsappController extends Controller
 
     public function store(Request $request)
     {
+
+        $userAuth = Auth::user();
+        $userId = $userAuth->user_id;
         $request->validate([
             'instance_id' => 'required',
             'token' => 'required',
         ]);
 
         WhatsappConfiguration::create([
-            'user_id' => auth()->id(),
+            'user_id' => $userId,
             'instance_id' => $request->instance_id,
             'token' => $request->token,
             'status' => 'pending', // Estado inicial

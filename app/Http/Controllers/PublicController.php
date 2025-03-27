@@ -10,9 +10,10 @@ use App\Models\Service;
 use App\Models\SpecialDate;
 use App\Models\User;
 use Carbon\Carbon;
-use DB;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log as FacadesLog;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Log;
@@ -108,7 +109,7 @@ class PublicController extends Controller
                     'email' => $validatedData['client_email'],
                     'contact_number' => $validatedData['client_phone'],
                 ]);
-
+                //TODO: VALIDAR ESTE CONTROLADOR
                 // Asociar el usuario al cliente en la tabla pivote
                 ClientsUser::create([
                     'client_id' => $client->client_id,
@@ -174,13 +175,12 @@ class PublicController extends Controller
                 'message' => 'Cita registrada correctamente',
                 'share_url' => $shareUrl
             ]);
-
         } catch (\Exception $e) {
             // Si ocurrió algún error, deshacer todos los cambios
             DB::rollBack();
 
             // Registrar el error para depuración
-            Log::error('Error al registrar cita: ' . $e->getMessage());
+            FacadesLog::error('Error al registrar cita: ' . $e->getMessage());
 
             return response()->json([
                 'success' => false,

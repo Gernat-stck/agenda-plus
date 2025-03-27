@@ -9,16 +9,18 @@ use App\Models\Client;
 use App\Models\ClientsUser;
 use App\Models\Service;
 use App\Models\SpecialDate;
-use DB;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
 class ClientController extends Controller
 {
     public function index()
     {
-        $userId = auth()->user()->user_id;
 
+        $userAuth = Auth::user();
+        $userId = $userAuth->user_id;
         // Primero obtenemos los IDs de clientes asociados al usuario
         $clientIds = ClientsUser::where('user_id', $userId)->pluck('client_id');
 
@@ -26,7 +28,7 @@ class ClientController extends Controller
         $clients = Client::whereIn('client_id', $clientIds)->get();
         //extraer unicamente el nombre de la categoria y el service_id
         // Primero obtenemos todos los servicios del usuario
-        $services = Service::where('user_id', auth()->user()->user_id)->get();
+        $services = Service::where('user_id', $userId)->get();
 
         // Agrupamos los servicios por categoría
         $categories = $services->groupBy('category')->map(function ($servicesInCategory, $categoryName) {
@@ -92,10 +94,12 @@ class ClientController extends Controller
             'contact_number' => 'nullable|string|max:20',
         ]);
 
-
         DB::transaction(function () use ($validatedData) {
+
+            $userAuth = Auth::user();
+            $userId = $userAuth->user_id;
             $validatedData['client_id'] = $this->generateClientId(
-                auth()->user()->user_id,
+                $userId,
             );
             $client = Client::create(array_merge($validatedData, [
                 'client_id' => $validatedData['client_id'],
@@ -104,8 +108,8 @@ class ClientController extends Controller
             // Asociar el usuario al cliente en la tabla pivote
             ClientsUser::create([
                 'client_id' => $client->client_id,
-                'user_id' => auth()->user()->user_id,
-                'notes' => "Cliente creado por " . auth()->user()->name,
+                'user_id' => $userId,
+                'notes' => "Cliente creado por " . $userAuth->name,
             ]);
         });
 
@@ -126,12 +130,16 @@ class ClientController extends Controller
             'contact_number' => 'nullable|string|max:20',
             'notes' => 'nullable|string',
         ]);
+
+        $userAuth = Auth::user();
+        $userId = $userAuth->user_id;
+
         $client = Client::where('client_id', $clientId)->firstOrFail();
         $client->update($validatedData);
         // Actualizar la relación en la tabla pivote si es necesario
         if ($request->has('user_id')) {
             ClientsUser::updateOrCreate(
-                ['client_id' => $client->client_id, 'user_id' => auth()->user()->user_id],
+                ['client_id' => $client->client_id, 'user_id' => $userId],
                 ['notes' => $request->notes]
             );
         }
@@ -167,10 +175,13 @@ class ClientController extends Controller
     public function storeClientsAppointments(AppointmentRequest $request)
     {
         $validatedData = $request->validated();
-        $validatedData['user_id'] = auth()->user()->user_id;
+
+        $userAuth = Auth::user();
+        $userId = $userAuth->user_id;
+        $validatedData['user_id'] = $userId;
 
         $appointmentId = $this->generateAppointmentId(
-            auth()->user()->user_id,
+            $userId,
             $validatedData['service_id'],
             $validatedData['client_id']
         );
