@@ -76,9 +76,13 @@ class PublicController extends Controller
 
         return $userInitials . "CL-" . $randomNumber;
     }
-    public function storeAppointment(Request $request)
+    public function storeAppointment(Request $request, $userId)
     {
-        // Iniciar una transacción de base de datos
+        // Verificar si el usuario existe
+        $user = User::where('user_id', $userId)->first();
+        if (!$user) {
+            return response()->json(['error' => 'Usuario no encontrado'], 404);
+        }
         DB::beginTransaction();
 
         try {
@@ -109,12 +113,11 @@ class PublicController extends Controller
                     'email' => $validatedData['client_email'],
                     'contact_number' => $validatedData['client_phone'],
                 ]);
-                //TODO: VALIDAR ESTE CONTROLADOR
                 // Asociar el usuario al cliente en la tabla pivote
                 ClientsUser::create([
                     'client_id' => $client->client_id,
-                    'user_id' => auth()->user()->user_id,
-                    'notes' => "Cliente creado por " . auth()->user()->name,
+                    'user_id' => $userId,
+                    'notes' => "Cliente creado por " . $user->name,
                 ]);
             }
 
