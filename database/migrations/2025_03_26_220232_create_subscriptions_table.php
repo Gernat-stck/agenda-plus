@@ -19,6 +19,8 @@ return new class extends Migration
             $table->string('date_transaction');
             $table->decimal('monto', 8, 2);
             $table->string('payment_method');
+            $table->string('id_enlace')->nullable()->after('id_account');
+            $table->string('hash')->nullable()->after('approved');
             $table->boolean('approved')->default(false);
             $table->timestamps();
 
