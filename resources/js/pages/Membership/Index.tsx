@@ -1,9 +1,9 @@
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Link } from '@inertiajs/react';
 import { ArrowLeft, CheckCircle2, X, Zap } from 'lucide-react';
 import { useState } from 'react';
 import { Badge } from '../../components/ui/badge';
+import { useScript } from '../../hooks/use-script';
 import { cn } from '../../lib/utils';
 interface PlanFeature {
     included: boolean;
@@ -25,8 +25,8 @@ interface Plan {
 }
 
 export default function GetSuscription() {
+    useScript('https://pagos.wompi.sv/js/wompi.pagos.js');
     const [activeCard, setActiveCard] = useState<number>(1);
-
     const plans: Plan[] = [
         {
             id: 0,
@@ -81,7 +81,7 @@ export default function GetSuscription() {
     return (
         <div className="from-muted/40 to-muted/60 flex min-h-screen flex-col items-center justify-center bg-gradient-to-b p-4">
             <div className="w-full max-w-4xl">
-                <div className="text-center">
+                <div className="mb-8 text-center">
                     <Badge variant="outline" className="mb-2 px-3 py-1 text-sm font-medium">
                         Acceso Restringido
                     </Badge>
@@ -149,9 +149,7 @@ export default function GetSuscription() {
                                     </ul>
                                 </CardContent>
                                 <CardFooter>
-                                    <Button variant={plan.buttonVariant as 'default' | 'outline'} className="w-full">
-                                        {plan.buttonText}
-                                    </Button>
+                                    <div className="wompi_button_widget" data-url-pago="https://u.wompi.sv/235192psZ"></div>
                                 </CardFooter>
                             </div>
                         </Card>
