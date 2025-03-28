@@ -18,20 +18,14 @@ class ValidateUserMembership
      */
     public function handle(Request $request, Closure $next): Response
     {
-        // Evitar bucle infinito: no aplicar este middleware a la ruta membership.required
+        // Evitar bucle infinito
         if ($request->routeIs('membership.required')) {
             return $next($request);
         }
-
-        // Verifica si el usuario está autenticado.
-        if (!Auth::check()) {
-            // Usuario no autenticado, redirige a la ruta de login.
-            return redirect()->route('login')->with('error', 'Debes iniciar sesión para acceder a esta área.');
-        }
-
+        // Asumimos que el usuario ya está autenticado por el middleware 'auth'
         $user = Auth::user();
 
-        // Si el usuario no tiene una membresía activa, redirige a una ruta específica.
+        // Solo verifica el estado de la membresía
         if ($user->membership_status == 'inactivo') {
             return redirect()->route('membership.required')->with('error', 'Debes ser usuario premium.');
         }
