@@ -11,13 +11,13 @@ export default function Welcome() {
                 <link rel="preconnect" href="https://fonts.bunny.net" />
                 <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600" rel="stylesheet" />
             </Head>
-            <div className="flex min-h-screen flex-col">
-                <Navbar />
+            <Navbar />
+            <div className="flex min-h-screen flex-col overflow-x-hidden">
                 <div className="flex w-full items-center justify-center opacity-100 transition-opacity duration-750 lg:grow starting:opacity-0">
                     <main className="flex-1">
                         {/* Hero Section */}
-                        <section className="w-full py-12 md:py-24 lg:py-32 xl:py-48">
-                            <div className="container px-4 md:px-6">
+                        <section className="mb-15 w-full py-12 md:py-24 lg:py-32 xl:py-48">
+                            <div className="mx-auto w-full max-w-7xl px-4 md:px-6">
                                 <div className="grid gap-6 lg:grid-cols-[1fr_400px] lg:gap-12 xl:grid-cols-[1fr_600px]">
                                     <div className="flex flex-col justify-center space-y-4">
                                         <div className="space-y-2">
@@ -39,7 +39,7 @@ export default function Welcome() {
                                         </div>
                                     </div>
                                     <div className="flex items-center justify-center">
-                                        <div className="relative h-[450px] w-full overflow-hidden rounded-xl">
+                                        <div className="relative aspect-video max-w-full overflow-hidden rounded-xl">
                                             <img src={placeholderImage} alt="App Screenshot" className="h-full w-full object-cover" loading="eager" />
                                         </div>
                                     </div>
@@ -48,8 +48,8 @@ export default function Welcome() {
                         </section>
 
                         {/* Features Section */}
-                        <section className="w-full bg-gray-50 py-12 md:py-24 lg:py-32 dark:bg-gray-900">
-                            <div className="container px-4 md:px-6">
+                        <section className="mb-15 w-full bg-gray-50 py-12 md:py-24 lg:py-32 dark:bg-gray-900">
+                            <div className="mx-auto w-full max-w-7xl px-4 md:px-6">
                                 <div className="flex flex-col items-center justify-center space-y-4 text-center">
                                     <div className="space-y-2">
                                         <div className="inline-block rounded-lg bg-gray-100 px-3 py-1 text-sm dark:bg-gray-800">Características</div>
@@ -94,7 +94,7 @@ export default function Welcome() {
 
                         {/* Pricing Section */}
                         <section id="pricing" className="w-full py-12 md:py-24 lg:py-32">
-                            <div className="container px-4 md:px-6">
+                            <div className="mx-auto w-full max-w-7xl px-4 md:px-6">
                                 <div className="flex flex-col items-center justify-center space-y-4 text-center">
                                     <div className="space-y-2">
                                         <h2 className="text-3xl font-bold tracking-tighter sm:text-5xl">Planes simples y transparentes</h2>
@@ -195,7 +195,7 @@ export default function Welcome() {
 
                         {/* About Section */}
                         <section id="about" className="w-full bg-gray-50 py-12 md:py-24 lg:py-32 dark:bg-gray-900">
-                            <div className="container px-4 md:px-6">
+                            <div className="mx-auto w-full max-w-7xl px-4 md:px-6">
                                 <div className="grid gap-6 lg:grid-cols-2 lg:gap-12">
                                     <div className="flex flex-col justify-center space-y-4">
                                         <div className="space-y-2">
@@ -228,7 +228,7 @@ export default function Welcome() {
 
                         {/* Contact Section */}
                         <section id="contact" className="w-full py-12 md:py-24 lg:py-32">
-                            <div className="container px-4 md:px-6">
+                            <div className="mx-auto w-full max-w-7xl px-4 md:px-6">
                                 <div className="flex flex-col items-center justify-center space-y-4 text-center">
                                     <div className="space-y-2">
                                         <h2 className="text-3xl font-bold tracking-tighter sm:text-5xl">Contacta con nosotros</h2>
