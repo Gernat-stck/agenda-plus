@@ -81,7 +81,7 @@ export default function GetSuscription() {
     return (
         <div className="from-muted/40 to-muted/60 flex min-h-screen flex-col items-center justify-center bg-gradient-to-b p-4">
             <div className="w-full max-w-4xl">
-                <div className="mb-8 text-center">
+                <div className="text-center">
                     <Badge variant="outline" className="mb-2 px-3 py-1 text-sm font-medium">
                         Acceso Restringido
                     </Badge>

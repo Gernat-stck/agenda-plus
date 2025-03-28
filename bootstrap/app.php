@@ -16,7 +16,6 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->web(append: [
             HandleInertiaRequests::class,
             AddLinkHeadersForPreloadedAssets::class,
-            'membership' => \App\Http\Middleware\ValidateUserMembership::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

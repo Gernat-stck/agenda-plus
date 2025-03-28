@@ -7,6 +7,7 @@ use App\Http\Controllers\ClientController;
 use App\Http\Controllers\SpecialDateController;
 use App\Http\Controllers\WhatsappController;
 use App\Http\Controllers\WhatsappWebhookController;
+use App\Http\Middleware\ValidateUserMembership;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -21,7 +22,7 @@ Route::get('/membership', function () {
 })->name('membership.required');
 
 // Rutas protegidas con autenticación y verificación de membresía
-Route::middleware(['auth', 'verified', 'membership'])->group(
+Route::middleware(['auth', 'verified', ValidateUserMembership::class])->group(
     function () {
         Route::get('dashboard', function () {
             return Inertia::render('dashboard');
