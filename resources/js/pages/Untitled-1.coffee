@@ -1,0 +1,1 @@
+http://localhost:8000/?identificadorEnlaceComercio=Plan+Basico&idTransaccion=c30effea-9f0b-455a-b0be-4070e93846c6&idEnlace=1835603&monto=10.00&hash=e8d705cbae4e5bbf2858666d133d8ba5a81f54b36e37d93124262548dfeaf1b8
