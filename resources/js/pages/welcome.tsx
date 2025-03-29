@@ -1,9 +1,12 @@
 import placeholderImage from '@/../img/placeholder.svg';
+import ContactSection from '@/components/shared/contact-section';
 import Footer from '@/components/shared/footer';
 import Navbar from '@/components/shared/navbar-home';
+import { PricingCards } from '@/components/shared/pricing-cards';
 import { Button } from '@/components/ui/button';
 import { Head } from '@inertiajs/react';
-import { CalendarClock, CheckCircle, MessageSquare, Users } from 'lucide-react';
+import { CalendarClock, MessageSquare, Users } from 'lucide-react';
+import { plans } from '../components/mocks/plans';
 export default function Welcome() {
     return (
         <>
@@ -103,92 +106,8 @@ export default function Welcome() {
                                         </p>
                                     </div>
                                 </div>
-                                <div className="mx-auto grid max-w-5xl gap-6 py-12 lg:grid-cols-3">
-                                    <div className="bg-background flex flex-col rounded-lg border p-6 shadow-sm">
-                                        <div className="space-y-2">
-                                            <h3 className="text-2xl font-bold">Básico</h3>
-                                            <p className="text-gray-500 dark:text-gray-400">Ideal para profesionales independientes</p>
-                                        </div>
-                                        <div className="mt-4 flex items-baseline text-gray-900 dark:text-gray-50">
-                                            <span className="text-3xl font-bold">$19</span>
-                                            <span className="ml-1 text-xl font-normal text-gray-500 dark:text-gray-400">/mes</span>
-                                        </div>
-                                        <ul className="mt-6 space-y-3">
-                                            <li className="flex items-center">
-                                                <CheckCircle className="text-primary mr-2 h-4 w-4" />
-                                                <span>Hasta 50 citas mensuales</span>
-                                            </li>
-                                            <li className="flex items-center">
-                                                <CheckCircle className="text-primary mr-2 h-4 w-4" />
-                                                <span>Recordatorios por email</span>
-                                            </li>
-                                            <li className="flex items-center">
-                                                <CheckCircle className="text-primary mr-2 h-4 w-4" />
-                                                <span>Calendario personalizable</span>
-                                            </li>
-                                        </ul>
-                                        <Button className="mt-8">Comenzar</Button>
-                                    </div>
-                                    <div className="bg-primary flex flex-col rounded-lg border p-6 shadow-sm">
-                                        <div className="space-y-2">
-                                            <h3 className="text-primary-foreground text-2xl font-bold">Profesional</h3>
-                                            <p className="text-primary-foreground/80">Perfecto para pequeños negocios</p>
-                                        </div>
-                                        <div className="text-primary-foreground mt-4 flex items-baseline">
-                                            <span className="text-3xl font-bold">$49</span>
-                                            <span className="text-primary-foreground/80 ml-1 text-xl font-normal">/mes</span>
-                                        </div>
-                                        <ul className="text-primary-foreground mt-6 space-y-3">
-                                            <li className="flex items-center">
-                                                <CheckCircle className="mr-2 h-4 w-4" />
-                                                <span>Citas ilimitadas</span>
-                                            </li>
-                                            <li className="flex items-center">
-                                                <CheckCircle className="mr-2 h-4 w-4" />
-                                                <span>Recordatorios por email y SMS</span>
-                                            </li>
-                                            <li className="flex items-center">
-                                                <CheckCircle className="mr-2 h-4 w-4" />
-                                                <span>Integración con Google Calendar</span>
-                                            </li>
-                                            <li className="flex items-center">
-                                                <CheckCircle className="mr-2 h-4 w-4" />
-                                                <span>Hasta 3 usuarios</span>
-                                            </li>
-                                        </ul>
-                                        <Button variant="secondary" className="mt-8">
-                                            Comenzar
-                                        </Button>
-                                    </div>
-                                    <div className="bg-background flex flex-col rounded-lg border p-6 shadow-sm">
-                                        <div className="space-y-2">
-                                            <h3 className="text-2xl font-bold">Empresarial</h3>
-                                            <p className="text-gray-500 dark:text-gray-400">Para empresas con múltiples sedes</p>
-                                        </div>
-                                        <div className="mt-4 flex items-baseline text-gray-900 dark:text-gray-50">
-                                            <span className="text-3xl font-bold">$99</span>
-                                            <span className="ml-1 text-xl font-normal text-gray-500 dark:text-gray-400">/mes</span>
-                                        </div>
-                                        <ul className="mt-6 space-y-3">
-                                            <li className="flex items-center">
-                                                <CheckCircle className="text-primary mr-2 h-4 w-4" />
-                                                <span>Todo lo del plan Profesional</span>
-                                            </li>
-                                            <li className="flex items-center">
-                                                <CheckCircle className="text-primary mr-2 h-4 w-4" />
-                                                <span>Usuarios ilimitados</span>
-                                            </li>
-                                            <li className="flex items-center">
-                                                <CheckCircle className="text-primary mr-2 h-4 w-4" />
-                                                <span>API para integraciones</span>
-                                            </li>
-                                            <li className="flex items-center">
-                                                <CheckCircle className="text-primary mr-2 h-4 w-4" />
-                                                <span>Soporte prioritario</span>
-                                            </li>
-                                        </ul>
-                                        <Button className="mt-8">Contactar ventas</Button>
-                                    </div>
+                                <div className="mx-auto flex w-full flex-col justify-center py-12">
+                                    <PricingCards plans={plans} defaultActiveCard={1} />
                                 </div>
                             </div>
                         </section>
@@ -227,68 +146,7 @@ export default function Welcome() {
                         </section>
 
                         {/* Contact Section */}
-                        <section id="contact" className="w-full py-12 md:py-24 lg:py-32">
-                            <div className="mx-auto w-full max-w-7xl px-4 md:px-6">
-                                <div className="flex flex-col items-center justify-center space-y-4 text-center">
-                                    <div className="space-y-2">
-                                        <h2 className="text-3xl font-bold tracking-tighter sm:text-5xl">Contacta con nosotros</h2>
-                                        <p className="max-w-[600px] text-gray-500 md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed dark:text-gray-400">
-                                            ¿Tienes alguna pregunta? Estamos aquí para ayudarte.
-                                        </p>
-                                    </div>
-                                </div>
-                                <div className="mx-auto grid max-w-5xl gap-6 py-12 lg:grid-cols-2">
-                                    <div className="flex flex-col gap-2">
-                                        <div className="rounded-lg border p-4">
-                                            <h3 className="text-lg font-bold">Email</h3>
-                                            <p className="text-gray-500 dark:text-gray-400">info@tuapp.com</p>
-                                        </div>
-                                        <div className="rounded-lg border p-4">
-                                            <h3 className="text-lg font-bold">Teléfono</h3>
-                                            <p className="text-gray-500 dark:text-gray-400">+34 123 456 789</p>
-                                        </div>
-                                        <div className="rounded-lg border p-4">
-                                            <h3 className="text-lg font-bold">Dirección</h3>
-                                            <p className="text-gray-500 dark:text-gray-400">Calle Principal 123, 28001 Madrid, España</p>
-                                        </div>
-                                    </div>
-                                    <div className="flex flex-col gap-4 rounded-lg border p-6">
-                                        <div className="grid gap-2">
-                                            <label htmlFor="name" className="text-sm leading-none font-medium">
-                                                Nombre
-                                            </label>
-                                            <input
-                                                id="name"
-                                                className="border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring flex h-10 w-full rounded-md border px-3 py-2 text-sm file:border-0 file:bg-transparent file:text-sm file:font-medium focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
-                                                placeholder="Tu nombre"
-                                            />
-                                        </div>
-                                        <div className="grid gap-2">
-                                            <label htmlFor="email" className="text-sm leading-none font-medium">
-                                                Email
-                                            </label>
-                                            <input
-                                                id="email"
-                                                type="email"
-                                                className="border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring flex h-10 w-full rounded-md border px-3 py-2 text-sm file:border-0 file:bg-transparent file:text-sm file:font-medium focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
-                                                placeholder="tu@email.com"
-                                            />
-                                        </div>
-                                        <div className="grid gap-2">
-                                            <label htmlFor="message" className="text-sm leading-none font-medium">
-                                                Mensaje
-                                            </label>
-                                            <textarea
-                                                id="message"
-                                                className="border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring flex min-h-[120px] w-full rounded-md border px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
-                                                placeholder="Tu mensaje"
-                                            />
-                                        </div>
-                                        <Button>Enviar mensaje</Button>
-                                    </div>
-                                </div>
-                            </div>
-                        </section>
+                        <ContactSection />
                     </main>
                 </div>
                 <Footer />
