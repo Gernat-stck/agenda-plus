@@ -129,6 +129,7 @@ class ClientController extends Controller
             'email' => 'required|email',
             'contact_number' => 'nullable|string|max:20',
             'notes' => 'nullable|string',
+            'name' => 'required|string|max:255',
         ]);
 
         $userAuth = Auth::user();
