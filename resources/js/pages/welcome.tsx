@@ -4,9 +4,11 @@ import Footer from '@/components/shared/footer';
 import Navbar from '@/components/shared/navbar-home';
 import { PricingCards } from '@/components/shared/pricing-cards';
 import { Button } from '@/components/ui/button';
-import { Head } from '@inertiajs/react';
+import { Head, Link } from '@inertiajs/react';
 import { CalendarClock, MessageSquare, Users } from 'lucide-react';
 import { plans } from '../components/mocks/plans';
+import { SmoothScrollLink } from '@/components/shared/smooth-scroll-link';
+
 export default function Welcome() {
     return (
         <>
@@ -19,7 +21,7 @@ export default function Welcome() {
                 <div className="flex w-full items-center justify-center opacity-100 transition-opacity duration-750 lg:grow starting:opacity-0">
                     <main className="flex-1">
                         {/* Hero Section */}
-                        <section className="mb-15 w-full py-12 md:py-24 lg:py-32 xl:py-48">
+                        <section id='first' className="mb-15 w-full py-12 md:py-24 lg:py-32 xl:py-48">
                             <div className="mx-auto w-full max-w-7xl px-4 md:px-6">
                                 <div className="grid gap-6 lg:grid-cols-[1fr_400px] lg:gap-12 xl:grid-cols-[1fr_600px]">
                                     <div className="flex flex-col justify-center space-y-4">
@@ -33,12 +35,11 @@ export default function Welcome() {
                                             </p>
                                         </div>
                                         <div className="flex flex-col gap-2 min-[400px]:flex-row">
-                                            <Button size="lg" className="h-12">
-                                                Comenzar ahora
-                                            </Button>
-                                            <Button size="lg" variant="outline" className="h-12">
-                                                Ver demostración
-                                            </Button>
+                                            <SmoothScrollLink to="pricing">
+                                                <Button size="lg" variant="outline" className=" h-12 border-purple-500 /50 text-purple-500 transition-all duration-300 hover:bg-purple-500/10 hover:text-purple-400 dark:border-purple-400/50 dark:text-purple-400 dark:hover:text-purple-300">
+                                                    Comenzar ahora
+                                                </Button>
+                                            </SmoothScrollLink>
                                         </div>
                                     </div>
                                     <div className="flex items-center justify-center">
@@ -51,7 +52,7 @@ export default function Welcome() {
                         </section>
 
                         {/* Features Section */}
-                        <section className="mb-15 w-full bg-gray-50 py-12 md:py-24 lg:py-32 dark:bg-gray-900">
+                        <section id='features' className="mb-15 w-full bg-gray-50 py-12 md:py-24 lg:py-32 dark:bg-gray-900">
                             <div className="mx-auto w-full max-w-7xl px-4 md:px-6">
                                 <div className="flex flex-col items-center justify-center space-y-4 text-center">
                                     <div className="space-y-2">
@@ -111,7 +112,6 @@ export default function Welcome() {
                                 </div>
                             </div>
                         </section>
-
                         {/* About Section */}
                         <section id="about" className="w-full bg-gray-50 py-12 md:py-24 lg:py-32 dark:bg-gray-900">
                             <div className="mx-auto w-full max-w-7xl px-4 md:px-6">
@@ -150,7 +150,7 @@ export default function Welcome() {
                     </main>
                 </div>
                 <Footer />
-            </div>
+            </div >
         </>
     );
 }

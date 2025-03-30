@@ -6,6 +6,15 @@ import { useEffect, useRef, useState } from 'react';
 import { useScript } from '../../hooks/use-script';
 import { Plan } from '../../types/pricing';
 
+// Declaración para TypeScript más precisa
+declare global {
+    interface Window {
+        wompi: {
+            initialize: () => void;
+        } | undefined;
+    }
+}
+
 interface PricingCardsProps {
     plans: Plan[];
     defaultActiveCard?: number;
@@ -14,14 +23,50 @@ interface PricingCardsProps {
 
 export function PricingCards({ plans, defaultActiveCard = 1, onCardSelect }: PricingCardsProps) {
     const [activeCard, setActiveCard] = useState<number>(defaultActiveCard);
-    const cardsRef = useRef<(HTMLDivElement | undefined)[]>([]);
+    const cardsRef = useRef<(HTMLDivElement | null | undefined)[]>([]);
     const containerRef = useRef<HTMLDivElement>(null);
     const [isTransitioning, setIsTransitioning] = useState(false);
-    useScript('https://pagos.wompi.sv/js/wompi.pagos.js');
+    const wompiInitialized = useRef<boolean>(false);
+    const status = useScript('https://pagos.wompi.sv/js/wompi.pagos.js');
 
     useEffect(() => {
         cardsRef.current = cardsRef.current.slice(0, plans.length);
     }, [plans.length]);
+
+    // Inicializa Wompi cuando el script está listo
+    useEffect(() => {
+        if (status === 'ready' && typeof window.wompi !== 'undefined') {
+            // Usar un timeout para asegurar que el DOM está actualizado
+            const timeoutId = setTimeout(() => {
+                if (!wompiInitialized.current && window.wompi) {
+                    window.wompi.initialize();
+                    wompiInitialized.current = true;
+                    // Guardar en sessionStorage que el script ya fue inicializado
+                    sessionStorage.setItem('wompiInitialized', 'true');
+                }
+            }, 200);
+            return () => clearTimeout(timeoutId);
+        }
+    }, [status]);
+
+    // Re-inicializar Wompi cuando cambia la tarjeta activa
+    useEffect(() => {
+        if (wompiInitialized.current && typeof window.wompi !== 'undefined') {
+            const timeoutId = setTimeout(() => {
+                window.wompi?.initialize();
+            }, 300);
+            return () => clearTimeout(timeoutId);
+        }
+    }, [activeCard]);
+
+    // Restaurar estado de inicialización desde sessionStorage
+    useEffect(() => {
+        const wasInitialized = sessionStorage.getItem('wompiInitialized') === 'true';
+        if (wasInitialized && typeof window.wompi !== 'undefined') {
+            wompiInitialized.current = true;
+            window.wompi.initialize();
+        }
+    }, []);
 
     const handleCardClick = (index: number) => {
         if (isTransitioning || activeCard === index) return;
@@ -43,14 +88,17 @@ export function PricingCards({ plans, defaultActiveCard = 1, onCardSelect }: Pri
             {plans.map((plan, index) => (
                 <Card
                     key={plan.id}
-                    ref={(el) => (cardsRef.current[index] = el)}
-                    className={cn(
+                    ref={(el) => {
+                        if (el !== null) {
+                            cardsRef.current[index] = el;
+                        }
+                    }} className={cn(
                         'absolute cursor-pointer transition-all duration-500 ease-in-out',
                         activeCard === index
                             ? 'z-20 scale-100 opacity-100 shadow-xl'
                             : index < activeCard
-                              ? 'left-0 z-10 scale-90 -rotate-6 opacity-80 shadow-md hover:opacity-90'
-                              : 'right-0 z-10 scale-90 rotate-6 opacity-80 shadow-md hover:opacity-90',
+                                ? 'left-0 z-10 scale-90 -rotate-6 opacity-80 shadow-md hover:opacity-90'
+                                : 'right-0 z-10 scale-90 rotate-6 opacity-80 shadow-md hover:opacity-90',
                         plan.highlight && activeCard === index ? 'border-primary/30' : 'border-muted/60',
                         isTransitioning ? 'pointer-events-none' : '',
                     )}
@@ -99,7 +147,13 @@ export function PricingCards({ plans, defaultActiveCard = 1, onCardSelect }: Pri
                             </ul>
                         </CardContent>
                         <CardFooter>
-                            {plan.paymentWidget && <div className="wompi_button_widget" data-url-pago={plan.paymentWidget}></div>}
+                            {plan.paymentWidget && (
+                                <div
+                                    className="wompi_button_widget"
+                                    data-url-pago={plan.paymentWidget}
+                                    id={`wompi-button-${plan.id}`}
+                                ></div>
+                            )}
                         </CardFooter>
                     </div>
                 </Card>
