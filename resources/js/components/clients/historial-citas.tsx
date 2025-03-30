@@ -7,7 +7,7 @@ import type { Cita } from "@/types/clients"
 interface HistorialCitasProps {
     citas: Cita[]
     clienteId: string
-    onDeleteCita: (clienteId: string, citaId: string) => void
+    onDeleteCita: (clienteId: string, citaId: string, event?: React.MouseEvent) => void
 }
 
 export function HistorialCitas({ citas, clienteId, onDeleteCita }: HistorialCitasProps) {
@@ -61,7 +61,7 @@ export function HistorialCitas({ citas, clienteId, onDeleteCita }: HistorialCita
                                         variant="ghost"
                                         size="icon"
                                         className="h-8 w-8 text-destructive hover:text-destructive/80 hover:bg-destructive/10"
-                                        onClick={() => onDeleteCita(clienteId, cita.appointment_id)}
+                                        onClick={(e) => onDeleteCita(clienteId, cita.appointment_id, e)}
                                     >
                                         <Trash2 size={16} />
                                         <span className="sr-only">Eliminar cita</span>

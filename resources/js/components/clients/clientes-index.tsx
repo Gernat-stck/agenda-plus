@@ -44,6 +44,8 @@ export default function ListaClientes({
         showFinalConfirmation,
         proceedToFinalConfirmation,
         cancelConfirmation,
+        citaToDelete,
+        clienteToDelete
     } = useClienteCrud(clients, {
         reloadOnSuccess: true,
         reloadDelay: 3000,
@@ -136,7 +138,11 @@ export default function ListaClientes({
         initDeleteCliente(cliente);
     };
 
-    const handleDeleteCitaClick = (clienteId: string, citaId: string) => {
+    const handleDeleteCitaClick = (clienteId: string, citaId: string, event?: React.MouseEvent) => {
+        if (event) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
         initDeleteCita(clienteId, citaId);
     };
     return (
@@ -189,7 +195,7 @@ export default function ListaClientes({
                                 <HistorialCitas
                                     citas={selectedCliente.citas}
                                     clienteId={selectedCliente.client_id}
-                                    onDeleteCita={(clienteId, citaId) => handleDeleteCitaClick(clienteId, citaId)}
+                                    onDeleteCita={(clienteId, citaId, event) => handleDeleteCitaClick(clienteId, citaId, event)}
                                 />
                             ) : null
                         }
@@ -198,7 +204,24 @@ export default function ListaClientes({
 
                 {/* Diálogos de confirmación */}
                 <ConfirmDeleteDialog
-                    open={showConfirmation}
+                    open={showConfirmation && citaToDelete !== null}
+                    onOpenChange={cancelConfirmation}
+                    onConfirm={proceedToFinalConfirmation}
+                    onCancel={cancelConfirmation}
+                    displayMessage="esta cita"
+                />
+
+                <ConfirmDeleteDialog
+                    open={showFinalConfirmation && citaToDelete !== null}
+                    onOpenChange={cancelConfirmation}
+                    onConfirm={handleDeleteCita}
+                    onCancel={cancelConfirmation}
+                    displayMessage="esta cita"
+                    finalConfirmation={true}
+                />
+
+                <ConfirmDeleteDialog
+                    open={showConfirmation && clienteToDelete !== null}
                     onOpenChange={cancelConfirmation}
                     onConfirm={proceedToFinalConfirmation}
                     onCancel={cancelConfirmation}
@@ -206,7 +229,7 @@ export default function ListaClientes({
                 />
 
                 <ConfirmDeleteDialog
-                    open={showFinalConfirmation}
+                    open={showFinalConfirmation && clienteToDelete !== null}
                     onOpenChange={cancelConfirmation}
                     onConfirm={handleDeleteCliente}
                     onCancel={cancelConfirmation}
