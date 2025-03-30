@@ -5,10 +5,15 @@ export function useConfirmation() {
     const [showFinalConfirmation, setShowFinalConfirmation] = useState(false);
 
     const startConfirmation = useCallback(() => setShowConfirmation(true), []);
+
     const proceedToFinalConfirmation = useCallback(() => {
         setShowConfirmation(false);
-        setShowFinalConfirmation(true);
+        // Añadir un pequeño retardo antes de mostrar el segundo diálogo
+        setTimeout(() => {
+            setShowFinalConfirmation(true);
+        }, 100);
     }, []);
+
     const cancelConfirmation = useCallback(() => {
         setShowConfirmation(false);
         setShowFinalConfirmation(false);

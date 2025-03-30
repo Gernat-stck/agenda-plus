@@ -1,8 +1,8 @@
-import type { Cliente, Cita } from '@/types/clients';
+import type { Cita, Cliente } from '@/types/clients';
 import { router } from '@inertiajs/react';
+import { format } from 'date-fns';
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { format } from 'date-fns';
 import { useConfirmation } from './use-confirmation';
 
 export interface UseClienteCrudOptions {
@@ -14,26 +14,18 @@ export interface UseClienteCrudOptions {
 export function useClienteCrud(initialClientes: Cliente[], options: UseClienteCrudOptions = {}) {
     const [clientes, setClientes] = useState<Cliente[]>(initialClientes);
     const [clienteToDelete, setClienteToDelete] = useState<Cliente | null>(null);
-    const [citaToDelete, setCitaToDelete] = useState<{clienteId: string, citaId: string} | null>(null);
-    
+    const [citaToDelete, setCitaToDelete] = useState<{ clienteId: string; citaId: string } | null>(null);
+
     // Estado para paginación
     const [currentPage, setCurrentPage] = useState(1);
     const [searchTerm, setSearchTerm] = useState('');
-    
+
     // Opciones con valores por defecto
-    const { 
-        onSuccess = () => {}, 
-        reloadOnSuccess = true,
-        reloadDelay = 3000 
-    } = options;
+    const { onSuccess = () => {}, reloadOnSuccess = true, reloadDelay = 3000 } = options;
 
     // Integración con el hook de confirmación
     const confirmationHook = useConfirmation();
-    const { 
-        startConfirmation, 
-        proceedToFinalConfirmation, 
-        cancelConfirmation 
-    } = confirmationHook;
+    const { startConfirmation, proceedToFinalConfirmation, cancelConfirmation } = confirmationHook;
 
     // Métodos de utilidad
     const handleReloadIfNeeded = () => {
@@ -103,11 +95,14 @@ export function useClienteCrud(initialClientes: Cliente[], options: UseClienteCr
     };
 
     const initDeleteCliente = (cliente: Cliente) => {
+        console.log('initDeleteCliente llamado con:', cliente);
         setClienteToDelete(cliente);
         startConfirmation();
     };
 
     const handleDeleteCliente = () => {
+        console.log('handleDeleteCliente llamado con:', clienteToDelete);
+
         if (!clienteToDelete) {
             toast.error('Error al eliminar el cliente', {
                 description: 'No se ha seleccionado ningún cliente para eliminar.',
@@ -154,7 +149,7 @@ export function useClienteCrud(initialClientes: Cliente[], options: UseClienteCr
         }
 
         const { clienteId, citaId } = citaToDelete;
-        
+
         router.delete(`appointments/client/${citaId}`, {
             onSuccess: () => {
                 const updatedClientes = clientes.map((cliente) => {
@@ -166,7 +161,7 @@ export function useClienteCrud(initialClientes: Cliente[], options: UseClienteCr
                     }
                     return cliente;
                 });
-                
+
                 setClientes(updatedClientes);
                 setCitaToDelete(null);
                 cancelConfirmation();
@@ -195,10 +190,10 @@ export function useClienteCrud(initialClientes: Cliente[], options: UseClienteCr
             });
             return;
         }
-        
+
         const formattedStartTime = format(appointment.start_time, 'yyyy-MM-dd HH:mm:ss');
         const formattedEndTime = format(appointment.end_time, 'yyyy-MM-dd HH:mm:ss');
-        
+
         router.post(
             'appointments/client',
             {
@@ -233,8 +228,7 @@ export function useClienteCrud(initialClientes: Cliente[], options: UseClienteCr
     // Filtrado de clientes
     const filteredClientes = clientes.filter(
         (cliente) =>
-            cliente.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            cliente.client_id.toLowerCase().includes(searchTerm.toLowerCase()),
+            cliente.name.toLowerCase().includes(searchTerm.toLowerCase()) || cliente.client_id.toLowerCase().includes(searchTerm.toLowerCase()),
     );
 
     // Actualizar la búsqueda
