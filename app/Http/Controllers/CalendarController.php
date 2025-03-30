@@ -127,10 +127,10 @@ class CalendarController extends Controller
     {
         $userAuth = Auth::user();
         $userId = $userAuth->user_id;
+
         // Obtener configuración actual o usar valores predeterminados
         $config = Cache::remember('calendar_config_' . $userId, 60 * 24, function () use ($userId) {
-
-            $config = CalendarConfig::firstOrNew(['user_id' => $userId], [
+            return CalendarConfig::firstOrNew(['user_id' => $userId], [
                 'show_weekend' => false,
                 'start_time' => '08:00',
                 'end_time' => '20:00',
@@ -138,7 +138,6 @@ class CalendarController extends Controller
             ]);
         });
         // Obtener fechas especiales
-
         $specialDates = Cache::remember('special_dates_' . $userId, 60 * 24, function () use ($userId) {
             return SpecialDate::where('user_id', $userId)->get();
         });
@@ -167,6 +166,12 @@ class CalendarController extends Controller
             ['user_id' => $userId],
             $validated
         );
+        // Olvidar la caché para que se actualice con los nuevos valores
+        Cache::forget('calendar_config_' . $userId);
+
+        // Si también has modificado fechas especiales, olvidar esa caché también
+        Cache::forget('special_dates_' . $userId);
+
 
         return redirect()->route('calendar.config')
             ->with('success', 'Configuración guardada correctamente');
