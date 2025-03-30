@@ -5,10 +5,18 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use App\Http\Requests\User\StoreUserRequest;
 use App\Http\Requests\User\UpdateUserRequest;
-use Illuminate\Http\Request;
+use Inertia\Inertia;
 
 class UserController extends Controller
 {
+    public function dashboard()
+    {
+        $statsController = new StatsController();
+        $stats = $statsController->getDashboardStats();
+        return Inertia::render('dashboard', [
+            'stats' =>  $stats
+        ]);
+    }
     public function index()
     {
         $users = User::all();
