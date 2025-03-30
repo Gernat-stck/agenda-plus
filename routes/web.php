@@ -4,6 +4,7 @@ use App\Http\Controllers\AppointmentController;
 use App\Http\Controllers\CalendarController;
 use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\ClientController;
+use App\Http\Controllers\ContactController;
 use App\Http\Controllers\SpecialDateController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\WhatsappController;
@@ -84,6 +85,8 @@ Route::middleware(['auth', 'verified', ValidateUserMembership::class])->group(
         Route::get('register/appointment/link', [AppointmentController::class, 'appointmentRegisterLink'])->name('appointment.register.link');
         Route::get('appointments/date/{date}', [AppointmentController::class, 'getAppointmentsByDate']);
         Route::get('available/slots/{date}', [CalendarController::class, 'getAvailableSlots']);
+
+        Route::post('/contact', [ContactController::class, 'send'])->name('contact.send');
     }
 
 );
