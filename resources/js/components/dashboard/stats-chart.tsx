@@ -1,22 +1,15 @@
 import { ChartContainer } from '@/components/ui/chart';
 import { Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 
-const data = [
-    { date: 'Mar', value: 300 },
-    { date: 'Apr', value: 350 },
-    { date: 'May', value: 200 },
-    { date: 'Jun', value: 400 },
-    { date: 'Jul', value: 300 },
-    { date: 'Aug', value: 200 },
-    { date: 'Sep', value: 450 },
-    { date: 'Oct', value: 500 },
-    { date: 'Nov', value: 480 },
-    { date: 'Dec', value: 400 },
-    { date: 'Jan', value: 350 },
-    { date: 'Feb', value: 400 },
-];
+interface StatsChartProps {
+    data: {
+        date: string;
+        value: number;
+    }[];
+}
 
-export default function StatsChart() {
+
+export default function StatsChart({ data }: StatsChartProps) {
     return (
         <ChartContainer
             config={{
