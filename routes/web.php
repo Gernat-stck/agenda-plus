@@ -5,6 +5,7 @@ use App\Http\Controllers\CalendarController;
 use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\ClientController;
 use App\Http\Controllers\SpecialDateController;
+use App\Http\Controllers\UserController;
 use App\Http\Controllers\WhatsappController;
 use App\Http\Controllers\WhatsappWebhookController;
 use App\Http\Middleware\ValidateUserMembership;
@@ -37,6 +38,7 @@ Route::middleware(['auth', 'verified', ValidateUserMembership::class])->group(
             return Inertia::render('calendar/config');
         })->name('calendar.config');
 
+        Route::get('dashboard', [UserController::class, 'dashboard'])->name('dashboard');
         //Services
         Route::get('services', [ServiceController::class, 'index'])->name('services.index');
         Route::post('services', [ServiceController::class, 'store'])->name('services.store');
