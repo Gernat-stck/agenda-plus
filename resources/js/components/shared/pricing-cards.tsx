@@ -1,10 +1,13 @@
 import { Badge as UIBadge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { CheckCircle2, X, Zap } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useScript } from '../../hooks/use-script';
 import { Plan } from '../../types/pricing';
+import { router } from '@inertiajs/react';
+import { SmoothScrollLink } from './smooth-scroll-link';
 
 // Declaración para TypeScript más precisa
 declare global {
@@ -83,6 +86,14 @@ export function PricingCards({ plans, defaultActiveCard = 1, onCardSelect }: Pri
         }, 500);
     };
 
+    // Verificar si estamos en la página principal
+    const isHomePage = window.location.pathname === '/';
+
+    // Función para manejar la redirección al registro
+    const handleRegisterRedirect = () => {
+        router.visit(route('register'));
+    };
+
     return (
         <div ref={containerRef} className="relative flex h-[400px] items-center justify-center">
             {plans.map((plan, index) => (
@@ -147,13 +158,22 @@ export function PricingCards({ plans, defaultActiveCard = 1, onCardSelect }: Pri
                             </ul>
                         </CardContent>
                         <CardFooter>
-                            {plan.paymentWidget && (
+                            {plan.paymentWidget && isHomePage ? (
+                                // Si estamos en la página principal, mostrar botón de registro
+                                <Button
+                                    onClick={handleRegisterRedirect}
+                                    className="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg shadow-purple-500/20 transition-all duration-300 hover:from-purple-600 hover:to-pink-600 hover:shadow-purple-500/40"
+                                >
+                                    <SmoothScrollLink to={route('register')}>Registrarse</SmoothScrollLink>
+                                </Button>
+                            ) : plan.paymentWidget ? (
+                                // En otras rutas, mostrar el widget de Wompi
                                 <div
                                     className="wompi_button_widget"
                                     data-url-pago={plan.paymentWidget}
                                     id={`wompi-button-${plan.id}`}
                                 ></div>
-                            )}
+                            ) : null}
                         </CardFooter>
                     </div>
                 </Card>
