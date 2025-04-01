@@ -5,8 +5,8 @@ interface CitaOverviewProps {
     tomorrowAppointments: number;
 }
 export default function CitaOverview(AppointmentsStats: CitaOverviewProps) {
-    const tomorrowAppointments = AppointmentsStats.appointments - AppointmentsStats.tomorrowAppointments;
-    const tomorrowString = tomorrowAppointments > 0 ? `+ ${tomorrowAppointments}  programadas para mañana` : 'No hay citas programadas para mañana';
+    const tomorrowAppointments = AppointmentsStats.tomorrowAppointments;
+    const citasString = tomorrowAppointments === 0 ? 'No hay citas para mañana' : `${tomorrowAppointments} Citas para mañana`;
     return (
         <Card className="flex h-full w-full flex-col">
             <CardHeader className="flex flex-row items-center justify-between p-3 sm:p-4 md:p-5">
@@ -15,7 +15,7 @@ export default function CitaOverview(AppointmentsStats: CitaOverviewProps) {
             </CardHeader>
             <CardContent className="pb-3 sm:pb-4 md:pb-5">
                 <div className="text-2xl font-bold sm:text-2xl md:text-3xl">{AppointmentsStats.appointments}</div>
-                <p className="text-muted-foreground text-sm sm:text-base md:text-lg">{tomorrowString}</p>
+                <p className="text-muted-foreground text-sm sm:text-base md:text-lg">{citasString} </p>
             </CardContent>
         </Card>
     );

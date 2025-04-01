@@ -9,9 +9,11 @@ interface ClientesOverviewProps {
 export default function ClientesOverview(clients: ClientesOverviewProps) {
     const clientsLastWeek = clients.new_clients - clients.clients_last_week;
     const clientsString =
-        clientsLastWeek > 0
-            ? `+ ${clientsLastWeek} nuevos clientes que la semana pasada`
-            : `${clientsLastWeek} que la semana pasada` || 'No hay nuevos clientes esta semana pasada';
+        clientsLastWeek === 0
+            ? 'No hay nuevos clientes esta semana'
+            : clientsLastWeek < 0
+                ? `- ${Math.abs(clientsLastWeek)} clientes menos que la semana pasada`
+                : `+ ${Math.abs(clientsLastWeek)}  clientes nuevos que la semana pasada`
     return (
         <Card className="flex h-full w-full flex-col">
             <CardHeader className="flex flex-row items-center justify-between p-3 sm:p-4 md:p-5">
