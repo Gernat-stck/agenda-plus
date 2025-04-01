@@ -4,9 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\AppointmentRequest;
 use App\Models\Appointments;
-use App\Models\CalendarConfig;
-use App\Models\Service;
-use App\Models\SpecialDate;
+use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 
 class AppointmentController extends Controller
@@ -39,7 +37,8 @@ class AppointmentController extends Controller
     }
     public function appointmentRegisterLink()
     {
-        $userId = auth()->user()->user_id;
+        $userAuth = Auth::user();
+        $userId = $userAuth->user_id;
         $url = env('APP_URL') . '/book/' . $userId;
         return Inertia::render('Appointments/RegisterLink', [
             'url' => $url

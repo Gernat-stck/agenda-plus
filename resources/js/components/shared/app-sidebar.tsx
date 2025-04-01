@@ -35,6 +35,11 @@ const footerNavItems: NavItem[] = [
         title: 'Atencion al cliente',
         url: '/support',
         icon: LifeBuoy,
+    },
+    {
+        title: 'Link de registro',
+        url: '/register/appointment/link',
+        icon: Link2Icon,
     }
 ];
 

@@ -2,7 +2,6 @@ import { Icon } from '@/components/shared/icon';
 import { SidebarGroup, SidebarGroupContent, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { type NavItem } from '@/types';
 import { Link } from '@inertiajs/react';
-import { Link2Icon } from 'lucide-react';
 import { type ComponentPropsWithoutRef } from 'react';
 
 export function NavFooter({
@@ -22,25 +21,14 @@ export function NavFooter({
                                 asChild
                                 className="text-neutral-600 hover:text-neutral-800 dark:text-neutral-300 dark:hover:text-neutral-100"
                             >
-                                <a href={item.url} target="_blank" rel="noopener noreferrer">
+                                <Link href={item.url} prefetch rel="noopener noreferrer">
                                     {item.icon && <Icon iconNode={item.icon} className="h-5 w-5" />}
                                     <span>{item.title}</span>
-                                </a>
+                                </Link>
 
                             </SidebarMenuButton>
                         </SidebarMenuItem>
                     ))}
-                    <SidebarMenuItem>
-                        <SidebarMenuButton
-                            asChild
-                            className="text-neutral-600 hover:text-neutral-800 dark:text-neutral-300 dark:hover:text-neutral-100"
-                        >
-                            <Link href='/register/appointment/link' prefetch>
-                                <Link2Icon className='h-5 w-5' />
-                                <span>URL de Citas</span>
-                            </Link>
-                        </SidebarMenuButton>
-                    </SidebarMenuItem>
                 </SidebarMenu>
             </SidebarGroupContent>
         </SidebarGroup>

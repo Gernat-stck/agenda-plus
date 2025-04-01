@@ -7,17 +7,19 @@ use App\Models\Appointments;
 use App\Models\CalendarConfig;
 use App\Models\Service;
 use App\Models\SpecialDate;
-use Cache;
+use Illuminate\Support\Facades\Cache;
 use Carbon\Carbon;
 use Inertia\Inertia;
 use Illuminate\Http\Request;
-
+use Illuminate\Support\Facades\Auth;
 
 class CalendarController extends Controller
 {
+
     public function index()
     {
-        $userId = auth()->user()->user_id;
+        $userAuth = Auth::user();
+        $userId = $userAuth->user_id;
         // Cargar las citas con la relación del cliente
         $appointmentsData = Appointments::with('client')
             ->where('user_id', $userId)
@@ -58,7 +60,7 @@ class CalendarController extends Controller
         $services = Service::where('user_id', $userId)->get();
         // Obtener días especiales
         $specialDates = SpecialDate::where('user_id', $userId)->get();
-        //Obtener config del calendario 
+        //Obtener config del calendario
         $config = CalendarConfig::where('user_id', $userId)->first();
         // Agrupamos los servicios por categoría
         $categories = $services->groupBy('category')->map(fn($servicesInCategory, $categoryName) => [
@@ -91,10 +93,13 @@ class CalendarController extends Controller
     public function store(AppointmentRequest $request)
     {
         $validatedData = $request->validated();
-        $validatedData['user_id'] = auth()->user()->user_id;
+
+        $userAuth = Auth::user();
+        $userId = $userAuth->user_id;
+        $validatedData['user_id'] = $userId;
 
         $appointmentId = $this->generateAppointmentId(
-            auth()->user()->user_id,
+            $userId->user_id,
             $validatedData['service_id'],
             $validatedData['client_id']
         );
@@ -120,11 +125,12 @@ class CalendarController extends Controller
     }
     public function configIndex()
     {
-        $userId = auth()->user()->user_id;
+        $userAuth = Auth::user();
+        $userId = $userAuth->user_id;
+
         // Obtener configuración actual o usar valores predeterminados
         $config = Cache::remember('calendar_config_' . $userId, 60 * 24, function () use ($userId) {
-
-            $config = CalendarConfig::firstOrNew(['user_id' => auth()->user()->user_id], [
+            return CalendarConfig::firstOrNew(['user_id' => $userId], [
                 'show_weekend' => false,
                 'start_time' => '08:00',
                 'end_time' => '20:00',
@@ -132,7 +138,6 @@ class CalendarController extends Controller
             ]);
         });
         // Obtener fechas especiales
-
         $specialDates = Cache::remember('special_dates_' . $userId, 60 * 24, function () use ($userId) {
             return SpecialDate::where('user_id', $userId)->get();
         });
@@ -144,10 +149,12 @@ class CalendarController extends Controller
         return Inertia::render('Calendar/Config', [
             'config' => $configArray
         ]);
-
     }
     public function saveConfig(Request $request)
     {
+
+        $userAuth = Auth::user();
+        $userId = $userAuth->user_id;
         $validated = $request->validate([
             'show_weekend' => 'boolean',
             'start_time' => 'required|string',
@@ -156,9 +163,15 @@ class CalendarController extends Controller
         ]);
 
         $config = CalendarConfig::updateOrCreate(
-            ['user_id' => auth()->user()->user_id],
+            ['user_id' => $userId],
             $validated
         );
+        // Olvidar la caché para que se actualice con los nuevos valores
+        Cache::forget('calendar_config_' . $userId);
+
+        // Si también has modificado fechas especiales, olvidar esa caché también
+        Cache::forget('special_dates_' . $userId);
+
 
         return redirect()->route('calendar.config')
             ->with('success', 'Configuración guardada correctamente');
@@ -166,8 +179,11 @@ class CalendarController extends Controller
 
     public function getAvailableSlots($date, $user_id = null)
     {
+
+        $userAuth = Auth::user();
+        $userId = $userAuth->user_id;
         // Usar el user_id proporcionado en la URL o el del usuario autenticado
-        $userId = $user_id ?? auth()->user()->user_id;
+        $userId = $user_id ?? $userId;
 
         if (!Carbon::hasFormat($date, 'Y-m-d')) {
             return response()->json(['error' => 'Formato de fecha inválido'], 400);

@@ -191,26 +191,14 @@
     background: #666;
 }
 
-/* Estilos específicos para el calendario */
-.rdp-nav {
-    position: relative !important;
-    display: flex !important;
-    justify-content: space-between !important;
-    width: 100% !important;
-    padding: 0 8px !important;
+.fc-scroller {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-border) var(--color-background);
 }
-
-.rdp-nav_button {
-    color: var(--foreground) !important;
-    background-color: transparent !important;
-    border-radius: var(--radius) !important;
+.fc-scroller::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
 }
-
-.rdp-nav_button:hover {
-    background-color: var(--accent) !important;
-    color: var(--accent-foreground) !important;
-}
-
-.dark .rdp-nav_button {
-    color: var(--foreground) !important;
+.fc-scroller::-webkit-scrollbar-track {
+    background: var(--color-background);
 }

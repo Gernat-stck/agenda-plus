@@ -1,16 +1,17 @@
-import { useState, useEffect } from "react";
-import { Handshake } from "lucide-react";
-import { router, usePage } from "@inertiajs/react";
-import { type Servicio } from "@/types/services";
-import { ServicioDialog } from "./service-dialog";
-import { TablaServicios } from "./tabla-servicios";
-import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
-import { NoData } from "../shared/no-data";
-import { toast } from "sonner";
-import { useAuth } from "@/context/AuthContext";
-import { FiltersBar } from "./filters-bar";
-import { Pagination } from "../shared/pagination";
-import ConfirmActionDialog from "../shared/confirm-dialog";
+import { useAuth } from '@/context/AuthContext';
+import { type Servicio } from '@/types/services';
+import { router, usePage } from '@inertiajs/react';
+import { Handshake, PlusCircle } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
+import { EntityForm } from '../shared/clients/entity-form';
+import ConfirmActionDialog from '../shared/confirm-dialog';
+import { NoData } from '../shared/no-data';
+import { Pagination } from '../shared/pagination';
+import { SearchBar } from '../shared/search-bar';
+import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
+import { ServicioFormFields } from './servicio-form-fields';
+import { TablaServicios } from './tabla-servicios';
 
 export default function GestionServicios({ services }: { services: Servicio[] }) {
     const { user } = useAuth();
@@ -18,11 +19,12 @@ export default function GestionServicios({ services }: { services: Servicio[] })
     const [categorias, setCategorias] = useState<string[]>([]);
     const [editingServicio, setEditingServicio] = useState<Servicio | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [searchTerm, setSearchTerm] = useState("");
-    const [filterCategoria, setFilterCategoria] = useState<string>("all");
+    const [searchTerm, setSearchTerm] = useState('');
+    const [filterCategoria, setFilterCategoria] = useState<string>('all');
     const [isCreating, setIsCreating] = useState(false);
     const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
     const [serviceIdToDelete, setServiceIdToDelete] = useState<string | null>(null);
+    const [newCategoria, setNewCategoria] = useState('');
 
     const { flash } = usePage().props as any;
 
@@ -48,16 +50,42 @@ export default function GestionServicios({ services }: { services: Servicio[] })
         if (flash && flash.success) {
             toast.success(flash.success, {
                 duration: 3000,
-                position: "top-right",
+                position: 'top-right',
             });
         }
     }, [flash]);
+
+    // Función para añadir nueva categoría
+    const addNewCategoria = () => {
+        if (!newCategoria.trim()) {
+            toast.error('Ingrese un nombre para la categoría');
+            return;
+        }
+
+        if (categorias.includes(newCategoria.trim())) {
+            toast.error('Esta categoría ya existe');
+            return;
+        }
+
+        setCategorias([...categorias, newCategoria.trim()]);
+
+        // Si hay un servicio en edición, actualizar su categoría
+        if (editingServicio) {
+            setEditingServicio({
+                ...editingServicio,
+                category: newCategoria.trim(),
+            });
+        }
+
+        setNewCategoria('');
+        toast.success('Categoría añadida');
+    };
 
     const filteredServicios = servicios.filter(
         (servicio) =>
             (servicio.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                 servicio.description.toLowerCase().includes(searchTerm.toLowerCase())) &&
-            (filterCategoria === "all" || servicio.category === filterCategoria),
+            (filterCategoria === 'all' || servicio.category === filterCategoria),
     );
 
     // Calculamos los servicios de la página actual
@@ -71,13 +99,13 @@ export default function GestionServicios({ services }: { services: Servicio[] })
             setIsCreating(false);
         } else {
             setEditingServicio({
-                service_id: "",
-                user_id: "",
-                name: "",
-                description: "",
+                service_id: '',
+                user_id: '',
+                name: '',
+                description: '',
                 price: 0,
                 duration: 30,
-                category: "",
+                category: '',
             } as Servicio);
             setIsCreating(true);
         }
@@ -88,6 +116,7 @@ export default function GestionServicios({ services }: { services: Servicio[] })
         setIsModalOpen(false);
         setEditingServicio(null);
         setIsCreating(false);
+        setNewCategoria('');
     };
 
     const handleSave = (servicio: Servicio) => {
@@ -104,57 +133,55 @@ export default function GestionServicios({ services }: { services: Servicio[] })
         setIsConfirmDialogOpen(true);
     };
 
-
     const confirmDelete = () => {
         if (!serviceIdToDelete) return;
 
         router.delete(`services/destroy/${serviceIdToDelete}`, {
             onSuccess: () => {
-                toast.success("Servicio eliminado correctamente", {
+                toast.success('Servicio eliminado correctamente', {
                     duration: 3000,
-                    position: "top-right",
+                    position: 'top-right',
                 });
                 setIsConfirmDialogOpen(false);
                 setServiceIdToDelete(null);
             },
             onError: (error) => {
-                toast.error("Error al eliminar el servicio", {
+                toast.error('Error al eliminar el servicio', {
                     duration: 3000,
-                    position: "top-right",
+                    position: 'top-right',
                 });
                 setIsConfirmDialogOpen(false);
                 setServiceIdToDelete(null);
-            }
+            },
         });
     };
+
     return (
-        <Card className="container mx-auto p-6 border-0">
+        <Card className="container mx-auto border-0 p-6">
             <CardHeader className="pb-0">
                 <CardTitle className="text-3xl font-bold">Servicios</CardTitle>
             </CardHeader>
             <CardContent className="p-6">
-                <FiltersBar
+                <SearchBar
                     searchTerm={searchTerm}
-                    setSearchTerm={setSearchTerm}
-                    filterCategoria={filterCategoria}
-                    setFilterCategoria={setFilterCategoria}
-                    categorias={categorias}
-                    onNewClick={() => openModal()}
+                    onSearchChange={setSearchTerm}
+                    searchPlaceholder="Buscar servicios..."
+                    showActionButton={true}
+                    actionButtonLabel="Nuevo Servicio"
+                    actionButtonIcon={<PlusCircle size={20} />}
+                    onActionButtonClick={() => openModal()}
+                    showCategoryFilter={true}
+                    filterCategory={filterCategoria}
+                    onCategoryChange={setFilterCategoria}
+                    categories={categorias.map((cat) => ({ id: cat, name: cat }))}
+                    categoryPlaceholder="Todas las categorías"
                 />
 
                 {servicios.length === 0 ? (
-                    <NoData
-                        title="No hay servicios"
-                        description="No se han registrado servicios en el sistema."
-                        icon={<Handshake size={64} />}
-                    />
+                    <NoData title="No hay servicios" description="No se han registrado servicios en el sistema." icon={<Handshake size={64} />} />
                 ) : (
                     <>
-                        <TablaServicios
-                            servicios={currentServicios}
-                            onEdit={openModal}
-                            onDelete={handleDeleteClick}
-                        />
+                        <TablaServicios servicios={currentServicios} onEdit={openModal} onDelete={handleDeleteClick} />
                         <Pagination
                             totalItems={filteredServicios.length}
                             itemsPerPage={itemsPerPage}
@@ -168,14 +195,20 @@ export default function GestionServicios({ services }: { services: Servicio[] })
                 )}
 
                 {isModalOpen && (
-                    <ServicioDialog
-                        servicio={editingServicio}
-                        open={isModalOpen}
+                    <EntityForm
+                        entity={editingServicio}
+                        entityType="service"
+                        fields={ServicioFormFields({
+                            categorias,
+                            newCategoria,
+                            setNewCategoria,
+                            addNewCategoria,
+                        })}
+                        isOpen={isModalOpen}
+                        isCreating={isCreating}
                         onOpenChange={setIsModalOpen}
                         onSave={handleSave}
-                        categorias={categorias}
-                        setCategorias={setCategorias}
-                        isCreating={isCreating}
+                        onCancel={closeModal}
                     />
                 )}
                 {isConfirmDialogOpen && (

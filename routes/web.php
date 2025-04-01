@@ -4,17 +4,27 @@ use App\Http\Controllers\AppointmentController;
 use App\Http\Controllers\CalendarController;
 use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\ClientController;
+use App\Http\Controllers\ContactController;
 use App\Http\Controllers\SpecialDateController;
+use App\Http\Controllers\UserController;
 use App\Http\Controllers\WhatsappController;
 use App\Http\Controllers\WhatsappWebhookController;
+use App\Http\Middleware\ValidateUserMembership;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
+// Rutas públicas - Sin middleware de validación de membresía
 Route::get('/', function () {
     return Inertia::render('welcome');
 })->name('home');
 
-Route::middleware(['auth', 'verified'])->group(
+// Ruta de membership debe estar FUERA del middleware de validación
+Route::get('/membership', function () {
+    return Inertia::render('Membership/Index');
+})->name('membership.required');
+
+// Rutas protegidas con autenticación y verificación de membresía
+Route::middleware(['auth', 'verified', ValidateUserMembership::class])->group(
     function () {
         Route::get('dashboard', function () {
             return Inertia::render('dashboard');
@@ -28,7 +38,11 @@ Route::middleware(['auth', 'verified'])->group(
         Route::get('calendar/config', function () {
             return Inertia::render('calendar/config');
         })->name('calendar.config');
+        Route::get('support', function () {
+            return Inertia::render('Support');
+        })->name('support');
 
+        Route::get('dashboard', [UserController::class, 'dashboard'])->name('dashboard');
         //Services
         Route::get('services', [ServiceController::class, 'index'])->name('services.index');
         Route::post('services', [ServiceController::class, 'store'])->name('services.store');
@@ -74,6 +88,10 @@ Route::middleware(['auth', 'verified'])->group(
         Route::get('register/appointment/link', [AppointmentController::class, 'appointmentRegisterLink'])->name('appointment.register.link');
         Route::get('appointments/date/{date}', [AppointmentController::class, 'getAppointmentsByDate']);
         Route::get('available/slots/{date}', [CalendarController::class, 'getAvailableSlots']);
+
+        //Rutas para envio de correos
+        Route::post('/contact', [ContactController::class, 'send'])->name('contact.send');
+        Route::post('/support', [ContactController::class, 'sendSupport'])->name('support.send');
     }
 
 );

@@ -5,6 +5,7 @@ import { es } from "date-fns/locale"
 import { CalendarIcon, Clock, FileCog, User } from "lucide-react"
 import ConfirmDeleteDialog from "@/components/shared/confirm-dialog"
 import { useState } from "react"
+import { useConfirmation } from "@/hooks/use-confirmation"
 
 interface AppointmentDetailsDialogProps {
     isOpen: boolean
@@ -24,31 +25,24 @@ export function AppointmentDetailsDialog({
     duration,
 }: AppointmentDetailsDialogProps) {
     // Estados para los diálogos de confirmación
-    const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false)
-    const [showFinalDeleteConfirmation, setShowFinalDeleteConfirmation] = useState(false)
+    const {
+        showConfirmation,
+        showFinalConfirmation,
+        startConfirmation,
+        proceedToFinalConfirmation,
+        cancelConfirmation
+    } = useConfirmation();
 
     if (!appointment) return null
     const startDate = new Date(appointment.start)
     const endDate = new Date(appointment.end)
-
-    // Manejadores para la confirmación de eliminación
-    const handleDeleteClick = () => {
-        setShowDeleteConfirmation(true)
-    }
-
-    const handleDeleteConfirm = () => {
-        setShowDeleteConfirmation(false)
-        setShowFinalDeleteConfirmation(true)
-    }
+    const handleDeleteClick = startConfirmation;
+    const handleDeleteConfirm = proceedToFinalConfirmation;
+    const handleDeleteCancel = cancelConfirmation;
 
     const handleFinalDeleteConfirm = () => {
-        setShowFinalDeleteConfirmation(false)
-        onDelete()
-    }
-
-    const handleDeleteCancel = () => {
-        setShowDeleteConfirmation(false)
-        setShowFinalDeleteConfirmation(false)
+        cancelConfirmation();
+        onDelete();
     }
 
     return (
@@ -118,17 +112,16 @@ export function AppointmentDetailsDialog({
 
             {/* Primera confirmación para eliminar cita */}
             <ConfirmDeleteDialog
-                open={showDeleteConfirmation}
-                onOpenChange={setShowDeleteConfirmation}
+                open={showConfirmation}
+                onOpenChange={startConfirmation}
                 onConfirm={handleDeleteConfirm}
                 onCancel={handleDeleteCancel}
                 displayMessage="esta cita"
             />
 
-            {/* Segunda confirmación (final) para eliminar cita */}
             <ConfirmDeleteDialog
-                open={showFinalDeleteConfirmation}
-                onOpenChange={setShowFinalDeleteConfirmation}
+                open={showFinalConfirmation}
+                onOpenChange={cancelConfirmation}
                 onConfirm={handleFinalDeleteConfirm}
                 onCancel={handleDeleteCancel}
                 displayMessage="esta cita"

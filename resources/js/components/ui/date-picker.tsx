@@ -1,7 +1,3 @@
-"use client"
-
-import type React from "react"
-
 import { format } from "date-fns"
 import { es } from "date-fns/locale"
 import { CalendarIcon, ChevronLeftCircleIcon, ChevronRightCircleIcon } from "lucide-react"
@@ -102,9 +98,9 @@ export function DatePicker({ date, onDateChange, className, disabled }: DatePick
                             day_hidden: "invisible",
                         }}
                         components={{
-                            IconLeft: () => <ChevronLeftCircleIcon className="h-4 w-4 text-foreground" />,
-                            IconRight: () => <ChevronRightCircleIcon className="h-4 w-4 text-foreground" />,
-                        }}
+                            PreviousMonthButton: () => <ChevronLeftCircleIcon className="h-4 w-4 text-foreground" />,
+                            NextMonthButton: () => <ChevronRightCircleIcon className="h-4 w-4 text-foreground" />,
+                        }} 
                     />
                 </PopoverContent>
             </Popover>

@@ -10,9 +10,10 @@ use App\Models\Service;
 use App\Models\SpecialDate;
 use App\Models\User;
 use Carbon\Carbon;
-use DB;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log as FacadesLog;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Log;
@@ -75,9 +76,13 @@ class PublicController extends Controller
 
         return $userInitials . "CL-" . $randomNumber;
     }
-    public function storeAppointment(Request $request)
+    public function storeAppointment(Request $request, $userId)
     {
-        // Iniciar una transacción de base de datos
+        // Verificar si el usuario existe
+        $user = User::where('user_id', $userId)->first();
+        if (!$user) {
+            return response()->json(['error' => 'Usuario no encontrado'], 404);
+        }
         DB::beginTransaction();
 
         try {
@@ -108,12 +113,11 @@ class PublicController extends Controller
                     'email' => $validatedData['client_email'],
                     'contact_number' => $validatedData['client_phone'],
                 ]);
-
                 // Asociar el usuario al cliente en la tabla pivote
                 ClientsUser::create([
                     'client_id' => $client->client_id,
-                    'user_id' => auth()->user()->user_id,
-                    'notes' => "Cliente creado por " . auth()->user()->name,
+                    'user_id' => $userId,
+                    'notes' => "Cliente creado por " . $user->name,
                 ]);
             }
 
@@ -174,13 +178,12 @@ class PublicController extends Controller
                 'message' => 'Cita registrada correctamente',
                 'share_url' => $shareUrl
             ]);
-
         } catch (\Exception $e) {
             // Si ocurrió algún error, deshacer todos los cambios
             DB::rollBack();
 
             // Registrar el error para depuración
-            Log::error('Error al registrar cita: ' . $e->getMessage());
+            FacadesLog::error('Error al registrar cita: ' . $e->getMessage());
 
             return response()->json([
                 'success' => false,
