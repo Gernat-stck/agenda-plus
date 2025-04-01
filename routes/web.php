@@ -38,6 +38,9 @@ Route::middleware(['auth', 'verified', ValidateUserMembership::class])->group(
         Route::get('calendar/config', function () {
             return Inertia::render('calendar/config');
         })->name('calendar.config');
+        Route::get('support', function () {
+            return Inertia::render('Support');
+        })->name('support');
 
         Route::get('dashboard', [UserController::class, 'dashboard'])->name('dashboard');
         //Services
@@ -86,7 +89,9 @@ Route::middleware(['auth', 'verified', ValidateUserMembership::class])->group(
         Route::get('appointments/date/{date}', [AppointmentController::class, 'getAppointmentsByDate']);
         Route::get('available/slots/{date}', [CalendarController::class, 'getAvailableSlots']);
 
+        //Rutas para envio de correos
         Route::post('/contact', [ContactController::class, 'send'])->name('contact.send');
+        Route::post('/support', [ContactController::class, 'sendSupport'])->name('support.send');
     }
 
 );
