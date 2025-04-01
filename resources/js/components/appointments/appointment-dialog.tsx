@@ -17,6 +17,8 @@ import { getServiceDuration } from '@/utils/service-utils';
 
 // Importar el nuevo componente
 import { DateTimePicker } from '@/components/ui/date-time-picker';
+import { PaymentMethodSelector } from '../shared/payment-method-selector';
+import { Label } from '@/components/ui/label';
 
 export function AppointmentDialog({
     isOpen,
@@ -89,7 +91,7 @@ export function AppointmentDialog({
 
     return (
         <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-            <DialogContent className="mt-[-50px] sm:w-90">
+            <DialogContent className="w-auto min-w-2xl">
                 <DialogHeader>
                     <DialogTitle>{appointment ? 'Editar cita' : 'Nueva cita'}</DialogTitle>
                 </DialogHeader>
@@ -137,15 +139,12 @@ export function AppointmentDialog({
 
                     {/* Forma de pago */}
                     <FormField label="Forma de pago" htmlFor="payment-type">
-                        <Select value={formData.payment_type} onValueChange={handlePaymentChange}>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Selecciona forma de pago" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="tarjeta">Tarjeta</SelectItem>
-                                <SelectItem value="efectivo">Efectivo</SelectItem>
-                            </SelectContent>
-                        </Select>
+                        <PaymentMethodSelector
+                            label=''
+                            serviceId={formData.service_id}
+                            value={formData.payment_type}
+                            onChange={(paymentType) => handlePaymentChange(paymentType)}
+                        />
                     </FormField>
                 </div>
                 <DialogFooter>

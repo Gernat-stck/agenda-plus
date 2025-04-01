@@ -19,6 +19,7 @@ import { formatForDisplay, formatTimeRange } from '@/utils/date-utils';
 import { Button } from '../ui/button';
 import { DateTimePicker } from '../ui/date-time-picker';
 import { Input } from '../ui/input';
+import { PaymentMethodSelector } from './payment-method-selector';
 // Modificar la interfaz para incluir isSubmitting
 interface AppointmentFormProps {
     onSave: (appointment: Cita) => void;
@@ -67,18 +68,8 @@ export function AppointmentForm({
     const [selectedCategory, setSelectedCategory] = useState<string>('');
     const [step, setStep] = useState<number>(0);
     const [isLoading, setIsLoading] = useState<boolean>(false);
-    const [isCardDisabled, setIsCardDisabled] = useState<boolean>(false);
-    const [isCashDisabled, setIsCashDisabled] = useState<boolean>(false);
     // Añadir estos nuevos estados para los slots disponibles
     const { availableSlots, loading: loadingSlots, loadAvailableSlots } = useAvailableSlots(config?.user_id);
-    //TODO: Recordatorio, en el useEffect se puede aplicar logica para implementar los pagos con tarjeta
-    useEffect(() => {
-        if (formData.service_id) {
-            // Ejemplo: deshabilitar pago con tarjeta para servicios caros
-            setIsCardDisabled(true); // Solo ejemplo, ajusta según tus necesidades
-            setIsCashDisabled(false); // Habilitar pago en efectivo
-        }
-    }, [formData.service_id]);
     useEffect(() => {
         const currentTime = new Date();
 
@@ -640,32 +631,11 @@ export function AppointmentForm({
                         </div>
 
                         <div className="space-y-2">
-                            <Label htmlFor="payment-type" className="text-sm font-medium">
-                                Forma de pago
-                            </Label>
-                            <div className="mt-1 grid grid-cols-2 gap-3">
-                                <div
-                                    className={`flex items-center gap-2 rounded-lg border p-3 transition-colors ${formData.payment_type === 'tarjeta' ? 'border-primary bg-primary/5' : 'hover:bg-muted/50'
-                                        } ${isCardDisabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
-                                    onClick={() => !isCardDisabled && handleSelectChange('payment', 'tarjeta')}
-                                >
-                                    <CreditCard className={`h-5 w-5 ${isCardDisabled ? 'text-muted-foreground' : 'text-primary'}`} />
-                                    <span>Tarjeta</span>
-                                    {formData.payment_type === 'tarjeta' && <CheckCircle2 className="text-primary ml-auto h-4 w-4" />}
-                                    {isCardDisabled && <span className="ml-auto text-xs text-muted-foreground">Proximamente</span>}
-                                </div>
-
-                                <div
-                                    className={`flex items-center gap-2 rounded-lg border p-3 transition-colors ${formData.payment_type === 'efectivo' ? 'border-primary bg-primary/5' : 'hover:bg-muted/50'
-                                        } ${isCashDisabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
-                                    onClick={() => !isCashDisabled && handleSelectChange('payment', 'efectivo')}
-                                >
-                                    <Banknote className={`h-5 w-5 ${isCashDisabled ? 'text-muted-foreground' : 'text-primary'}`} />
-                                    <span>Efectivo</span>
-                                    {formData.payment_type === 'efectivo' && <CheckCircle2 className="text-primary ml-auto h-4 w-4" />}
-                                    {isCashDisabled && <span className="ml-auto text-xs text-muted-foreground">No disponible</span>}
-                                </div>
-                            </div>
+                            <PaymentMethodSelector
+                                serviceId={formData.service_id}
+                                value={formData.payment_type}
+                                onChange={(paymentType) => setFormData({ ...formData, payment_type: paymentType })}
+                            />
                         </div>
 
                         {!clientName && (
