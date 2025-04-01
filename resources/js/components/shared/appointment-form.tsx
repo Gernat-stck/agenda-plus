@@ -67,9 +67,18 @@ export function AppointmentForm({
     const [selectedCategory, setSelectedCategory] = useState<string>('');
     const [step, setStep] = useState<number>(0);
     const [isLoading, setIsLoading] = useState<boolean>(false);
-
+    const [isCardDisabled, setIsCardDisabled] = useState<boolean>(false);
+    const [isCashDisabled, setIsCashDisabled] = useState<boolean>(false);
     // Añadir estos nuevos estados para los slots disponibles
     const { availableSlots, loading: loadingSlots, loadAvailableSlots } = useAvailableSlots(config?.user_id);
+    //TODO: Recordatorio, en el useEffect se puede aplicar logica para implementar los pagos con tarjeta
+    useEffect(() => {
+        if (formData.service_id) {
+            // Ejemplo: deshabilitar pago con tarjeta para servicios caros
+            setIsCardDisabled(true); // Solo ejemplo, ajusta según tus necesidades
+            setIsCashDisabled(false); // Habilitar pago en efectivo
+        }
+    }, [formData.service_id]);
     useEffect(() => {
         const currentTime = new Date();
 
@@ -479,32 +488,32 @@ export function AppointmentForm({
                                 <SelectContent>
                                     {selectedCategory
                                         ? category
-                                              .find((cat) => cat.name === selectedCategory)
-                                              ?.services.map((service) => (
-                                                  <SelectItem key={service.service_id} value={service.service_id}>
-                                                      <div className="flex w-full justify-between">
-                                                          <span>{service.name}</span>
-                                                          <span className="text-muted-foreground">
-                                                              ${service.price} - {service.duration}min
-                                                          </span>
-                                                      </div>
-                                                  </SelectItem>
-                                              ))
+                                            .find((cat) => cat.name === selectedCategory)
+                                            ?.services.map((service) => (
+                                                <SelectItem key={service.service_id} value={service.service_id}>
+                                                    <div className="flex w-full justify-between">
+                                                        <span>{service.name}</span>
+                                                        <span className="text-muted-foreground">
+                                                            ${service.price} - {service.duration}min
+                                                        </span>
+                                                    </div>
+                                                </SelectItem>
+                                            ))
                                         : category.map((cat) => (
-                                              <div key={cat.name} className="pb-1">
-                                                  <div className="bg-muted/50 px-2 py-1.5 text-sm font-semibold">{cat.name}</div>
-                                                  {cat.services.map((service) => (
-                                                      <SelectItem key={service.service_id} value={service.service_id}>
-                                                          <div className="flex w-full justify-between">
-                                                              <span>{service.name}</span>
-                                                              <span className="text-muted-foreground">
-                                                                  ${service.price} - {service.duration}min
-                                                              </span>
-                                                          </div>
-                                                      </SelectItem>
-                                                  ))}
-                                              </div>
-                                          ))}
+                                            <div key={cat.name} className="pb-1">
+                                                <div className="bg-muted/50 px-2 py-1.5 text-sm font-semibold">{cat.name}</div>
+                                                {cat.services.map((service) => (
+                                                    <SelectItem key={service.service_id} value={service.service_id}>
+                                                        <div className="flex w-full justify-between">
+                                                            <span>{service.name}</span>
+                                                            <span className="text-muted-foreground">
+                                                                ${service.price} - {service.duration}min
+                                                            </span>
+                                                        </div>
+                                                    </SelectItem>
+                                                ))}
+                                            </div>
+                                        ))}
                                 </SelectContent>
                             </Select>
                         </div>
@@ -636,21 +645,25 @@ export function AppointmentForm({
                             </Label>
                             <div className="mt-1 grid grid-cols-2 gap-3">
                                 <div
-                                    className={`flex cursor-pointer items-center gap-2 rounded-lg border p-3 transition-colors ${formData.payment_type === 'tarjeta' ? 'border-primary bg-primary/5' : 'hover:bg-muted/50'}`}
-                                    onClick={() => handleSelectChange('payment', 'tarjeta')}
+                                    className={`flex items-center gap-2 rounded-lg border p-3 transition-colors ${formData.payment_type === 'tarjeta' ? 'border-primary bg-primary/5' : 'hover:bg-muted/50'
+                                        } ${isCardDisabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                                    onClick={() => !isCardDisabled && handleSelectChange('payment', 'tarjeta')}
                                 >
-                                    <CreditCard className="text-primary h-5 w-5" />
+                                    <CreditCard className={`h-5 w-5 ${isCardDisabled ? 'text-muted-foreground' : 'text-primary'}`} />
                                     <span>Tarjeta</span>
                                     {formData.payment_type === 'tarjeta' && <CheckCircle2 className="text-primary ml-auto h-4 w-4" />}
+                                    {isCardDisabled && <span className="ml-auto text-xs text-muted-foreground">Proximamente</span>}
                                 </div>
 
                                 <div
-                                    className={`flex cursor-pointer items-center gap-2 rounded-lg border p-3 transition-colors ${formData.payment_type === 'efectivo' ? 'border-primary bg-primary/5' : 'hover:bg-muted/50'}`}
-                                    onClick={() => handleSelectChange('payment', 'efectivo')}
+                                    className={`flex items-center gap-2 rounded-lg border p-3 transition-colors ${formData.payment_type === 'efectivo' ? 'border-primary bg-primary/5' : 'hover:bg-muted/50'
+                                        } ${isCashDisabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                                    onClick={() => !isCashDisabled && handleSelectChange('payment', 'efectivo')}
                                 >
-                                    <Banknote className="text-primary h-5 w-5" />
+                                    <Banknote className={`h-5 w-5 ${isCashDisabled ? 'text-muted-foreground' : 'text-primary'}`} />
                                     <span>Efectivo</span>
                                     {formData.payment_type === 'efectivo' && <CheckCircle2 className="text-primary ml-auto h-4 w-4" />}
+                                    {isCashDisabled && <span className="ml-auto text-xs text-muted-foreground">No disponible</span>}
                                 </div>
                             </div>
                         </div>
