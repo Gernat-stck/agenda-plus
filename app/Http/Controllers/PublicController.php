@@ -76,8 +76,9 @@ class PublicController extends Controller
 
         return $userInitials . "CL-" . $randomNumber;
     }
-    public function storeAppointment(Request $request, $userId)
+    public function storeAppointment(Request $request)
     {
+        $userId = $request['user_id'];
         // Verificar si el usuario existe
         $user = User::where('user_id', $userId)->first();
         if (!$user) {
