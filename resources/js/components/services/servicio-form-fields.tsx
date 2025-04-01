@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { EntityFormField } from "../shared/clients/entity-form"
+import { MinusCircleIcon, PlusCircleIcon } from "lucide-react";
 
 interface ServicioFormFieldsProps {
     categorias: string[];
@@ -44,9 +45,48 @@ export const ServicioFormFields = ({
             id: "duration",
             name: "duration",
             label: "Duración (minutos)",
-            type: "number",
+            type: "custom",
             required: true,
-            placeholder: "30"
+            renderCustom: (value, onChange) => {
+                // Asegurar que el valor inicial sea múltiplo de 30
+                const currentValue = value || 30;
+
+                const increment = () => {
+                    onChange(currentValue + 30);
+                };
+
+                const decrement = () => {
+                    if (currentValue > 30) {
+                        onChange(currentValue - 30);
+                    }
+                };
+
+                return (
+                    <div className="flex items-center space-x-2 border rounded-md p-2 max-w-2xs max-h-10">
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            onClick={decrement}
+                            disabled={currentValue <= 30}
+                            className="max-w-2 max-h-5"
+                        >
+                            <MinusCircleIcon />
+                        </Button>
+                        <div className="flex-1 text-center font-medium">
+                            {currentValue} minutos
+                        </div>
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            className="max-w-2 max-h-5 "
+                            onClick={increment}
+                        >
+                            <PlusCircleIcon />
+                        </Button>
+
+                    </div>
+                );
+            }
         },
         {
             id: "category",
