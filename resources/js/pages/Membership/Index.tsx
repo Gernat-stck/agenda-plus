@@ -1,6 +1,6 @@
 import { PricingCards } from '@/components/shared/pricing-cards';
 import { Badge } from '@/components/ui/badge';
-import { plans } from '@/mocks/plans';
+import { plans } from '@/components/mocks/plans';
 import { Link } from '@inertiajs/react';
 import { ArrowLeft, CheckCircle2 } from 'lucide-react';
 export default function GetSuscription() {
