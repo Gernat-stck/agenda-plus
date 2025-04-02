@@ -1,73 +1,22 @@
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { MoreHorizontal, Eye, Edit, Copy, Trash } from "lucide-react"
-import { Link } from "@inertiajs/react"
-// Datos de ejemplo basados en la interfaz proporcionada
-const plans = [
-    {
-        id: 1,
-        badge: { text: "Popular", variant: "primary" as const },
-        highlight: true,
-        buttonText: "Comenzar ahora",
-        buttonVariant: "default" as const,
-        title: "Pro",
-        description: "Perfecto para negocios en crecimiento",
-        price: "19.99",
-        period: "mes",
-        features: [
-            { included: true, text: "Hasta 10 usuarios", icon: "users" },
-            { included: true, text: "Soporte prioritario", icon: "headphones" },
-            { included: true, text: "Análisis avanzados", icon: "bar-chart" },
-            { included: true, text: "Exportación de datos", icon: "download" },
-            { included: false, text: "API personalizada", icon: "code" },
-        ],
-    },
-    {
-        id: 2,
-        highlight: false,
-        buttonText: "Contactar ventas",
-        buttonVariant: "outline" as const,
-        title: "Enterprise",
-        description: "Para grandes organizaciones",
-        price: "199.99",
-        period: "mes",
-        features: [
-            { included: true, text: "Usuarios ilimitados", icon: "users" },
-            { included: true, text: "Soporte 24/7", icon: "headphones" },
-            { included: true, text: "Análisis avanzados", icon: "bar-chart" },
-            { included: true, text: "Exportación de datos", icon: "download" },
-            { included: true, text: "API personalizada", icon: "code" },
-            { included: true, text: "Implementación dedicada", icon: "server" },
-        ],
-    },
-    {
-        id: 3,
-        highlight: false,
-        buttonText: "Comenzar gratis",
-        buttonVariant: "outline" as const,
-        title: "Basic",
-        description: "Para individuos y pequeños equipos",
-        price: "9.99",
-        period: "mes",
-        features: [
-            { included: true, text: "Hasta 3 usuarios", icon: "users" },
-            { included: true, text: "Soporte por email", icon: "mail" },
-            { included: true, text: "Análisis básicos", icon: "bar-chart" },
-            { included: false, text: "Exportación de datos", icon: "download" },
-            { included: false, text: "API personalizada", icon: "code" },
-        ],
-    },
-]
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Plan } from '@/types/pricing'; // Importa el tipo Plan
+import { Copy, Edit, Eye, MoreHorizontal, Trash } from 'lucide-react';
 
-export function PlansTable() {
-    const formatCurrency = (amount: string) => {
-        return new Intl.NumberFormat("es-ES", {
-            style: "currency",
-            currency: "EUR",
-        }).format(Number.parseFloat(amount))
-    }
+interface PlansTableProps {
+    plans: Plan[];
+    onEditPlan?: (id: string) => void;
+}
+
+export function PlansTable({ plans, onEditPlan }: PlansTableProps) {
+    const formatCurrency = (amount: number) => {
+        return new Intl.NumberFormat('es-ES', {
+            style: 'currency',
+            currency: 'USD',
+        }).format(amount);
+    };
 
     return (
         <Table>
@@ -95,11 +44,11 @@ export function PlansTable() {
                         <TableCell>{plan.description}</TableCell>
                         <TableCell>
                             {plan.highlight ? (
-                                <Badge variant="outline" className="bg-emerald-50 border-emerald-500 text-emerald-700">
+                                <Badge variant="outline" className="border-emerald-500 bg-emerald-50 text-emerald-700">
                                     Sí
                                 </Badge>
                             ) : (
-                                <Badge variant="outline" className="bg-slate-100 border-slate-500 text-slate-700">
+                                <Badge variant="outline" className="border-slate-500 bg-slate-100 text-slate-700">
                                     No
                                 </Badge>
                             )}
@@ -118,21 +67,19 @@ export function PlansTable() {
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end">
                                     <DropdownMenuItem>
-                                        <Eye className="h-4 w-4 mr-2" />
+                                        <Eye className="mr-2 h-4 w-4" />
                                         Ver detalles
                                     </DropdownMenuItem>
-                                    <Link href={`/admin/plans/${plan.id}/edit`}>
-                                        <DropdownMenuItem>
-                                            <Edit className="h-4 w-4 mr-2" />
-                                            Editar plan
-                                        </DropdownMenuItem>
-                                    </Link>
+                                    <DropdownMenuItem onClick={() => onEditPlan && onEditPlan(plan.id.toString())}>
+                                        <Edit className="mr-2 h-4 w-4" />
+                                        Editar plan
+                                    </DropdownMenuItem>
                                     <DropdownMenuItem>
-                                        <Copy className="h-4 w-4 mr-2" />
+                                        <Copy className="mr-2 h-4 w-4" />
                                         Duplicar
                                     </DropdownMenuItem>
                                     <DropdownMenuItem className="text-destructive">
-                                        <Trash className="h-4 w-4 mr-2" />
+                                        <Trash className="mr-2 h-4 w-4" />
                                         Eliminar
                                     </DropdownMenuItem>
                                 </DropdownMenuContent>
@@ -142,6 +89,5 @@ export function PlansTable() {
                 ))}
             </TableBody>
         </Table>
-    )
+    );
 }
-

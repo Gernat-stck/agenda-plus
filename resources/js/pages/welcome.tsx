@@ -5,7 +5,6 @@ import { PricingCards } from '@/components/shared/pricing-cards';
 import { Button } from '@/components/ui/button';
 import { Head, Link } from '@inertiajs/react';
 import { CalendarClock, MessageSquare, Users } from 'lucide-react';
-import { plans } from '../components/mocks/plans';
 import { SmoothScrollLink } from '@/components/shared/smooth-scroll-link';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel"
 import calendar from '@/../img/Calendar-Laravel-03-28-2025_09_52_PM.png';
@@ -14,8 +13,12 @@ import calendarConfig from '@/../img/Configuración-del-Calendario-Laravel-03-29
 import calendarConfig2 from '@/../img/Configuración-del-Calendario-Laravel-03-29-2025_12_06_AM.png';
 import services from '@/../img/Services-Laravel-03-29-2025_12_07_AM.png';
 import bussinessImage from '@/../img/istockphoto-1418476287-612x612.jpg'
-export default function Welcome() {
+import { Plan } from '@/types/pricing';
+import formatPlans from '@/utils/format-plans';
+export default function Welcome({ plans }: { plans: Plan[] }) {
     const images = [calendar, clients, calendarConfig, calendarConfig2, services];
+    const formattedPlans = formatPlans(plans);
+
     return (
         <>
             <Head title="Welcome">
@@ -134,7 +137,7 @@ export default function Welcome() {
                                     </div>
                                 </div>
                                 <div className="mx-auto flex w-full flex-col justify-center py-12">
-                                    <PricingCards plans={plans} defaultActiveCard={1} />
+                                    <PricingCards plans={formattedPlans} />
                                 </div>
                             </div>
                         </section>
