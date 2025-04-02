@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
@@ -56,5 +57,43 @@ class User extends Authenticatable
         // }
 
         return false;
+    }
+    /**
+     * Las suscripciones del usuario
+     */
+    public function subscriptions(): HasMany
+    {
+        return $this->hasMany(Subscription::class);
+    }
+
+    /**
+     * Las transacciones del usuario
+     */
+    public function transactions(): HasMany
+    {
+        return $this->hasMany(PaymentTransaction::class);
+    }
+
+    /**
+     * Obtiene la suscripción activa del usuario
+     */
+    public function activeSubscription()
+    {
+        return $this->subscriptions()
+            ->where('status', 'active')
+            ->where(function ($query) {
+                $query->whereNull('valid_until')
+                    ->orWhere('valid_until', '>', now());
+            })
+            ->latest()
+            ->first();
+    }
+
+    /**
+     * Verifica si el usuario tiene una suscripción activa
+     */
+    public function hasActiveSubscription(): bool
+    {
+        return $this->activeSubscription() !== null;
     }
 }
