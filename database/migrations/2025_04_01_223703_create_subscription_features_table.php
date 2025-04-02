@@ -11,17 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('admin', function (Blueprint $table) {
+        Schema::create('subscription_features', function (Blueprint $table) {
             $table->id();
-            $table->string('user_id')->unique();
             $table->string('name');
-            $table->string('email')->unique();
-            $table->string('role')->default('admin');
+            $table->text('description')->nullable();
+            $table->string('icon')->nullable();
             $table->timestamps();
-
-            $table->foreign('user_id')->references('user_id')->on('users')->onDelete('cascade');
-
-            $table->softDeletes();
         });
     }
 
@@ -30,6 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('admin');
+        Schema::dropIfExists('subscription_features');
     }
 };
