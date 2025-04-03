@@ -15,5 +15,3 @@ Route::post('/book/appointments', [PublicController::class, 'storeAppointment'])
 Route::get('/book/appointments/slots/{date}/{userId}', [PublicController::class, 'getAvailableSlots'])->name('appointments.public.slots');
 Route::get('/appointments/confirmation/{appointment_id}', [PublicController::class, 'showConfirmation'])->name('appointments.confirmation');
 
-// Ruta pública para recibir webhooks de suscripción
-Route::post('webhook/wompi', [SubscriptionWebhookController::class, 'handleWompiWebhook'])->name('webhook.wompi')->withoutMiddleware(['auth', 'verified']);

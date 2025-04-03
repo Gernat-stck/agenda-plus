@@ -9,6 +9,7 @@ use App\Models\SubscriptionPlan;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 
 class SubscriptionWebhookController extends Controller
 {
@@ -72,20 +73,26 @@ class SubscriptionWebhookController extends Controller
                     $plan = SubscriptionPlan::where('is_active', true)->orderBy('price', 'asc')->first();
                 }
 
-                // Crear o actualizar la suscripción
-                $subscription = new Subscription();
-                $subscription->user_id = $user->id;
-                $subscription->plan_id = $plan->id;
-                $subscription->status = 'active';
-                $subscription->start_date = now();
-                $subscription->valid_until = now()->addMonth(); // Suscripción por un mes
-                $subscription->payment_method = 'online';
-                $subscription->last_payment_date = now();
-                $subscription->save();
+                // Verificar si existe la columna plan_id en la tabla subscriptions
+                if (Schema::hasColumn('subscriptions', 'plan_id')) {
+                    // Crear o actualizar la suscripción solo si existe la columna
+                    $subscription = new Subscription();
+                    $subscription->user_id = $user->id;
+                    $subscription->plan_id = $plan->id;
+                    $subscription->status = 'active';
+                    $subscription->start_date = now();
+                    $subscription->valid_until = now()->addMonth(); // Suscripción por un mes
+                    $subscription->payment_method = 'online';
+                    $subscription->last_payment_date = now();
+                    $subscription->save();
+                } else {
+                    // Registrar que no se pudo guardar la suscripción debido a la falta de columna
+                    Log::warning("No se pudo guardar la suscripción porque falta la columna plan_id. Ejecute la migración.");
+                }
 
                 // Actualizar el estado de membresía del usuario
                 $user->membership_status = 'activo';
-                $user->membership_expires_at = $subscription->valid_until;
+                $user->membership_expires_at = now()->addMonth(); // Un mes desde ahora
                 $user->save();
 
                 Log::info("Pago procesado exitosamente para el usuario {$user->email}");
