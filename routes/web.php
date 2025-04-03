@@ -14,13 +14,13 @@ use App\Http\Middleware\ValidateUserMembership;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
-// Ruta de membership debe estar FUERA del middleware de validación
-Route::get('/membership', [SubscriptionController::class, 'index'])->name('membership.required');
 
 // Rutas protegidas con autenticación y verificación de membresía
 Route::middleware(['auth', 'verified', ValidateUserMembership::class])->group(
 
     function () {
+        // Ruta de membership debe estar FUERA del middleware de validación
+        Route::get('/membership', [SubscriptionController::class, 'index'])->name('membership.required');
         Route::get('redirect', function () {
             return Inertia::render('redirect');
         })->name('redirect');
