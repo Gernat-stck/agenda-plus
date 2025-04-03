@@ -6,7 +6,6 @@ use App\Models\User;
 use Carbon\Carbon;
 use App\Models\Subscription;
 use App\Models\SubscriptionPlan;
-use App\Models\PaymentTransaction;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use App\Models\Invoice;
@@ -177,149 +176,6 @@ class SubscriptionController extends Controller
     }
 
     /**
-     * Maneja los webhooks entrantes del proveedor de pagos
-     * Esta función procesa las notificaciones asíncronas enviadas por el proveedor de pagos
-     * 
-     * @param \Illuminate\Http\Request $request
-     * @return \Illuminate\Http\Response
-     */
-    public function handleWebhook(\Illuminate\Http\Request $request)
-    {
-        // Registrar la solicitud webhook para depuración
-        Log::info('Webhook recibido: ' . json_encode($request->all()));
-
-        // Verificar la firma/autenticidad del webhook
-        if (!$this->validateWebhookSignature($request)) {
-            Log::error('Firma de webhook inválida');
-            return response()->json(['message' => 'Firma inválida'], 401);
-        }
-
-        try {
-            // Extraer datos del webhook (ajustar según la estructura del proveedor de pagos)
-            $webhookData = $request->all();
-            $idTransaccion = $webhookData['idTransaccion'] ?? null;
-            $status = $webhookData['estado'] ?? 'desconocido';
-            $idEnlace = $webhookData['idEnlace'] ?? null;
-            $monto = $webhookData['monto'] ?? 0;
-            $identificadorEnlaceComercio = $webhookData['identificadorEnlaceComercio'] ?? null;
-
-            // Verificar si la transacción ya ha sido procesada para evitar duplicados
-            $existingInvoice = Invoice::where('transaction_data->idTransaccion', $idTransaccion)
-                ->first();
-
-            if ($existingInvoice) {
-                Log::info("Transacción {$idTransaccion} ya procesada anteriormente");
-                return response()->json(['message' => 'Transacción ya procesada'], 200);
-            }
-
-            // Identificar al usuario relacionado con esta transacción
-            // Esto dependerá de cómo tu sistema vincule los pagos con los usuarios
-            $user = null;
-
-            // Opción 1: Si el identificador del enlace de comercio contiene el ID del usuario
-            if ($identificadorEnlaceComercio) {
-                // Extraer userId del identificador (ajustar según tu implementación)
-                $userId = $this->extractUserIdFromIdentifier($identificadorEnlaceComercio);
-                $user = User::where('user_id', $userId)->first();
-            }
-
-            // Opción 2: Buscar por idEnlace si el sistema lo utiliza para asociar usuarios
-            if (!$user && $idEnlace) {
-                $user = User::where('payment_link_id', $idEnlace)->first();
-            }
-
-            if (!$user) {
-                Log::error("No se pudo identificar al usuario para la transacción {$idTransaccion}");
-                return response()->json(['message' => 'Usuario no identificado'], 404);
-            }
-
-            // Procesar según el estado de la transacción
-            switch ($status) {
-                case 'exitoso':
-                case 'pagado':
-                case 'completado':
-                    // Crear factura para el pago exitoso
-                    $invoice = new Invoice();
-                    $invoice->user_id = $user->user_id;
-                    $invoice->invoice_type = 'membresia';
-                    $invoice->amount = $monto;
-                    $invoice->payment_method = 'online';
-                    $invoice->status = 'pagado';
-                    $invoice->transaction_data = json_encode($webhookData);
-                    $invoice->save();
-
-                    // Identificar el plan de suscripción basado en el monto o datos adicionales
-                    $plan = $this->identifySubscriptionPlan($monto, $webhookData);
-
-                    // Actualizar o crear suscripción
-                    $subscription = new Subscription();
-                    $subscription->user_id = $user->id;
-                    $subscription->plan_id = $plan->id;
-                    $subscription->status = 'active';
-                    $subscription->start_date = now();
-                    $subscription->valid_until = $this->calculateValidUntil($plan->billing_period);
-                    $subscription->payment_method = 'online';
-                    $subscription->last_payment_date = now();
-                    $subscription->save();
-
-                    // Actualizar el estado de membresía del usuario
-                    $user->membership_status = 'activo';
-                    $user->membership_expires_at = $subscription->valid_until;
-                    $user->save();
-
-                    // Enviar notificación al usuario
-                    $this->notifySuccessfulPayment($user, $invoice);
-
-                    Log::info("Pago exitoso procesado: {$idTransaccion} para usuario {$user->user_id}");
-                    break;
-
-                case 'fallido':
-                case 'rechazado':
-                case 'error':
-                    // Registrar la transacción fallida
-                    $invoice = new Invoice();
-                    $invoice->user_id = $user->user_id;
-                    $invoice->invoice_type = 'membresia';
-                    $invoice->amount = $monto;
-                    $invoice->payment_method = 'online';
-                    $invoice->status = 'fallido';
-                    $invoice->transaction_data = json_encode($webhookData);
-                    $invoice->save();
-
-                    // Notificar al usuario sobre el fallo en el pago
-                    $this->notifyFailedPayment($user, $webhookData);
-
-                    Log::warning("Pago fallido: {$idTransaccion} para usuario {$user->user_id}");
-                    break;
-
-                case 'pendiente':
-                    // Registrar transacción pendiente
-                    $invoice = new Invoice();
-                    $invoice->user_id = $user->user_id;
-                    $invoice->invoice_type = 'membresia';
-                    $invoice->amount = $monto;
-                    $invoice->payment_method = 'online';
-                    $invoice->status = 'pendiente';
-                    $invoice->transaction_data = json_encode($webhookData);
-                    $invoice->save();
-
-                    Log::info("Pago pendiente registrado: {$idTransaccion} para usuario {$user->user_id}");
-                    break;
-
-                default:
-                    Log::warning("Estado de pago desconocido: {$status} para transacción {$idTransaccion}");
-                    return response()->json(['message' => 'Estado de transacción no reconocido'], 200);
-            }
-
-            return response()->json(['message' => 'Webhook procesado correctamente'], 200);
-        } catch (\Exception $e) {
-            Log::error('Error al procesar webhook: ' . $e->getMessage());
-            // Devolver 200 para que el proveedor no reintente
-            return response()->json(['message' => 'Error al procesar webhook'], 200);
-        }
-    }
-
-    /**
      * Valida la firma del webhook para verificar su autenticidad
      */
     private function validateWebhookSignature(\Illuminate\Http\Request $request)
@@ -338,21 +194,6 @@ class SubscriptionController extends Controller
 
         // Por ahora, en desarrollo aceptamos todos los webhooks
         return true;
-    }
-
-    /**
-     * Extrae el ID del usuario del identificador del enlace comercial
-     */
-    private function extractUserIdFromIdentifier($identifier)
-    {
-        // Implementa la lógica para extraer el ID del usuario del identificador
-        // Por ejemplo, si el formato es "payment-{userId}-{timestamp}"
-        // 
-        // $parts = explode('-', $identifier);
-        // return $parts[1] ?? null;
-
-        // Simplificado para desarrollo
-        return $identifier;
     }
 
     /**
@@ -399,4 +240,5 @@ class SubscriptionController extends Controller
         // Por ahora solo registramos en el log
         Log::info("Se enviaría notificación de pago fallido al usuario {$user->email}");
     }
+
 }

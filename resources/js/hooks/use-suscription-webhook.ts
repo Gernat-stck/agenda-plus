@@ -66,6 +66,41 @@ export function useSubscriptionWebhook() {
         processPayment();
     }, [params]);
 
+    useEffect(() => {
+        // Procesar datos de redirección (no el webhook)
+        const checkTransactionResult = async () => {
+            // Verificar si hay parámetros en la URL
+            if (!params.has('ResultadoTransaccion')) return;
+
+            setIsProcessing(true);
+            const resultado = params.get('ResultadoTransaccion');
+
+            try {
+                if (resultado === 'ExitosaAprobada') {
+                    setSuccess(true);
+                    // Redirigir al dashboard después de un breve momento
+                    setTimeout(() => router.visit('/dashboard'), 3000);
+                } else {
+                    // Error en el pago según parámetros de URL
+                    setError({
+                        message: 'La transacción no fue completada con éxito',
+                        details: `Resultado: ${resultado}`,
+                    });
+                }
+            } catch (err) {
+                setError({
+                    message: 'Error al procesar la redirección',
+                    details: err instanceof Error ? err.message : String(err),
+                });
+                console.error('Error:', err);
+            } finally {
+                setIsProcessing(false);
+            }
+        };
+
+        checkTransactionResult();
+    }, [params]);
+
     return {
         isProcessing,
         success,
