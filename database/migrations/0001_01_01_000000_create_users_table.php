@@ -20,6 +20,7 @@ return new class extends Migration {
             $table->enum('membership_status', ['activo', 'inactivo'])->default('inactivo');
             $table->dateTime('membership_expires_at')->nullable();
             $table->rememberToken();
+            $table->string('role')->default('user'); // user, admin, superadmin
             $table->timestamps();
         });
 
