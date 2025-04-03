@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\PublicController;
 use App\Http\Controllers\SubscriptionController;
+use App\Http\Controllers\SubscriptionWebhookController;
 use Illuminate\Support\Facades\Route;
 
 
@@ -14,5 +15,5 @@ Route::post('/book/appointments', [PublicController::class, 'storeAppointment'])
 Route::get('/book/appointments/slots/{date}/{userId}', [PublicController::class, 'getAvailableSlots'])->name('appointments.public.slots');
 Route::get('/appointments/confirmation/{appointment_id}', [PublicController::class, 'showConfirmation'])->name('appointments.confirmation');
 
-// Ruta pública para recibir webhooks de suscripción (opcional, si el proveedor hace callbacks directos)
-Route::post('webhook/subscription', [SubscriptionController::class, 'handleWebhook'])->name('webhook.subscription');
+// Ruta pública para recibir webhooks de suscripción
+Route::post('webhook/wompi', [SubscriptionWebhookController::class, 'handleWompiWebhook'])->name('webhook.wompi')->withoutMiddleware(['auth', 'verified']);

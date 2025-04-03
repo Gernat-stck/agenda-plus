@@ -20,7 +20,11 @@ Route::get('/membership', [SubscriptionController::class, 'index'])->name('membe
 
 // Rutas protegidas con autenticación y verificación de membresía
 Route::middleware(['auth', 'verified', ValidateUserMembership::class])->group(
+
     function () {
+        Route::get('redirect', function () {
+            return Inertia::render('redirect');
+        })->name('redirect');
         Route::get('dashboard', function () {
             return Inertia::render('dashboard');
         })->name('dashboard');
