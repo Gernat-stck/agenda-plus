@@ -14,9 +14,9 @@ export default function GetSuscription({ plans }: PlansProps) {
 
     return (
         <div className="from-muted/40 to-muted/60 flex min-h-screen flex-col items-center justify-center bg-gradient-to-b p-8 ">
-            <div className="w-full max-w-4xl">
-                <div className="text-center">
-                    <Badge variant="outline" className="border-amber-300 px-3 py-1 text-sm font-medium bg-amber-200/30">
+            <div className="w-full max-w-4xl ">
+                <div className="text-center -mb-7">
+                    <Badge variant="outline" className="border-amber-300 px-3 py-1 mb-3 text-sm font-medium bg-amber-200/30">
                         Acceso Restringido
                     </Badge>
                     <h1 className="text-3xl font-bold tracking-tight sm:text-4xl md:text-5xl">Suscripción Requerida</h1>
