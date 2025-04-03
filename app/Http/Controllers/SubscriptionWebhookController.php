@@ -39,7 +39,7 @@ class SubscriptionWebhookController extends Controller
                 return response()->json(['mensaje' => 'Datos insuficientes'], 200); // 200 para no causar reintentos
             }
 
-            // 2. Evitar procesamiento duplicado
+            // 2. Evitar procesamiento duplicado //TODO: (Esto no esta funcionando correctamente, revisar)
             $existingInvoice = Invoice::where('transaction_data->IdTransaccion', $idTransaccion)->first();
             if ($existingInvoice) {
                 Log::info("Transacción {$idTransaccion} ya procesada anteriormente");
@@ -77,8 +77,8 @@ class SubscriptionWebhookController extends Controller
                 if (Schema::hasColumn('subscriptions', 'plan_id')) {
                     // Crear o actualizar la suscripción solo si existe la columna
                     $subscription = new Subscription();
-                    $subscription->user_id = $user->id;
-                    $subscription->plan_id = $plan->id;
+                    $subscription->user_id = $user->user_id;
+                    $subscription->plan_id = $plan->slug;
                     $subscription->status = 'active';
                     $subscription->start_date = now();
                     $subscription->valid_until = now()->addMonth(); // Suscripción por un mes
