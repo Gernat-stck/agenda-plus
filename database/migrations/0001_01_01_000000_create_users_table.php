@@ -18,7 +18,7 @@ return new class extends Migration {
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
             $table->enum('membership_status', ['activo', 'inactivo'])->default('inactivo');
-            $table->dateTime('subscription_until')->nullable();
+            $table->dateTime('membership_expires_at')->nullable();
             $table->rememberToken();
             $table->timestamps();
         });
