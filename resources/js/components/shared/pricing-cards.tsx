@@ -3,22 +3,24 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { X, Zap, Users, Headphones, BarChart, Download, Code, Server, Mail, User } from "lucide-react"
-import { useEffect, useRef, useState, useMemo, memo, useCallback } from "react"
-import { useScript } from "../../hooks/use-script"
+import { useEffect, useRef, useState, useMemo, memo } from "react"
 import type { Plan } from "../../types/pricing"
 import { router } from "@inertiajs/react"
 import { SmoothScrollLink } from "./smooth-scroll-link"
 
-// Declaración para TypeScript más precisa
+// Declaración para TypeScript más precisa// Actualiza la declaración existente al inicio de tu archivo
+// filepath: c:\Users\nager\OneDrive\Escritorio\agenda-plus\resources\js\components\shared\pricing-cards.tsx
 declare global {
     interface Window {
-        wompi?: {
+        wompi: {
             initialize: () => void
         }
         route: (name: string, params?: any) => string
+        // Añadir las nuevas propiedades personalizadas
+        _wompiInitCallbacks?: Array<() => void>
+        _wompiReady?: () => void
     }
 }
-
 // Definición de interfaces para mejorar el tipado
 interface Feature {
     text: string;
@@ -30,6 +32,11 @@ interface PricingCardsProps {
     plans: Plan[];
     defaultActiveCard?: number;
     onCardSelect?: (planId: string | number) => void;
+}
+
+// Función para obtener el ID del botón de Wompi
+function getWompiButtonId(planId: string | number): string {
+    return `wompi-button-${planId}`;
 }
 
 // Mapa de iconos para acceso O(1)
@@ -79,7 +86,9 @@ const PricingCard = memo(({
     activeCard,
     isTransitioning,
     onClick,
-    cardRef
+    cardRef,
+    wompiFailure,
+    wompiInitialized
 }: {
     plan: Plan
     isActive: boolean
@@ -89,6 +98,8 @@ const PricingCard = memo(({
     isTransitioning: boolean
     onClick: () => void
     cardRef: (el: HTMLDivElement | null) => void
+    wompiFailure: boolean
+    wompiInitialized: boolean
 }) => {
     const isPopular = plan.badge?.text === "Popular";
 
@@ -129,6 +140,7 @@ const PricingCard = memo(({
 
         return { xPosition: xPos, zIndex: z, rotation: rot, scale: s, opacity: op };
     }, [isActive, index, activeCard, isPopular]);
+
     // Clase para el efecto neón
     const neonClass = isActive ? (isPopular ? "popular-neon-effect" : "neon-effect") : "";
 
@@ -184,22 +196,33 @@ const PricingCard = memo(({
                                 "w-full h-11 text-base bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg shadow-purple-500/20 transition-all duration-300 hover:from-purple-600 hover:to-pink-600 hover:shadow-purple-500/40",
                             )}
                         >
-
                             <SmoothScrollLink to={window.route("register")}>
                                 {"Registrarse"}
                             </SmoothScrollLink>
                         </Button>
                     ) : plan.paymentWidget ? (
-                        <div
-                            className="wompi_button_widget w-full"
-                            data-url-pago={plan.paymentWidget}
-                            id={`wompi-button-${plan.id}`}
-                            style={{
-                                display: "flex",
-                                justifyContent: "center",
-                                width: "100%",
-                            }}
-                        ></div>
+                        <>
+
+                            {!wompiFailure && (
+                                <div
+                                    className="wompi_button_widget w-full opacity-0" // Añadido opacity-0 para ocultar inicialmente
+                                    data-url-pago={plan.paymentWidget}
+                                    id={getWompiButtonId(plan.id)}
+                                    style={{
+                                        display: "flex",
+                                        justifyContent: "center",
+                                        width: "100%",
+                                        minHeight: "44px",
+                                        transition: "opacity 0.3s ease-in-out", // Añadida la transición
+                                    }}
+                                />
+                            )}
+                            {wompiFailure && (
+                                <div className="w-full h-11 flex items-center justify-center bg-white border rounded-md text-red-500">
+                                    Error al cargar el botón de pago
+                                </div>
+                            )}
+                        </>
                     ) : (
                         <Button disabled className="w-full h-11 text-base" variant="outline">
                             Próximamente
@@ -228,70 +251,284 @@ export function PricingCards({ plans, defaultActiveCard = 1, onCardSelect }: Pri
     // Referencias
     const cardsRef = useRef<(HTMLDivElement | null)[]>([]);
     const containerRef = useRef<HTMLDivElement>(null);
-    const wompiInitialized = useRef<boolean>(false);
 
-    // Cargar script de Wompi
-    const status = useScript("https://pagos.wompi.sv/js/wompi.pagos.js");
+    // Verificar si estamos en la página principal o en membership
+    const isHomePage = useMemo(() => window.location.pathname === "/", []);
+    const isMembershipPage = useMemo(() => window.location.pathname === "/membership", []);
 
-    // Añadir un debounce para la inicialización de Wompi
-    const debouncedWompiInit = useCallback(() => {
-        if (window.wompi) {
-            clearTimeout((window as any)._wompiInitTimeout);
-            (window as any)._wompiInitTimeout = setTimeout(() => {
-                try {
-                    window.wompi?.initialize();
-                    console.log("Wompi inicializado (debounced)");
-                } catch (error) {
-                    console.error("Error al inicializar Wompi:", error);
-                }
-            }, 500);
-        }
-    }, []);
+    const [wompiInitialized, setWompiInitialized] = useState(false);
+    const [wompiFailure, setWompiFailure] = useState(false);
 
-    // Inicializar refs para las tarjetas - Optimizado para evitar recreaciones innecesarias
+    // Inicializar refs para las tarjetas
     useEffect(() => {
-        // Solo redimensionar si es necesario
         if (cardsRef.current.length !== plans.length) {
             cardsRef.current = Array(plans.length).fill(null);
         }
     }, [plans.length]);
 
-    // Inicializar Wompi cuando el script esté listo
+
     useEffect(() => {
-        if (status === "ready" && window.wompi) {
-            // Pequeño retraso para asegurar que los elementos del DOM estén listos
-            const timeoutId = setTimeout(() => {
-                try {
-                    window.wompi?.initialize();
-                    wompiInitialized.current = true;
-                    sessionStorage.setItem("wompiInitialized", "true");
-                } catch (error) {
-                    console.error("Error al inicializar Wompi:", error);
-                }
-            }, 500); // Aumentamos el tiempo a 500ms para dar más margen
-
-            return () => clearTimeout(timeoutId);
+        // Solo proceder si estamos en la página de membresía
+        if (!isMembershipPage) {
+            return;
         }
-    }, [status]);
 
-    // Re-inicializar Wompi cuando cambia la tarjeta activa o los planes
-    useEffect(() => {
-        if (window.wompi) {
-            const timeoutId = setTimeout(() => {
-                try {
-                    window.wompi?.initialize();
-                } catch (error) {
-                    console.error("Error al reinicializar Wompi:", error);
-                }
-            }, 500);
+        // Limpiar cualquier estado previo
+        setWompiInitialized(false);
+        setWompiFailure(false);
 
-            return () => clearTimeout(timeoutId);
+        // Bloquear y eliminar cualquier script existente de Wompi
+        const existingScript = document.querySelector('script[src*="wompi.pagos.js"]');
+        if (existingScript && existingScript.parentNode) {
+            existingScript.parentNode.removeChild(existingScript);
         }
-    }, [activeCard, plans]); // Agregamos plans como dependencia
 
+        // Agregar estilos para animaciones con reset previo
+        const addStyles = () => {
+            // Eliminar estilos existentes para evitar conflictos
+            const existingStyle = document.getElementById('wompi-transition-style');
+            if (existingStyle) existingStyle.remove();
 
+            const wompiStyle = document.createElement('style');
+            wompiStyle.id = 'wompi-transition-style';
+            wompiStyle.textContent = `
+            /* Ocultar botón de Wompi original con !important para asegurar que siempre se aplique */
+            .wompi_button_widget iframe, 
+            .wompi_button_widget form {
+                display: none !important;
+                opacity: 0 !important;
+                visibility: hidden !important;
+                pointer-events: none !important;
+            }
+            
+            /* Estilo para nuestro contenido controlado */
+            .wompi_button_widget {
+                position: relative !important;
+                opacity: 1 !important; 
+                transition: opacity 0.3s ease-in-out;
+                min-height: 44px;
+            }
+            
+            /* Animación del skeleton */
+            .skeleton-loading {
+                background: linear-gradient(90deg, rgba(0,0,0,0) 0%, rgba(255,255,255,0.5) 50%, rgba(0,0,0,0) 100%);
+                animation: shimmer 1.5s infinite;
+                background-size: 200% 100%;
+            }
+            
+            @keyframes shimmer {
+                0% { background-position: -200% 0; }
+                100% { background-position: 200% 0; }
+            }
+            
+            /* Control de animaciones para el botón personalizado */
+            .wompi-button-container {
+                opacity: 0;
+                transform: translateY(4px);
+                transition: all 0.3s ease-out;
+            }
+            
+            /* Wrapper para mantener dimensiones consistentes */
+            .skeleton-wrapper {
+                width: 100%; 
+                height: 44px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 20;
+                position: relative;
+            }
+            
+            /* Clase activa para skeleton - asegurando prioridad */
+            .skeleton-active {
+                z-index: 10;
+            }
+            
+            /* Prevenir interferencias externas */
+            .wompi_button_widget * {
+                z-index: 1;
+            }
+            
+            .wompi_button_widget .our-content {
+                z-index: 20;
+            }
+        `;
+            document.head.appendChild(wompiStyle);
+        };
+
+        // Mostrar skeleton loader para todos los widgets de Wompi
+        const showSkeletonLoaders = () => {
+            document.querySelectorAll('.wompi_button_widget').forEach(widget => {
+                const element = widget as HTMLElement;
+
+                // Añadir clase de control
+                element.classList.add('skeleton-active');
+
+                // Capturar el URL de pago para usarlo después
+                const urlPago = element.dataset.urlPago || element.getAttribute('data-url-pago');
+                if (urlPago) {
+                    element.dataset.urlPago = urlPago;
+                }
+
+                // Vaciar completamente el elemento para eliminar cualquier contenido de Wompi
+                element.innerHTML = `
+                <div class="our-content skeleton-wrapper">
+                    <div class="w-full h-11 flex items-center justify-center bg-white border rounded-md overflow-hidden">
+                        <div class="w-full h-full relative bg-gradient-to-r from-gray-100 to-gray-200">
+                            <div class="absolute inset-0 skeleton-loading"></div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+                // Asegurar visibilidad y estilo correcto
+                element.style.opacity = "1";
+                element.style.position = "relative";
+            });
+        };
+
+        // Función dedicada a limpiar cualquier interferencia de Wompi
+        const cleanWompiInterference = () => {
+            document.querySelectorAll('.wompi_button_widget').forEach(widget => {
+                const element = widget as HTMLElement;
+
+                // Eliminar iframes o forms que Wompi pueda haber insertado
+                element.querySelectorAll('iframe, form').forEach(node => {
+                    if (node.parentNode) {
+                        node.parentNode.removeChild(node);
+                    }
+                });
+
+                // Asegurarse que nuestro contenido esté visible y al frente
+                const ourContent = element.querySelector('.our-content');
+                if (!ourContent) {
+                    showSkeletonLoaders(); // Re-insertar nuestro contenido si fue eliminado
+                }
+            });
+        };
+
+        // Cargar nuestros botones personalizados finales
+        const loadCustomButtons = () => {
+            document.querySelectorAll('.wompi_button_widget').forEach(widget => {
+                const element = widget as HTMLElement;
+                const urlPago = element.dataset.urlPago || element.getAttribute('data-url-pago');
+
+                // Eliminar la clase skeleton-active
+                element.classList.remove('skeleton-active');
+
+                // Configurar el container para nuestro botón
+                element.innerHTML = `
+                <div class="our-content wompi-button-container" style="width:100%; max-width:100%; display:flex; justify-content:center;">
+                    ${urlPago ?
+                        `<a 
+                            href="${urlPago}" 
+                            class="flex items-center justify-center gap-2 bg-gradient-to-br from-purple-500 to-pink-200 text-white py-2 px-4 rounded-md hover:from-purple-600 hover:to-pink-600 hover:shadow-purple-500/40 duration-300 transition-colors w-full max-w-xs"
+                        >      
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-shield-check-icon lucide-shield-check"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg>
+                            <span>Pagar con <span class="font-bold">Wompi</span></span>
+                        </a>`
+                        :
+                        `<div class="w-full h-11 flex items-center justify-center bg-white border rounded-md text-red-500">
+                            No se encontró enlace de pago
+                        </div>`
+                    }
+                </div>
+            `;
+
+                // Animar la aparición con un pequeño retardo
+                setTimeout(() => {
+                    const buttonContainer = element.querySelector('.wompi-button-container');
+                    if (buttonContainer instanceof HTMLElement) {
+                        buttonContainer.style.opacity = "1";
+                        buttonContainer.style.transform = "translateY(0)";
+                    }
+                }, 100);
+            });
+
+            setWompiInitialized(true);
+        };
+
+        // Secuencia de inicialización
+        const initializeSequence = () => {
+            // 1. Agregar estilos primero (prioridad alta)
+            addStyles();
+
+            // 2. Mostrar skeletons inmediatamente
+            showSkeletonLoaders();
+
+            // 3. Configurar un intervalo para limpiar interferencias constantemente
+            const cleanupInterval = setInterval(cleanWompiInterference, 100);
+
+            // 4. Instalar un MutationObserver en cada widget para detectar cambios
+            const observerConfig = { childList: true, subtree: true, attributes: true };
+            const observers: MutationObserver[] = [];
+
+            document.querySelectorAll('.wompi_button_widget').forEach(widget => {
+                const observer = new MutationObserver(() => {
+                    // Si Wompi modifica el contenido, restaurar nuestro skeleton
+                    if (!wompiInitialized) {
+                        cleanWompiInterference();
+                    }
+                });
+
+                observer.observe(widget, observerConfig);
+                observers.push(observer);
+            });
+
+            // 5. Cargar el script de Wompi solo para obtener tokens (pero nunca mostrar sus botones)
+            setTimeout(() => {
+                const script = document.createElement('script');
+                script.src = "https://pagos.wompi.sv/js/wompi.pagos.js";
+                script.async = true;
+                script.defer = true;
+
+                // Cuando el script cargue, seguir mostrando nuestro skeleton
+                script.onload = () => {
+                    // Limpiar interferencia de inmediato
+                    cleanWompiInterference();
+
+                    // Esperar un tiempo antes de mostrar nuestros botones personalizados
+                    setTimeout(() => {
+                        clearInterval(cleanupInterval);
+                        loadCustomButtons();
+                    }, 1500);
+                };
+
+                // Si hay un error, cargar nuestros botones personalizados directamente
+                script.onerror = () => {
+                    clearInterval(cleanupInterval);
+                    loadCustomButtons();
+                    setWompiFailure(true);
+                    console.error("Error al cargar el script de Wompi");
+                };
+
+                document.head.appendChild(script);
+            }, 300);
+
+            // 6. Timeout de seguridad para asegurar que siempre mostramos algo
+            const safetyTimeout = setTimeout(() => {
+                clearInterval(cleanupInterval);
+                if (!wompiInitialized) {
+                    loadCustomButtons();
+                }
+            }, 5000);
+
+            // 7. Limpieza al desmontar el componente
+            return () => {
+                clearInterval(cleanupInterval);
+                clearTimeout(safetyTimeout);
+                observers.forEach(observer => observer.disconnect());
+
+                const wompiStyle = document.getElementById('wompi-transition-style');
+                if (wompiStyle) wompiStyle.remove();
+            };
+        };
+
+        // Iniciar la secuencia
+        return initializeSequence();
+    }, [isMembershipPage]);
+    // Manejador de clic en tarjetas
     const handleCardClick = (index: number) => {
-        // Evitar trabajo innecesario
         if (isTransitioning || activeCard === index) return;
 
         setIsTransitioning(true);
@@ -303,83 +540,6 @@ export function PricingCards({ plans, defaultActiveCard = 1, onCardSelect }: Pri
 
         setTimeout(() => setIsTransitioning(false), 500);
     };
-
-    // Verificar si estamos en la página principal (calculado solo una vez)
-    const isHomePage = useMemo(() => window.location.pathname === "/", []);
-    // Detectar los botones de wompi cuando se renderizan
-    useEffect(() => {
-        if (!window.wompi || isHomePage) return; // No necesitamos esto en la homepage
-
-        const observer = new MutationObserver((mutations) => {
-            for (const mutation of mutations) {
-                if (mutation.addedNodes.length) {
-                    // Si detectamos nuevos nodos, inicializamos wompi
-                    setTimeout(() => {
-                        if (window.wompi) {
-                            window.wompi.initialize();
-                        }
-                    }, 200);
-                    break;
-                }
-            }
-        });
-
-        // Observar cambios en el contenedor de tarjetas
-        if (containerRef.current) {
-            observer.observe(containerRef.current, { childList: true, subtree: true });
-        }
-
-        return () => observer.disconnect();
-    }, [isHomePage]);
-    const forceWompiInitialization = () => {
-        if (window.wompi) {
-            try {
-                window.wompi.initialize();
-                console.log("Wompi reinicializado manualmente");
-            } catch (error) {
-                console.error("Error al reinicializar Wompi manualmente:", error);
-            }
-        }
-    };
-
-    // Añadir un efecto para detectar cambios de ruta y forzar inicialización
-    useEffect(() => {
-        // Si no estamos en la homepage Y tenemos Wompi disponible, forzar inicialización
-        if (!isHomePage && window.wompi) {
-            const timeoutId = setTimeout(() => {
-                try {
-                    window.wompi?.initialize();
-                    console.log("Wompi inicializado automáticamente al detectar cambio de página");
-                } catch (error) {
-                    console.error("Error al inicializar Wompi después del cambio de página:", error);
-                }
-            }, 800); // Damos más tiempo para que el DOM esté completamente listo
-
-            return () => clearTimeout(timeoutId);
-        }
-    }, [isHomePage]); // Solo depende de isHomePage para evitar re-renders innecesarios
-
-    // Utilizar en efecto para detectar cambio de página
-    useEffect(() => {
-        if (!isHomePage) {
-            debouncedWompiInit();
-        }
-    }, [isHomePage, debouncedWompiInit]);
-
-    // Usar también en el observer
-    useEffect(() => {
-        if (!window.wompi || isHomePage) return;
-
-        const observer = new MutationObserver(() => {
-            debouncedWompiInit();
-        });
-
-        if (containerRef.current) {
-            observer.observe(containerRef.current, { childList: true, subtree: true });
-        }
-
-        return () => observer.disconnect();
-    }, [isHomePage, debouncedWompiInit]);
 
     return (
         <div className="w-full">
@@ -401,10 +561,11 @@ export function PricingCards({ plans, defaultActiveCard = 1, onCardSelect }: Pri
                         cardRef={(el) => {
                             cardsRef.current[index] = el;
                         }}
+                        wompiFailure={wompiFailure}
+                        wompiInitialized={wompiInitialized}
                     />
                 ))}
             </div>
         </div>
     );
 }
-
