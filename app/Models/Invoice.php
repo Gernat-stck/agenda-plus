@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 class Invoice extends Model
 {
     use HasFactory;
-    protected $table = 'invoices';
+
     protected $fillable = [
         'user_id',
         'client_id',
@@ -16,7 +16,12 @@ class Invoice extends Model
         'amount',
         'payment_method',
         'status',
-        'transaction_data'
+        'transaction_data',
+    ];
+
+    protected $casts = [
+        'transaction_data' => 'array',
+        'amount' => 'decimal:2',
     ];
     public function user()
     {
