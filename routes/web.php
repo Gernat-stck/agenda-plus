@@ -2,10 +2,12 @@
 
 use App\Http\Controllers\AppointmentController;
 use App\Http\Controllers\CalendarController;
+use App\Http\Controllers\PublicController;
 use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\ClientController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\SpecialDateController;
+use App\Http\Controllers\SubscriptionController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\WhatsappController;
 use App\Http\Controllers\WhatsappWebhookController;
@@ -13,15 +15,8 @@ use App\Http\Middleware\ValidateUserMembership;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
-// Rutas públicas - Sin middleware de validación de membresía
-Route::get('/', function () {
-    return Inertia::render('welcome');
-})->name('home');
-
 // Ruta de membership debe estar FUERA del middleware de validación
-Route::get('/membership', function () {
-    return Inertia::render('Membership/Index');
-})->name('membership.required');
+Route::get('/membership', [SubscriptionController::class, 'index'])->name('membership.required');
 
 // Rutas protegidas con autenticación y verificación de membresía
 Route::middleware(['auth', 'verified', ValidateUserMembership::class])->group(
@@ -92,6 +87,8 @@ Route::middleware(['auth', 'verified', ValidateUserMembership::class])->group(
         //Rutas para envio de correos
         Route::post('/contact', [ContactController::class, 'send'])->name('contact.send');
         Route::post('/support', [ContactController::class, 'sendSupport'])->name('support.send');
+        Route::post('subscriptions/process-payment', [SubscriptionController::class, 'processPayment'])->name('subscriptions.process');
+
     }
 
 );
@@ -99,3 +96,4 @@ Route::middleware(['auth', 'verified', ValidateUserMembership::class])->group(
 require __DIR__ . '/settings.php';
 require __DIR__ . '/auth.php';
 require __DIR__ . '/public.php';
+require __DIR__ . '/admin.php';

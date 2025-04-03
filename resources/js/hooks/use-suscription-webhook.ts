@@ -38,11 +38,11 @@ export function useSubscriptionWebhook() {
                 };
 
                 // Enviar los datos al backend para procesamiento
-                const response = await axios.post('/api/subscriptions/process-payment', webhookData);
+                const response = await axios.post('subscriptions/process-payment', webhookData);
 
                 setSuccess(true);
                 // Opcional: Redirigir después de procesar con éxito usando Inertia
-                // setTimeout(() => router.visit('/dashboard'), 3000);
+                setTimeout(() => router.visit('/dashboard'), 3000);
             } catch (err) {
                 // Manejo de errores mejorado con tipado
                 if (axios.isAxiosError(err)) {

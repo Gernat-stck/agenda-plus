@@ -13,18 +13,12 @@ return new class extends Migration
     {
         Schema::create('subscriptions', function (Blueprint $table) {
             $table->id();
-            $table->string('user_id');
-            $table->string('package_name');
-            $table->string('id_account');
-            $table->string('date_transaction');
-            $table->decimal('monto', 8, 2);
-            $table->string('payment_method');
-            $table->string('id_enlace')->nullable()->after('id_account');
-            $table->string('hash')->nullable()->after('approved');
+            $table->foreignId('user_id')->constrained()->onDelete('cascade');
+            $table->foreignId('subscription_plan_id')->nullable()->constrained();
             $table->boolean('approved')->default(false);
+            $table->timestamp('valid_until')->nullable();
+            $table->string('status')->default('active'); // active, cancelled, expired
             $table->timestamps();
-
-            $table->foreign('user_id')->references('user_id')->on('users')->onDelete('cascade');
         });
     }
 

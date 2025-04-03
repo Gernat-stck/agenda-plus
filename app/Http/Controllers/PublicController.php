@@ -8,18 +8,29 @@ use App\Models\Client;
 use App\Models\ClientsUser;
 use App\Models\Service;
 use App\Models\SpecialDate;
+use App\Models\SubscriptionPlan;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log as FacadesLog;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
-use Log;
 
 class PublicController extends Controller
 {
+    public function index()
+    {
+        $plans = SubscriptionPlan::where('is_active', true)
+            ->with('features')
+            ->get()
+            ->map->toFrontendFormat();
+
+        return Inertia::render('welcome', [
+            'plans' => $plans
+        ]);
+
+    }
     // Controlador publico para appointments
     public function showRegistrationForm($userId = null)
     {
@@ -76,8 +87,9 @@ class PublicController extends Controller
 
         return $userInitials . "CL-" . $randomNumber;
     }
-    public function storeAppointment(Request $request, $userId)
+    public function storeAppointment(Request $request)
     {
+        $userId = $request['user_id'];
         // Verificar si el usuario existe
         $user = User::where('user_id', $userId)->first();
         if (!$user) {
