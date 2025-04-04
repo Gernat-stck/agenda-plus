@@ -4,9 +4,10 @@ import { AuthProvider } from '@/context/AuthContext';
 import { createInertiaApp } from '@inertiajs/react';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { createRoot } from 'react-dom/client';
+import { Toaster } from 'sonner';
 import { route as routeFn } from 'ziggy-js';
-import { initializeTheme } from './hooks/use-appearance';
 import { ActiveSectionProvider } from './context/ActiveSectionProvider';
+import { initializeTheme } from './hooks/use-appearance';
 
 declare global {
     const route: typeof routeFn;
@@ -23,6 +24,7 @@ createInertiaApp({
         root.render(
             <AuthProvider>
                 <ActiveSectionProvider>
+                    <Toaster richColors position="top-right" />
                     <App {...props} />
                 </ActiveSectionProvider>
             </AuthProvider>,
