@@ -90,7 +90,8 @@ Route::middleware(['auth', 'verified', ValidateUserMembership::class])->group(
         //Rutas para envio de correos
         Route::post('/contact', [ContactController::class, 'send'])->name('contact.send');
         Route::post('/support', [ContactController::class, 'sendSupport'])->name('support.send');
-        Route::post('subscriptions/process-payment', [SubscriptionController::class, 'processPayment'])->name('subscriptions.process');
+
+        Route::post('subscriptions/verify', [SubscriptionController::class, 'verifySubscription'])->name('subscriptions.verify');
 
     }
 
