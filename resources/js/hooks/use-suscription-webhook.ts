@@ -1,5 +1,5 @@
-import { router, usePage } from '@inertiajs/react';
-import axios, { AxiosError } from 'axios';
+import { router } from '@inertiajs/react';
+import axios from 'axios';
 import { useEffect, useState } from 'react';
 
 // Tipo para el estado de error
@@ -8,104 +8,95 @@ type ErrorState = {
     details?: string;
 } | null;
 
+// Respuesta de verificación de suscripción
+interface SubscriptionVerificationResponse {
+    status: 'active' | 'inactive' | 'pending' | 'error';
+    message: string;
+    subscription?: {
+        plan_name: string;
+        valid_until: string;
+    };
+    details?: string;
+}
+
 export function useSubscriptionWebhook() {
-    const [isProcessing, setIsProcessing] = useState(false);
+    const [isProcessing, setIsProcessing] = useState(true);
     const [success, setSuccess] = useState(false);
     const [error, setError] = useState<ErrorState>(null);
+    const [subscriptionData, setSubscriptionData] = useState<SubscriptionVerificationResponse | null>(null);
 
-    // Usar Inertia para obtener los parámetros de la URL
-    const { props } = usePage();
-    const { url } = props as unknown as { url: URL };
-
-    // Analizar los parámetros de la URL
+    // Obtener parámetros de la URL
     const params = new URLSearchParams(window.location.search);
 
     useEffect(() => {
-        const processPayment = async () => {
-            // Verificar si hay parámetros en la URL
-            if (!params.has('idTransaccion')) return;
-
+        const verifyPaymentAndSubscription = async () => {
             try {
-                setIsProcessing(true);
+                // Verificar si hay parámetros en la URL
+                if (!params.has('idTransaccion') && !params.has('IdTransaccion')) {
+                    setError({ message: 'No se detectaron parámetros de transacción en la URL' });
+                    setIsProcessing(false);
+                    return;
+                }
 
-                // Obtener los parámetros de la URL
-                const webhookData = {
-                    identificadorEnlaceComercio: params.get('identificadorEnlaceComercio'),
-                    idTransaccion: params.get('idTransaccion'),
-                    idEnlace: params.get('idEnlace'),
-                    monto: params.get('monto'),
+                // Determinar el ID de transacción (compatibilidad con ambos formatos)
+                const transactionId = params.get('idTransaccion') || params.get('IdTransaccion') || '';
+
+                // Enviar datos al servidor para verificación
+                const paymentData = {
+                    identificadorEnlaceComercio: params.get('identificadorEnlaceComercio') || params.get('IdentificadorEnlaceComercio'),
+                    idTransaccion: transactionId,
+                    idEnlace: params.get('idEnlace') || params.get('IdEnlace'),
+                    monto: params.get('monto') || params.get('Monto'),
                     hash: params.get('hash'),
                 };
 
-                // Enviar los datos al backend para procesamiento
-                const response = await axios.post('subscriptions/process-payment', webhookData);
+                // Verificar el estado de la suscripción
+                const response = await axios.post<SubscriptionVerificationResponse>('subscriptions/verify', paymentData);
+                const data = response.data;
+                setSubscriptionData(data);
 
-                setSuccess(true);
-                // Opcional: Redirigir después de procesar con éxito usando Inertia
-                setTimeout(() => router.visit('/dashboard'), 3000);
-            } catch (err) {
-                // Manejo de errores mejorado con tipado
-                if (axios.isAxiosError(err)) {
-                    const axiosError = err as AxiosError<{ message: string }>;
-                    setError({
-                        message: axiosError.response?.data?.message || 'Error procesando el pago',
-                        details: axiosError.message,
-                    });
-                } else {
-                    setError({
-                        message: 'Error inesperado procesando el pago',
-                        details: err instanceof Error ? err.message : String(err),
-                    });
-                }
-                console.error('Error en proceso de pago:', err);
-            } finally {
-                setIsProcessing(false);
-            }
-        };
-
-        processPayment();
-    }, [params]);
-
-    useEffect(() => {
-        // Procesar datos de redirección (no el webhook)
-        const checkTransactionResult = async () => {
-            // Verificar si hay parámetros en la URL
-            if (!params.has('ResultadoTransaccion')) return;
-
-            setIsProcessing(true);
-            const resultado = params.get('ResultadoTransaccion');
-
-            try {
-                if (resultado === 'ExitosaAprobada') {
+                if (data.status === 'active') {
                     setSuccess(true);
-                    // Redirigir al dashboard después de un breve momento
-                    setTimeout(() => router.visit('/dashboard'), 3000);
+                    // Redirigir después de un breve momento
+                    setTimeout(() => router.visit('/dashboard'), 6000);
+                } else if (data.status === 'pending') {
+                    // Mantener el estado de procesamiento y volver a verificar después de un tiempo
+                    setTimeout(() => verifyPaymentAndSubscription(), 5000);
                 } else {
-                    // Error en el pago según parámetros de URL
                     setError({
-                        message: 'La transacción no fue completada con éxito',
-                        details: `Resultado: ${resultado}`,
+                        message: data.message || 'La suscripción no está activa',
+                        details: data.details,
                     });
+                    setIsProcessing(false);
                 }
             } catch (err) {
-                setError({
-                    message: 'Error al procesar la redirección',
-                    details: err instanceof Error ? err.message : String(err),
-                });
-                console.error('Error:', err);
-            } finally {
+                console.error('Error en proceso de verificación:', err);
+
+                // Manejar el error de forma específica
+                let errorMsg = 'Error inesperado durante la verificación';
+                let details = '';
+
+                if (axios.isAxiosError(err)) {
+                    errorMsg = err.response?.data?.message || 'Error en la comunicación con el servidor';
+                    details = `Código: ${err.response?.status || 'desconocido'} - ${err.message}`;
+                } else if (err instanceof Error) {
+                    errorMsg = 'Error en la verificación de la suscripción';
+                    details = err.message;
+                }
+
+                setError({ message: errorMsg, details });
                 setIsProcessing(false);
             }
         };
 
-        checkTransactionResult();
-    }, [params]);
+        verifyPaymentAndSubscription();
+    }, []);
 
     return {
         isProcessing,
         success,
         error,
-        // Método para redirigir usando Inertia
+        subscriptionData,
         redirectToDashboard: () => router.visit('/dashboard'),
     };
 }
