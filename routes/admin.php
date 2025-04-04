@@ -1,10 +1,11 @@
 <?php
 
 use App\Http\Controllers\SubscriptionPlanController;
+use App\Http\Middleware\ValidateAdminUser;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
-Route::middleware(['auth', 'verified'])->group(
+Route::middleware(['auth', 'verified', ValidateAdminUser::class])->group(
     function () {
         Route::get('admin/dashboard', function () {
             return Inertia::render('Admin/Dashboard');
