@@ -71,7 +71,7 @@ class SubscriptionPlanController extends Controller
                     'badge_variant' => $validated['badge']['variant'] ?? null,
                     'button_text' => $validated['buttonText'],
                     'button_variant' => $validated['buttonVariant'],
-                    'payment_url' => $validated['paymentWidget'],
+                    'payment_url' => $validated['paymentWidget'] ?? null,
                 ]);
 
                 // Guardar las características del plan

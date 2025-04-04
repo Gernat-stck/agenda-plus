@@ -105,7 +105,6 @@ export function PlanForm({ plan: initialPlan }: { plan?: Plan | null }) {
             // Crear nuevo plan
             post(route('admin.plans.store'), {
                 onSuccess: () => {
-                    toast.success('Plan creado correctamente');
                     reset(); // Limpiar el formulario después de crear
                 },
             });
