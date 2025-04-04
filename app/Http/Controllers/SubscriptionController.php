@@ -26,67 +26,6 @@ class SubscriptionController extends Controller
             'plans' => $plans,
         ]);
     }
-    public function processPayment(Request $request)
-    {
-        // Validar los datos recibidos del webhook
-        $validator = Validator::make($request->all(), [
-            'identificadorEnlaceComercio' => 'required|string',
-            'idTransaccion' => 'required|string',
-            'idEnlace' => 'required|string',
-            'monto' => 'required|numeric',
-            'hash' => 'required|string',
-        ]);
-
-        if ($validator->fails()) {
-            Log::error('Validación de webhook fallida: ' . json_encode($validator->errors()));
-            return response()->json(['message' => 'Datos de pago inválidos'], 400);
-        }
-
-        try {
-            // Verificar la autenticación del usuario
-            if (!Auth::check()) {
-                // Si el usuario no está autenticado, buscar el usuario basado en algún identificador en el enlace
-                // Por ejemplo, si tienes un token en la URL o un identificador de comercio que está vinculado a un usuario
-                $user = User::where('some_identifier', $request->identificadorEnlaceComercio)->first();
-
-                if (!$user) {
-                    Log::error('Usuario no encontrado para el pago: ' . $request->identificadorEnlaceComercio);
-                    return response()->json(['message' => 'Usuario no identificado'], 404);
-                }
-            } else {
-                $user = Auth::user();
-            }
-
-            // Verificar si el hash es válido (implementa tu lógica de verificación)
-            if (!$this->verifyHash($request->all())) {
-                Log::error('Hash inválido para la transacción: ' . $request->idTransaccion);
-                return response()->json(['message' => 'Hash de verificación inválido'], 400);
-            }
-
-            // Registrar la factura de la membresía
-            $invoice = new Invoice();
-            $invoice->user_id = $user->user_id;
-            $invoice->invoice_type = 'membresia';
-            $invoice->amount = $request->monto;
-            $invoice->payment_method = 'online';
-            $invoice->status = 'pagado';
-            $invoice->transaction_data = json_encode($request->all());
-            $invoice->save();
-
-            // Actualizar el estado de membresía del usuario
-            $user->membership_status = 'activo';
-
-            // Establecer la fecha de expiración (por ejemplo, 30 días desde ahora)
-            $user->membership_expires_at = Carbon::now()->addDays(30);
-            $user->save();
-
-            Log::info('Pago de membresía procesado correctamente: ' . $request->idTransaccion);
-            return response()->json(['message' => 'Pago procesado correctamente'], 200);
-        } catch (\Exception $e) {
-            Log::error('Error al procesar pago: ' . $e->getMessage());
-            return response()->json(['message' => 'Error al procesar el pago: ' . $e->getMessage()], 500);
-        }
-    }
 
     /**
      * Verifica que el hash recibido sea válido
@@ -115,27 +54,114 @@ class SubscriptionController extends Controller
             ->latest()
             ->first();
     }
+
     /**
-     * Muestra la suscripción activa del usuario autenticado
+     * Verifica el estado de la suscripción tras un pago
      */
-    public function current()
+    public function verifySubscription(\Illuminate\Http\Request $request)
     {
-        $user = Auth::user();
-        $subscription = $this->getUserActiveSubscription($user);
+        try {
+            // Validar los datos mínimos de la transacción
+            $validator = Validator::make($request->all(), [
+                'idTransaccion' => 'required|string',
+            ]);
 
+            if ($validator->fails()) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Datos de verificación inválidos'
+                ], 400);
+            }
 
-        if (!$subscription) {
-            return response()->json(['message' => 'No tienes una suscripción activa'], 404);
+            // Obtener el usuario autenticado
+            $user = Auth::user();
+            if (!$user) {
+                return response()->json([
+                    'status' => 'inactive',
+                    'message' => 'Usuario no autenticado'
+                ], 401);
+            }
+            $transactionId = $request->input('idTransaccion');
+            // OPCIÓN 1: VERIFICAR DIRECTAMENTE SI EXISTE UNA SUSCRIPCIÓN CON ESA TRANSACCIÓN
+            // Verificar si hay una suscripción asociada a esta transacción y que esté activa
+            $subscription = Subscription::where('subscription_plan_id', $transactionId)
+                ->where('user_id', $user->user_id)
+                ->where('status', 'active')
+                ->where('approved', true)
+                ->first();
+            Log::info('suscripcion' . Subscription::where('subscription_plan_id', $transactionId)->where('user_id', $user->id)
+                ->first());
+            if ($subscription) {
+                return response()->json([
+                    'status' => 'active',
+                    'message' => 'Suscripción activa',
+                    'subscription' => [
+                        'plan_name' => $subscription->plan->name ?? 'Plan',
+                        'valid_until' => $subscription->valid_until
+                    ]
+                ]);
+            }
+
+            // OPCIÓN 2: VERIFICAR SI EL USUARIO TIENE CUALQUIER SUSCRIPCIÓN ACTIVA
+            // Si no encontramos una suscripción con esa transacción, verificamos si el usuario tiene otra activa
+            $activeSubscription = $user->activeSubscription();
+            if ($activeSubscription) {
+                return response()->json([
+                    'status' => 'active',
+                    'message' => 'Suscripción activa',
+                    'subscription' => [
+                        'plan_name' => $activeSubscription->plan->name ?? 'Plan',
+                        'valid_until' => $activeSubscription->valid_until
+                    ]
+                ]);
+            }
+
+            // OPCIÓN 3: VERIFICAR SI HAY UNA SUSCRIPCIÓN PENDIENTE CON ESA TRANSACCIÓN
+            // Buscar una suscripción con el ID de transacción pero en estado no activo
+            $pendingSubscription = Subscription::where('subscription_plan_id', $transactionId)
+                ->where('user_id', $user->id)
+                ->where('status', '!=', 'active')
+                ->first();
+
+            if ($pendingSubscription) {
+                return response()->json([
+                    'status' => 'pending',
+                    'message' => 'Su suscripción está siendo procesada'
+                ]);
+            }
+
+            // OPCIÓN 4: VERIFICAR SI HAY UNA FACTURA PAGADA PARA ESA TRANSACCIÓN
+            // Verificar si hay una factura relacionada con la transacción
+            $invoice = Invoice::where('transaction_data->idTransaccion', $transactionId)
+                ->orWhere('transaction_data->IdTransaccion', $transactionId)
+                ->first();
+
+            if ($invoice && $invoice->status === 'paid') {
+                return response()->json([
+                    'status' => 'pending',
+                    'message' => 'Su pago ha sido registrado y está siendo procesado'
+                ]);
+            } elseif ($invoice && $invoice->status === 'failed') {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'La transacción no fue procesada correctamente'
+                ]);
+            }
+
+            // Si no hay registro, significa que el webhook aún no ha procesado el pago
+            return response()->json([
+                'status' => 'pending',
+                'message' => 'Verificando estado del pago'
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error al verificar suscripción: ' . $e->getMessage());
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Error interno al verificar la suscripción',
+                'details' => app()->environment('local') ? $e->getMessage() : null
+            ], 500);
         }
-
-        $subscription->load('plan.features');
-
-        return response()->json([
-            'subscription' => $subscription,
-            'plan' => $subscription->plan->toFrontendFormat(),
-            'valid_until' => $subscription->valid_until,
-            'status' => $subscription->status,
-        ]);
     }
     /**
      * Cancela la suscripción activa del usuario

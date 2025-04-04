@@ -79,7 +79,9 @@ class SubscriptionWebhookController extends Controller
                     $subscription = new Subscription();
                     $subscription->user_id = $user->user_id;
                     $subscription->plan_id = $plan->slug;
+                    $subscription->subscription_plan_id = $idTransaccion; // Guardar el ID del plan
                     $subscription->status = 'active';
+                    $subscription->approved = true;
                     $subscription->start_date = now();
                     $subscription->valid_until = now()->addMonth(); // Suscripción por un mes
                     $subscription->payment_method = 'online';
