@@ -14,13 +14,13 @@ return new class extends Migration {
             $table->id();
             $table->string('user_id');
             $table->string('plan_id')->after('user_id');
-            $table->foreignId('subscription_plan_id')->nullable()->constrained();
+            $table->string('subscription_plan_id')->nullable();
             $table->timestamp('start_date')->nullable();
             $table->boolean('approved')->default(false);
             $table->timestamp('valid_until')->nullable();
             $table->string('payment_method')->default('online');
             $table->timestamp('last_payment_date')->nullable();
-            $table->string('status')->default('active'); // active, cancelled, expired
+            $table->string('status')->default('inactive'); // active, cancelled, expired
             $table->timestamps();
 
             // Agregar la clave foránea
