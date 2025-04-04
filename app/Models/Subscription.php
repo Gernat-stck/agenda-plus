@@ -15,6 +15,7 @@ class Subscription extends Model
         'plan_id',
         'status',
         'start_date',
+        'approved',
         'valid_until',
         'payment_method',
         'last_payment_date',
@@ -28,11 +29,11 @@ class Subscription extends Model
 
     public function user()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class, 'user_id');
     }
 
     public function plan()
     {
-        return $this->belongsTo(SubscriptionPlan::class, 'plan_id');
+        return $this->belongsTo(SubscriptionPlan::class, 'plan_id', 'slug');
     }
 }
