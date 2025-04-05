@@ -21,6 +21,7 @@ class CreateAppointmentsTable extends Migration
             // Usamos enum para controlar los valores predefinidos de payment_type y status
             $table->enum('payment_type', ['tarjeta', 'efectivo']);
             $table->enum('status', ['pendiente', 'en curso', 'finalizado', 'cancelado']);
+            $table->bolean('reminder_sent')->default(false);
             $table->timestamps();
 
             // Definir claves foráneas
