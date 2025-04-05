@@ -10,3 +10,5 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 Schedule::job(new ChangeStatusAppointment)->everyFifteenMinutes();
+
+Schedule::command('appointments:send-reminders')->daily();

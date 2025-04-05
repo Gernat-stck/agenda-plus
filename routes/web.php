@@ -73,16 +73,7 @@ Route::middleware(['auth', 'verified', ValidateUserMembership::class])->group(
         Route::post('special-dates', [SpecialDateController::class, 'store'])->name('special-dates.store');
         Route::patch('special-dates/{id}', [SpecialDateController::class, 'update'])->name('special-dates.update');
         Route::delete('special-dates/{id}', [SpecialDateController::class, 'destroy'])->name('special-dates.destroy');
-        // Rutas para configuración de WhatsApp
-        Route::resource('whatsapp-configurations', WhatsappController::class);
-        Route::post('whatsapp-configurations/{configuration}/connect', [WhatsappController::class, 'connect'])->name('whatsapp-configurations.connect');
-        Route::post('whatsapp-configurations/{configuration}/disconnect', [WhatsappController::class, 'disconnect'])->name('whatsapp-configurations.disconnect');
 
-        // Ruta para enviar mensajes
-        Route::post('whatsapp/send', [WhatsappController::class, 'sendTestMessage']);
-
-        // Ruta para recibir webhooks de Twilio (por ejemplo, actualizaciones de estado de mensaje)
-        Route::post('whatsapp/webhook', [WhatsappWebhookController::class, 'handleWebhook']);
         Route::get('register/appointment/link', [AppointmentController::class, 'appointmentRegisterLink'])->name('appointment.register.link');
         Route::get('appointments/date/{date}', [AppointmentController::class, 'getAppointmentsByDate']);
         Route::get('available/slots/{date}', [CalendarController::class, 'getAvailableSlots']);
@@ -92,7 +83,6 @@ Route::middleware(['auth', 'verified', ValidateUserMembership::class])->group(
         Route::post('/support', [ContactController::class, 'sendSupport'])->name('support.send');
 
         Route::post('subscriptions/verify', [SubscriptionController::class, 'verifySubscription'])->name('subscriptions.verify');
-
     }
 
 );
