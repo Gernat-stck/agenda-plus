@@ -1,5 +1,5 @@
 import { addMinutes } from 'date-fns';
-import { Banknote, CheckCircle2, CreditCard, Info } from 'lucide-react';
+import { Info } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 import { useAvailableSlots } from '@/hooks/use-available-slots';
@@ -11,11 +11,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
 
+import { formatToE164, isValidE164 } from '@/lib/utils';
 import type { CalendarConfig, SpecialDate } from '@/types/calendar';
 import type { Cita } from '@/types/clients';
 import type { category } from '@/types/services';
 import { isDateAvailable, isTimeWithinBusinessHours } from '@/utils/appointment-validations';
 import { formatForDisplay, formatTimeRange } from '@/utils/date-utils';
+import { PhoneInput } from '../shared/phone-input';
 import { Button } from '../ui/button';
 import { DateTimePicker } from '../ui/date-time-picker';
 import { Input } from '../ui/input';
@@ -68,13 +70,11 @@ export function AppointmentForm({
     const [selectedCategory, setSelectedCategory] = useState<string>('');
     const [step, setStep] = useState<number>(0);
     const [isLoading, setIsLoading] = useState<boolean>(false);
-    // Añadir estos nuevos estados para los slots disponibles
     const { availableSlots, loading: loadingSlots, loadAvailableSlots } = useAvailableSlots(config?.user_id);
     useEffect(() => {
         const currentTime = new Date();
 
         if (appointment) {
-            // Asegurar que appointment tiene start_time y end_time válidos
             if (!appointment.start_time) appointment.start_time = currentTime;
             if (!appointment.end_time) appointment.end_time = new Date(currentTime.getTime() + 60 * 60 * 1000);
             setFormData(appointment);
@@ -87,7 +87,6 @@ export function AppointmentForm({
                 }
             }
 
-            // Si es una edición, mostrar todos los pasos
             setStep(3);
         } else if (selectedDate) {
             const startTime = new Date(selectedDate);
@@ -436,13 +435,24 @@ export function AppointmentForm({
                             <Label htmlFor="client_phone" className="text-sm font-medium">
                                 Número de teléfono
                             </Label>
-                            <Input
-                                id="client_phone"
-                                value={formData.client_phone || ''}
-                                onChange={(e) => setFormData({ ...formData, client_phone: e.target.value })}
-                                placeholder="Ej: 555-123-4567"
-                                required
-                            />
+                            <div>
+                                <PhoneInput
+                                    value={formData.client_phone || ''}
+                                    onChange={(newValue) => {
+                                        // Si es undefined o vacío, devolvemos string vacío
+                                        if (!newValue) {
+                                            setFormData({ ...formData, client_phone: '' });
+                                            return;
+                                        }
+
+                                        // Si no está en formato E.164, lo convertimos
+                                        const formattedValue = isValidE164(newValue) ? newValue : formatToE164(newValue);
+                                        setFormData({ ...formData, client_phone: formattedValue });
+                                    }}
+                                    placeholder="Ingrese número telefónico"
+                                    defaultCountry="SV"
+                                />
+                            </div>
                         </div>
                     </div>
                 )}
@@ -479,32 +489,32 @@ export function AppointmentForm({
                                 <SelectContent>
                                     {selectedCategory
                                         ? category
-                                            .find((cat) => cat.name === selectedCategory)
-                                            ?.services.map((service) => (
-                                                <SelectItem key={service.service_id} value={service.service_id}>
-                                                    <div className="flex w-full justify-between">
-                                                        <span>{service.name}</span>
-                                                        <span className="text-muted-foreground">
-                                                            ${service.price} - {service.duration}min
-                                                        </span>
-                                                    </div>
-                                                </SelectItem>
-                                            ))
+                                              .find((cat) => cat.name === selectedCategory)
+                                              ?.services.map((service) => (
+                                                  <SelectItem key={service.service_id} value={service.service_id}>
+                                                      <div className="flex w-full justify-between">
+                                                          <span>{service.name}</span>
+                                                          <span className="text-muted-foreground">
+                                                              ${service.price} - {service.duration}min
+                                                          </span>
+                                                      </div>
+                                                  </SelectItem>
+                                              ))
                                         : category.map((cat) => (
-                                            <div key={cat.name} className="pb-1">
-                                                <div className="bg-muted/50 px-2 py-1.5 text-sm font-semibold">{cat.name}</div>
-                                                {cat.services.map((service) => (
-                                                    <SelectItem key={service.service_id} value={service.service_id}>
-                                                        <div className="flex w-full justify-between">
-                                                            <span>{service.name}</span>
-                                                            <span className="text-muted-foreground">
-                                                                ${service.price} - {service.duration}min
-                                                            </span>
-                                                        </div>
-                                                    </SelectItem>
-                                                ))}
-                                            </div>
-                                        ))}
+                                              <div key={cat.name} className="pb-1">
+                                                  <div className="bg-muted/50 px-2 py-1.5 text-sm font-semibold">{cat.name}</div>
+                                                  {cat.services.map((service) => (
+                                                      <SelectItem key={service.service_id} value={service.service_id}>
+                                                          <div className="flex w-full justify-between">
+                                                              <span>{service.name}</span>
+                                                              <span className="text-muted-foreground">
+                                                                  ${service.price} - {service.duration}min
+                                                              </span>
+                                                          </div>
+                                                      </SelectItem>
+                                                  ))}
+                                              </div>
+                                          ))}
                                 </SelectContent>
                             </Select>
                         </div>

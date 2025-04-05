@@ -45,12 +45,11 @@ export default function ListaClientes({
         proceedToFinalConfirmation,
         cancelConfirmation,
         citaToDelete,
-        clienteToDelete
+        clienteToDelete,
     } = useClienteCrud(clients, {
         reloadOnSuccess: true,
         reloadDelay: 3000,
     });
-
     // Estados para modales
     const [selectedCliente, setSelectedCliente] = useState<Cliente | null>(null);
     const [isEditing, setIsEditing] = useState(false);
